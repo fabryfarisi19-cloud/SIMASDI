@@ -1,15 +1,30 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (username === "admin" && password === "admin123") {
+      router.push("/dashboard");
+    } else {
+      alert("Username atau Password salah!");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
 
         <div className="text-center">
-
           <Image
             src="/logo.png"
             alt="SIMASDI"
@@ -25,32 +40,29 @@ export default function LoginPage() {
           <p className="text-gray-500">
             Sistem Manajemen Surat dan Disposisi
           </p>
-
         </div>
 
-        <form className="mt-8">
+        <form className="mt-8" onSubmit={handleLogin}>
 
           <div className="mb-4">
-            <label className="block mb-2">
-              Username
-            </label>
-
+            <label className="block mb-2">Username</label>
             <input
               type="text"
               className="w-full border rounded-lg p-3"
               placeholder="Masukkan Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
           <div className="mb-6">
-            <label className="block mb-2">
-              Password
-            </label>
-
+            <label className="block mb-2">Password</label>
             <input
               type="password"
               className="w-full border rounded-lg p-3"
               placeholder="Masukkan Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
@@ -64,7 +76,6 @@ export default function LoginPage() {
         </form>
 
       </div>
-
     </div>
   );
 }
