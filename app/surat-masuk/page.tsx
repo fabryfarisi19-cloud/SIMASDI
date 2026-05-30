@@ -1,44 +1,90 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 
 export default function SuratMasukPage() {
   const [file, setFile] = useState<File | null>(null);
 
-  const [suratList, setSuratList] = useState<any[]>([
-    {
-      agenda: "AGD-2026-0001",
-      tanggal: "29/05/2026",
-      nomor: "001/BPS/2026",
-      asal: "Pengadilan Negeri",
-      perihal: "Permintaan Litmas",
-      file: "contoh.pdf",
-    },
-  ]);
+  const [suratList, setSuratList] = useState<any[]>([]);
+   
 
   const [form, setForm] = useState({
     nomor: "",
     asal: "",
     perihal: "",
   });
+useEffect(() => {
+  loadSurat();
+ const hapusSurat = async (noAgenda: string) => {
+  if (!confirm("Yakin hapus surat ini?")) return;
 
-  const simpanSurat = () => {
+  const { error } = await supabase
+    .from("surat_masuk")
+    .delete()
+    .eq("no_agenda", noAgenda);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Surat berhasil dihapus");
+
+  loadSurat();
+}; 
+}, []);
+
+const loadSurat = async () => {
+  const { data, error } = await supabase
+    .from("surat_masuk")
+    .select("*");
+
+  if (!error) {
+    setSuratList(data || []);
+  }
+};
+  const simpanSurat = async () => {
     if (!form.nomor || !form.asal || !form.perihal) {
       alert("Lengkapi data surat");
       return;
     }
+let fileurl = "";
+if (file) {
+  const namaFile = `${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase
+  .storage
+  .from("surat")
+  .upload(namaFile, file);
 
-    const dataBaru = {
-      agenda: `AGD-${Date.now()}`,
-      tanggal: new Date().toLocaleDateString("id-ID"),
-      nomor: form.nomor,
-      asal: form.asal,
+  if (uploadError) {
+  alert(uploadError.message);
+  return;
+}
+
+fileurl = namaFile;
+}
+    const { error } = await supabase
+  .from("surat_masuk")
+  .insert([
+    {
+      no_agenda: `AGD-${Date.now()}`,
+      tanggal: new Date(),
+      nomor_surat: form.nomor,
+      asal_surat: form.asal,
       perihal: form.perihal,
-      file: file?.name || "-",
-    };
+      file_url: fileurl,
+    },
+  ]);
 
-    setSuratList([...suratList, dataBaru]);
+if (error) {
+  alert(error.message);
+  return;
+}
 
+await loadSurat();
+
+alert("Surat berhasil disimpan");
     setForm({
       nomor: "",
       asal: "",
@@ -46,10 +92,29 @@ export default function SuratMasukPage() {
     });
 
     setFile(null);
-
+await loadSurat();
     alert("Surat berhasil disimpan");
   };
+  const hapusSurat = async (noAgenda: string) => {
+  if (!confirm("Yakin hapus surat ini?")) return;
 
+  const { error } = await supabase
+    .from("surat_masuk")
+    .delete()
+    .eq("no_agenda", noAgenda);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadSurat();
+  alert("Surat berhasil dihapus");
+};
+
+const getFileUrl = (fileName: string) => {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/surat/${fileName}`;
+};
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">
@@ -132,33 +197,49 @@ export default function SuratMasukPage() {
           <tbody>
             {suratList.map((surat, index) => (
               <tr key={index}>
-                <td className="border p-2">{surat.agenda}</td>
+                <td className="border p-2">{surat.no_agenda}</td>
                 <td className="border p-2">{surat.tanggal}</td>
-                <td className="border p-2">{surat.nomor}</td>
+                <td className="border p-2">{surat.nomor_surat}</td>
                 <td className="border p-2">{surat.asal}</td>
                 <td className="border p-2">{surat.perihal}</td>
-                <td className="border p-2">{surat.file}</td>
+                <td className="border p-2">{surat.file_url}</td>
 
                 <td className="border p-2">
-                  <button className="bg-green-600 text-white px-3 py-1 rounded mr-2">
-                    Lihat
-                  </button>
+                  <button
+  className="bg-green-600 text-white px-3 py-1 rounded"
+  onClick={() =>
+    window.open(getFileUrl(surat.file_url), "_blank")
+  }
+>
+  Lihat
+</button>
 
-                  <button className="bg-blue-600 text-white px-3 py-1 rounded mr-2">
-                    Download
-                  </button>
+      <a
+  href={getFileUrl(surat.file_url)}
+  target="_blank"
+  className="bg-blue-600 text-white px-3 py-1 rounded mr-2"
+>
+  Download
+</a>          
 
                   <button
                     className="bg-orange-500 text-white px-3 py-1 rounded"
                     onClick={() =>
                       window.open(
-                        `https://wa.me/6282113349937?text=DISPOSISI SURAT MASUK%0A%0ANomor Surat : ${surat.nomor}%0AAsal Surat : ${surat.asal}%0APerihal : ${surat.perihal}`,
+                        `https://wa.me/6282113349937?text=DISPOSISI SURAT MASUK%0A%0ANomor Surat : ${surat.nomor_surat}%0AAsal Surat : ${surat.asal_surat}%0APerihal : ${surat.perihal}`,
                         "_blank"
                       )
                     }
                   >
                     Disposisi
                   </button>
+
+                  <button
+  onClick={() => hapusSurat(surat.no_agenda)}
+  className="bg-red-500 text-white px-3 py-1 rounded ml-2"
+>
+  Hapus
+</button>
                 </td>
               </tr>
             ))}
