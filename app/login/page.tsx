@@ -13,9 +13,11 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username === "admin" && password === "admin123") {
-      router.push("/dashboard");
-    } else {
+   if (username === "admin" && password === "admin123") {
+  localStorage.setItem("login", "true");
+  router.push("/dashboard");
+}
+    else {
       alert("Username atau Password salah!");
     }
   };

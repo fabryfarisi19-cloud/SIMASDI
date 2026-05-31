@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
-
+import { supabase } from "@/lib/supabase";
+import Tesseract from "tesseract.js";
 export default function SuratMasukPage() {
   const [file, setFile] = useState<File | null>(null);
-
   const [suratList, setSuratList] = useState<any[]>([]);
-   
+
 
   const [form, setForm] = useState({
     nomor: "",
@@ -16,23 +15,6 @@ export default function SuratMasukPage() {
   });
 useEffect(() => {
   loadSurat();
- const hapusSurat = async (noAgenda: string) => {
-  if (!confirm("Yakin hapus surat ini?")) return;
-
-  const { error } = await supabase
-    .from("surat_masuk")
-    .delete()
-    .eq("no_agenda", noAgenda);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  alert("Surat berhasil dihapus");
-
-  loadSurat();
-}; 
 }, []);
 
 const loadSurat = async () => {
@@ -44,58 +26,8 @@ const loadSurat = async () => {
     setSuratList(data || []);
   }
 };
-  const simpanSurat = async () => {
-    if (!form.nomor || !form.asal || !form.perihal) {
-      alert("Lengkapi data surat");
-      return;
-    }
-let fileurl = "";
-if (file) {
-  const namaFile = `${Date.now()}-${file.name}`;
-  const { error: uploadError } = await supabase
-  .storage
-  .from("surat")
-  .upload(namaFile, file);
 
-  if (uploadError) {
-  alert(uploadError.message);
-  return;
-}
-
-fileurl = namaFile;
-}
-    const { error } = await supabase
-  .from("surat_masuk")
-  .insert([
-    {
-      no_agenda: `AGD-${Date.now()}`,
-      tanggal: new Date(),
-      nomor_surat: form.nomor,
-      asal_surat: form.asal,
-      perihal: form.perihal,
-      file_url: fileurl,
-    },
-  ]);
-
-if (error) {
-  alert(error.message);
-  return;
-}
-
-await loadSurat();
-
-alert("Surat berhasil disimpan");
-    setForm({
-      nomor: "",
-      asal: "",
-      perihal: "",
-    });
-
-    setFile(null);
-await loadSurat();
-    alert("Surat berhasil disimpan");
-  };
-  const hapusSurat = async (noAgenda: string) => {
+const hapusSurat = async (noAgenda: string) => {
   if (!confirm("Yakin hapus surat ini?")) return;
 
   const { error } = await supabase
@@ -112,8 +44,114 @@ await loadSurat();
   alert("Surat berhasil dihapus");
 };
 
+const simpanSurat = async () => {
+  if (!file) {
+    alert("Pilih file surat");
+    return;
+  }
+
+  let fileUrl = "";
+
+  const namaFile = `${Date.now()}-${file.name}`;
+
+  const { error: uploadError } = await supabase
+    .storage
+    .from("surat")
+    .upload(namaFile, file);
+
+  if (uploadError) {
+    alert(uploadError.message);
+    return;
+  }
+
+  fileUrl = namaFile;
+
+  const { error } = await supabase
+    .from("surat_masuk")
+    .insert([
+      {
+        no_agenda: `AGD-${Date.now()}`,
+        tanggal: new Date(),
+        nomor_surat: form.nomor,
+        asal_surat: form.asal,
+        perihal: form.perihal,
+        file_url: fileUrl,
+      },
+    ]);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  setForm({
+    nomor: "",
+    asal: "",
+    perihal: "",
+  });
+
+  setFile(null);
+
+  await loadSurat();
+
+  alert("Surat berhasil disimpan");
+};
+
 const getFileUrl = (fileName: string) => {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/surat/${fileName}`;
+};
+const bacaSuratAI = async () => {
+  if (!file) {
+    alert("Pilih file terlebih dahulu");
+    return;
+  }
+
+  const result = await Tesseract.recognize(
+    file,
+    "eng"
+  );
+const text = result.data.text;
+
+const lines = text
+  .split("\n")
+  .map((x) => x.trim())
+  .filter((x) => x !== "");
+
+let nomor = "";
+let perihal = "";
+let asal = "";
+
+lines.forEach((line) => {
+  if (
+    line.toLowerCase().includes("nomor") &&
+    nomor === ""
+  ) {
+    nomor = line;
+  }
+
+  if (
+    line.toLowerCase().includes("perihal") &&
+    perihal === ""
+  ) {
+    perihal = line;
+  }
+});
+
+setForm({
+  nomor,
+  asal,
+  perihal,
+});
+
+alert("AI berhasil membaca surat");
+
+if (
+  file &&
+  !file.type.startsWith("image/")
+) {
+  alert("AI gratis hanya mendukung JPG dan PNG");
+  return;
+}
 };
   return (
     <div className="p-6">
@@ -160,12 +198,42 @@ const getFileUrl = (fileName: string) => {
 
         <div className="mb-4">
           <label className="block mb-2">Upload Dokumen</label>
-          <input
-            type="file"
-            onChange={(e) =>
-              setFile(e.target.files?.[0] || null)
-            }
-          />
+          <div
+  onDragOver={(e) => e.preventDefault()}
+  onDrop={(e) => {
+    e.preventDefault();
+
+    if (e.dataTransfer.files?.[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  }}
+  style={{
+    border: "2px dashed #2563eb",
+    borderRadius: "12px",
+    padding: "30px",
+    textAlign: "center",
+    background: "#f8fafc",
+    marginBottom: "20px",
+  }}
+>
+  <input
+    type="file"
+    accept=".pdf,.jpg,.jpeg,.png"
+    onChange={(e) =>
+      setFile(e.target.files?.[0] || null)
+    }
+  />
+
+  <p style={{ marginTop: "10px" }}>
+    📄 Tarik file surat ke sini atau klik untuk memilih file
+  </p>
+
+  {file && (
+    <p style={{ color: "green" }}>
+      ✅ {file.name}
+    </p>
+  )}
+</div>
         </div>
 
         <button
@@ -174,6 +242,21 @@ const getFileUrl = (fileName: string) => {
         >
           Simpan Surat
         </button>
+       <button
+  onClick={bacaSuratAI}
+  style={{
+    background: "#9333ea",
+    color: "white",
+    padding: "10px 20px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    marginLeft: "10px",
+  }}
+>
+  Baca Surat AI
+</button>
+
       </div>
 
       <h2 className="text-2xl font-bold mt-8 mb-4">
