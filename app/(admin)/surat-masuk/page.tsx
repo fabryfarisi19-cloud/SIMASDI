@@ -19,13 +19,15 @@ useEffect(() => {
 }, []);
 
 const loadSurat = async () => {
-  const { data, error } = await supabase
-    .from("surat_masuk")
-    .select("*");
+  const { data, error: uploadError } = await supabase
+  .storage
+  .from("surat")
+  .upload(namaFile, file);
 
-  if (!error) {
-    setSuratList(data || []);
-  }
+if (uploadError) {
+  alert(JSON.stringify(uploadError));
+  return;
+}
 };
 
 const hapusSurat = async (noAgenda: string) => {
