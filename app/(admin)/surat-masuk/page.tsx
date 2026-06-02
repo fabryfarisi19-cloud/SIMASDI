@@ -98,7 +98,7 @@ const simpanSurat = async () => {
   alert("Surat berhasil disimpan");
 };
 
-const getFileUrl = (fileName) => {
+const getFileUrl = (fileName: string) => {
   return `https://nwospdurijnlwsrmdpaf.supabase.co/storage/v1/object/public/surat/${fileName}`;
 };
 
