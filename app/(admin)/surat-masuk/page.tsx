@@ -98,10 +98,7 @@ const simpanSurat = async () => {
   alert("Surat berhasil disimpan");
 };
 
-const getFileUrl = (fileName: string) => {
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/surat/${fileName}`;
-};
-const bacaSuratAI = async () => {
+https://nwospdurijlnwsrmdpaf.supabase.co/storage/v1/object/public/surat/1780229425915-e79b54ce-3f10-4320-a76a-4ea87ad20eca.jpgconst bacaSuratAI = async () => {
   if (!file) {
     alert("Pilih file terlebih dahulu");
     return;
