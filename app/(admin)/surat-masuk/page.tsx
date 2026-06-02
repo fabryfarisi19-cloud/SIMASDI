@@ -98,7 +98,11 @@ const simpanSurat = async () => {
   alert("Surat berhasil disimpan");
 };
 
-https://nwospdurijlnwsrmdpaf.supabase.co/storage/v1/object/public/surat/1780229425915-e79b54ce-3f10-4320-a76a-4ea87ad20eca.jpgconst bacaSuratAI = async () => {
+const getFileUrl = (fileName) => {
+  return `https://nwospdurijnlwsrmdpaf.supabase.co/storage/v1/object/public/surat/${fileName}`;
+};
+
+const bacaSuratAI = async () => {
   if (!file) {
     alert("Pilih file terlebih dahulu");
     return;
