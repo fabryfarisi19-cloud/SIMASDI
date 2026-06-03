@@ -55,7 +55,7 @@ const simpanSurat = async () => {
 
   let fileUrl = "";
 
-  const namaFile = `${Date.now()}.jpg`;
+  const namaFile = `${Date.now()}.{file.name}`;
 
   const { error: uploadError } = await supabase
     .storage
