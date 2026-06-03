@@ -33,23 +33,20 @@ const hapusSurat = async (noAgenda: string) => {
     return;
   }
 const loadSurat = async () => {
+
   const { data, error } = await supabase
     .from("surat_masuk")
     .select("*")
     .order("created_at", { ascending: false });
-
-  if (error) {
+if (error) {
     alert(error.message);
     return;
   }
 
   setSuratList(data || []);
 };
-  await loadSurat();
-  alert("Surat berhasil dihapus");
-};
-
-const simpanSurat = async () => {
+  
+  const simpanSurat = async () => {
   if (!file) {
     alert("Pilih file surat");
     return;
