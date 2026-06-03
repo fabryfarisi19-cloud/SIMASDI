@@ -56,15 +56,6 @@ if (error) {
 
   const namaFile = `${Date.now()}.{file.name}`;
 
-  const { error: uploadError } = await supabase
-    .storage
-    .from("surat")
-    .upload(namaFile, file);
-
-  if (uploadError) {
-    alert(uploadError.message);
-    return;
-  }
 
   fileUrl = namaFile;
 
