@@ -48,6 +48,12 @@ export default function SuratMasukPage() {
   };
 
   const simpanSurat = async () => {
+    console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
+console.log(
+  "KEY:",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20)
+);
     if (!file) {
       alert("Pilih file surat");
       return;
