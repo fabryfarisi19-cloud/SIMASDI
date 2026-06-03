@@ -48,11 +48,14 @@ export default function SuratMasukPage() {
   };
 
   const simpanSurat = async () => {
-    console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    alert(
+  "URL: " +
+  process.env.NEXT_PUBLIC_SUPABASE_URL
+);
 
-console.log(
-  "KEY:",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20)
+alert(
+  "KEY: " +
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0,20)
 );
     if (!file) {
       alert("Pilih file surat");
@@ -63,14 +66,16 @@ console.log(
 
     const namaFile = `${Date.now()}-${file.name}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("surat")
-      .upload(namaFile, file);
+  const { error: uploadError } = await supabase
+  .storage
+  .from("surat")
+  .upload(namaFile, file);
 
-    if (uploadError) {
-      alert(uploadError.message);
-      return;
-    }
+if (uploadError) {
+  alert("UPLOAD ERROR: " + uploadError.message);
+  console.log(uploadError);
+  return;
+}
 
     fileUrl = namaFile;
 
