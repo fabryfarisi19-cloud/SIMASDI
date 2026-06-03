@@ -18,17 +18,7 @@ useEffect(() => {
   loadSurat();
 }, []);
 
-const loadSurat = async () => {
-  const { data, error: uploadError } = await supabase
-  .storage
-  .from("surat")
-  .upload(namaFile, file);
 
-if (uploadError) {
-  alert(JSON.stringify(uploadError));
-  return;
-}
-};
 
 const hapusSurat = async (noAgenda: string) => {
   if (!confirm("Yakin hapus surat ini?")) return;
@@ -42,7 +32,19 @@ const hapusSurat = async (noAgenda: string) => {
     alert(error.message);
     return;
   }
+const loadSurat = async () => {
+  const { data, error } = await supabase
+    .from("surat_masuk")
+    .select("*")
+    .order("created_at", { ascending: false });
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  setSuratList(data || []);
+};
   await loadSurat();
   alert("Surat berhasil dihapus");
 };
