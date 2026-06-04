@@ -15,23 +15,23 @@ export default function SuratMasukPage() {
        console.log("DATA:", data);
        console.log("ERROR:", error);
 
-              setSurat(data || []);
-                                };
+       setSurat(data || []);
+                      };
 
-                 useEffect(() => {
-                                      loadData();
-                        }, []);
+         useEffect(() => {
+                  loadData();
+             }, []);
 
-                    return (
-               <div style={{ padding: "20px" }}>
-                     <h1>Surat Masuk</h1>
+        return (
+  <div style={{ padding: "20px" }}>
+    <h1>Surat Masuk</h1>
 
-                             <button onClick={loadData}>
-                            Refresh
-                        </button>
+   <button onClick={loadData}>
+       Refresh
+         </button>
 
-                            <table border={1} cellPadding={10}>
-                                          <thead>
+        <table border={1} cellPadding={10}>
+          <thead>
                                                                           <tr>
                                                                        <th>No Agenda</th>
                                                                                                                         <th>Nomor Surat</th>
