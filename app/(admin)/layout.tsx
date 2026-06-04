@@ -1,31 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Sidebar from "../components/Sidebar";
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const router = useRouter();
-
-  useEffect(() => {
-    const login = localStorage.getItem("login");
-
-    if (login !== "true") {
-      router.push("/login");
-    }
-  }, []);
-
+export default function Sidebar() {
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
-
-      <main style={{ flex: 1 }}>
-        {children}
-      </main>
-    </div>
-  );
-}
+      <div style={{ width: "220px", background: "#1e3a8a", color: "white", padding: "20px" }}>
+            <h2>SIMASDI</h2>
+                </div>
+                  );
+                  }
