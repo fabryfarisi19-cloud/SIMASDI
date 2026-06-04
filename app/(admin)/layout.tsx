@@ -1,9 +1,18 @@
 "use client";
 
-export default function Sidebar() {
-  return (
-      <div style={{ width: "220px", background: "#1e3a8a", color: "white", padding: "20px" }}>
-            <h2>SIMASDI</h2>
-                </div>
-                  );
-                  }
+import Sidebar from "../components/Sidebar";
+
+export default function AdminLayout({
+  children,
+  }: {
+    children: React.ReactNode;
+    }) {
+      return (
+          <div style={{ display: "flex" }}>
+                <Sidebar />
+                      <main style={{ flex: 1 }}>
+                              {children}
+                                    </main>
+                                        </div>
+                                          );
+                                          }
