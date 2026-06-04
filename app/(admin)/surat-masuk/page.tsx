@@ -71,10 +71,12 @@ alert(
   .from("surat")
   .upload(namaFile, file);
 
+
 if (uploadError) {
-  alert("UPLOAD ERROR: " + uploadError.message);
-  console.log(uploadError);
-  return;
+    console.log(uploadError);
+      alert(JSON.stringify(uploadError));
+        return;
+        }
 }
 
     fileUrl = namaFile;
@@ -93,8 +95,10 @@ if (uploadError) {
       ]);
 
     if (error) {
-      alert(error.message);
-      return;
+        console.log(error);
+          alert(JSON.stringify(error));
+            return;
+            }
     }
 
     setForm({
