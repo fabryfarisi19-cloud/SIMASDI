@@ -51,12 +51,30 @@ export default function SuratMasukPage() {
      <td>{item.perihal}</td>
 
     <td>
-        <button
-      onClick={() => alert("Disposisi surat: " + item.nomor_surat)}
-          >
-            Disposisi
-                    </button>
-                    </td>
+        
+      <button
+     onClick={async () => {
+    const tujuan = prompt("Tujuan disposisi:");
+
+    if (!tujuan) return;
+
+    await supabase.from("disposisi").insert([
+       {
+      nomor_surat: item.nomor_surat,
+      asal_surat: item.asal_surat,
+      perihal: item.perihal,
+      tujuan: tujuan,
+      isi_disposisi: "Mohon ditindaklanjuti",
+     status: "Menunggu",
+       },
+       ]);
+
+       alert("Disposisi berhasil disimpan");
+          }}
+           >
+          Disposisi
+        </button>
+        </td>
 
      </tr>
      ))}
