@@ -32,29 +32,30 @@ export default function SuratMasukPage() {
 
         <table border={1} cellPadding={10}>
           <thead>
-                                                                          <tr>
-                                                                       <th>No Agenda</th>
-                                                                                                                        <th>Nomor Surat</th>
-                                                                                                                                    <th>Asal Surat</th>
-                                                                                                                                                <th>Perihal</th>
-                                                                                                                                                         <th>Aksi</th>
-                                                                                                                                                          </tr>
-                                                                                                                                                                  </thead>
+    <tr>
+   <th>No Agenda</th>
+   <th>Nomor Surat</th>
+  <th>Asal Surat</th>
+   <th>Perihal</th>
+    <th>Aksi</th>
+        </tr>
+     </thead>
 
-                                                                                                                                                                          <tbody>
-                                                                                                                                                                                    {surat.map((item) => (
-                                                                                                                                                                                                <tr key={item.id}>
-                                                                                                                                                                                                              <td>{item.no_agenda}</td>
-                                                                                                                                                                                                                            <td>{item.nomor_surat}</td>
-                                                                                                                                                                                                                                          <td>{item.asal_surat}</td>
-                                                                                                                                                                                                                                                        <td>{item.perihal}</td>
-                                                                                                                                                                                                                                                              <td>
-                                                                                                                                                                                                                                                                  <button>Disposisi</button>
-                                                                                                                                                                                                                                                                  </td>  
-                                                                                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                                                                                              ))}
-                                                                                                                                                                                                                                                                                      </tbody>
-                                                                                                                                                                                                                                                                                            </table>
-                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                  );
-                                                                                                                                                                                                                                                                                                  }
+    <tbody>
+     {surat.map((item) => (
+     <tr key={item.id}>
+      <td>{item.no_agenda}</td>   
+         <td>{item.no_agenda}</td>
+      <td>{item.nomor_surat}</td>
+     <td>{item.asal_surat}</td>
+     <td>{item.perihal}</td>
+    <td>
+    <button>Disposisi</button>
+     </td>
+     </tr>
+     ))}
+     </tbody>
+      </table>
+      </div>
+      );
+      }
