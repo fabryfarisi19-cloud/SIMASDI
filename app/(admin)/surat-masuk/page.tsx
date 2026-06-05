@@ -37,6 +37,7 @@ export default function SuratMasukPage() {
                                                                                                                         <th>Nomor Surat</th>
                                                                                                                                     <th>Asal Surat</th>
                                                                                                                                                 <th>Perihal</th>
+                                                                                                                                                         <th>Aksi</th>
                                                                                                                                                           </tr>
                                                                                                                                                                   </thead>
 
@@ -47,6 +48,9 @@ export default function SuratMasukPage() {
                                                                                                                                                                                                                             <td>{item.nomor_surat}</td>
                                                                                                                                                                                                                                           <td>{item.asal_surat}</td>
                                                                                                                                                                                                                                                         <td>{item.perihal}</td>
+                                                                                                                                                                                                                                                              <td>
+                                                                                                                                                                                                                                                                  <button>Disposisi</button>
+                                                                                                                                                                                                                                                                  </td>  
                                                                                                                                                                                                                                                                     </tr>
                                                                                                                                                                                                                                                                               ))}
                                                                                                                                                                                                                                                                                       </tbody>
