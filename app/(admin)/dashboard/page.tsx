@@ -73,7 +73,33 @@ useEffect(() => {
   return () => clearInterval(timer);
 }, []);
   return (
-    <div className="p-6">
+<div className="p-6">
+<div style={{
+ display: "grid",
+gridTemplateColumns: "repeat(4, 1fr)",
+  gap: "20px",
+ marginBottom: "20px"
+ }}>
+ <div style={{padding:"20px",border:"1px solid #ddd"}}>
+ <h3>Surat Masuk</h3>
+ <h1>{suratMasuk}</h1>
+ </div>
+
+ <div style={{padding:"20px",border:"1px solid #ddd"}}>
+<h3>Surat Keluar</h3>
+<h1>{suratKeluar}</h1>
+ </div>
+ <div style={{padding:"20px",border:"1px solid #ddd"}}>
+ <h3>Disposisi</h3>
+ <h1>{disposisi}</h1>
+ </div>
+
+  <div style={{padding:"20px",border:"1px solid #ddd"}}>
+   <h3>Arsip Digital</h3>
+  <h1>{arsipDigital}</h1>
+   </div>
+   </div>
+    
       <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white p-6 rounded-xl shadow mb-6">
   <h1 className="text-3xl font-bold">
     SIMASDI
