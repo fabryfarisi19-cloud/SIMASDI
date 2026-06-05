@@ -49,9 +49,15 @@ export default function SuratMasukPage() {
       <td>{item.nomor_surat}</td>
      <td>{item.asal_surat}</td>
      <td>{item.perihal}</td>
+
     <td>
-    <button>Disposisi</button>
-     </td>
+        <button
+      onClick={() => alert("Disposisi surat: " + item.nomor_surat)}
+          >
+            Disposisi
+                    </button>
+                    </td>
+
      </tr>
      ))}
      </tbody>
