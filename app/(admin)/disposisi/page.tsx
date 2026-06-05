@@ -223,11 +223,7 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
   Selesai
   </button>
    </td>
-    <td style={{border:"1px solid #ddd",padding:"8px"}}>
-    <button>
-   Selesai
-   </button>
-   </td>
+    
       </tr>
     ))}
   </tbody>
