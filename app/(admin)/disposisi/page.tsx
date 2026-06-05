@@ -229,7 +229,7 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
   loadDisposisi();
    }}
   >
-  Selesai /
+  Selesai •
   </button>
    </td>
     
