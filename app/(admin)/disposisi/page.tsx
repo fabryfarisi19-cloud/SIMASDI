@@ -212,6 +212,7 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
    </td>
    <td style={{border:"1px solid #ddd",padding:"8px"}}>
    <button
+   onClick={() => alert("TEST")}
    style={{
      background: "green",
        color: "white",
@@ -220,16 +221,7 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
              borderRadius: "5px",
                cursor: "pointer"
                }}
-               onClick={async () => {
-   await supabase
- .from("disposisi")
- .update({ status: "Selesai" })
-  .eq("id", item.id);
-alert("Tombol ditekan");
-
-loadDisposisi();
-  
-   }}
+    
   >
   Selesai •
   </button>
