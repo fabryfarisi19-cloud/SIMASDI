@@ -75,15 +75,15 @@ return ( <div style={{ padding: "20px" }}> Disposisi Surat
       onChange={(e) => {
         const noAgenda = e.target.value;
 
-        setSuratDipilih(noAgenda);
+     setSuratDipilih(noAgenda);
 
-        const surat = suratList.find(
-          (s) => s.no_agenda === noAgenda
-        );
+   const surat = suratList.find(
+     (s) => s.no_agenda === noAgenda
+    );
 
-        if (surat) {
-          setIsiDisposisi(
-            `Kepada Yth.
+   if (surat) {
+   setIsiDisposisi(
+    `Kepada Yth.
 ${tujuan || ".............."}
 Mohon ditindaklanjuti.
 Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${surat.perihal}` ); } }} style={{ width: "100%", padding: "10px", marginBottom: "10px", }} > Pilih Surat Masuk
@@ -189,6 +189,9 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Nomor Surat</th>
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Tujuan</th>
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Status</th>
+    <th style={{border:"1px solid #ddd",padding:"8px"}}>
+        Aksi
+        </th>
     </tr>
   </thead>
 
@@ -203,9 +206,28 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
           {item.tujuan}
         </td>
 
-        <td style={{border:"1px solid #ddd",padding:"8px"}}>
-          {item.status}
-        </td>
+    <td style={{border:"1px solid #ddd",padding:"8px"}}>
+     {item.status}
+   </td>
+   <td style={{border:"1px solid #ddd",padding:"8px"}}>
+   <button
+   onClick={async () => {
+   await supabase
+ .from("disposisi")
+ .update({ status: "Selesai" })
+  .eq("id", item.id);
+
+  loadDisposisi();
+   }}
+  >
+  Selesai
+  </button>
+   </td>
+    <td style={{border:"1px solid #ddd",padding:"8px"}}>
+    <button>
+   Selesai
+   </button>
+   </td>
       </tr>
     ))}
   </tbody>
