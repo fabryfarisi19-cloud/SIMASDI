@@ -225,8 +225,10 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
  .from("disposisi")
  .update({ status: "Selesai" })
   .eq("id", item.id);
+alert("Tombol ditekan");
 
-  loadDisposisi();
+loadDisposisi();
+  
    }}
   >
   Selesai •
