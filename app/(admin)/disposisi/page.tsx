@@ -15,6 +15,7 @@ const loadDisposisi = async () => {
     .from("disposisi")
     .select("*")
     .order("tanggal", { ascending: false });
+    alert(JSON.stringify(data));
 
   setDisposisiList(data || []);
 };
