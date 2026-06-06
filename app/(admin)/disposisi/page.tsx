@@ -213,14 +213,25 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
 
 
 <td style={{border:"1px solid #ddd",padding:"8px"}}>
-  <button
-      onClick={() => {
-            alert("TOMBOL BERHASIL DIKLIK");
-                }}
-                  >
-                      Selesai
-                        </button>
-                        </td>
+
+<button
+  onClick={async () => {
+      const { error } = await supabase
+         .from("disposisi")
+   .update({ status: "Selesai" })
+     .eq("id", item.id);
+
+       if (error) {
+     alert(error.message);
+      } else {
+     alert("Update berhasil");
+      loadDisposisi();
+     }
+     }}
+       >
+   Selesai
+    </button>
+  </td>
     
       </tr>
     ))}
