@@ -224,11 +224,7 @@ onClick={async () => {
      .eq("id", item.id)
       .select();
 
-        alert(
-        "ID=" + item.id +
-       "\nERROR=" + JSON.stringify(error) +
-             "\nDATA=" + JSON.stringify(data) +
-             "x"
+      alert(JSON.stringify(item));
          );
                                     
 }}
