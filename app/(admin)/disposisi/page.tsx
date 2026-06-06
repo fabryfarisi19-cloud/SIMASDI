@@ -198,6 +198,8 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
 
   <tbody>
     {disposisiList.map((item) => (
+      
+  
       <tr key={item.id}>
         <td style={{border:"1px solid #ddd",padding:"8px"}}>
           {item.nomor_surat}
@@ -215,19 +217,11 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
 <td style={{border:"1px solid #ddd",padding:"8px"}}>
 
 <button
-  onClick={async () => {
-      const { error } = await supabase
-         .from("disposisi")
-   .update({ status: "Selesai" })
-     .eq("id", item.id);
+onClick={() => {
+    alert("ID = " + item.id + " | STATUS = " + item.status);
+    }}
 
-       if (error) {
-     alert(error.message);
-      } else {
-     alert("Update berhasil");
-      loadDisposisi();
-     }
-     }}
+  
        >
    Selesai
     </button>
