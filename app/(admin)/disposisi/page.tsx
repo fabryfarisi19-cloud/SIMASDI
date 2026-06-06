@@ -210,9 +210,21 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
           {item.tujuan}
         </td>
 
-    <td style={{border:"1px solid #ddd",padding:"8px"}}>
-     {item.status}
-   </td>
+   <td style={{border:"1px solid #ddd",padding:"8px"}}>
+      <span
+     style={{
+      background:
+     item.status === "Selesai" ? "#22c55e" : "#facc15",
+        color:
+      item.status === "Selesai" ? "white" : "black",
+      padding: "4px 8px",
+     borderRadius: "6px",
+       fontWeight: "bold",
+     }}
+       >
+    {item.status}
+          </span>
+               </td> 
 
 
 <td style={{border:"1px solid #ddd",padding:"8px"}}>
