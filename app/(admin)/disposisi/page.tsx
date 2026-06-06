@@ -217,23 +217,25 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
 <td style={{border:"1px solid #ddd",padding:"8px"}}>
 
 <button
-onClick={async () => {
+  onClick={async () => {
     const { data, error } = await supabase
-  .from("disposisi")
-   .update({ status: "Selesai" })
-     .eq("id", item.id)
+      .from("disposisi")
+      .update({ status: "Selesai" })
+      .eq("id", item.id)
       .select();
 
-      alert(JSON.stringify(item));
-         );
-                                    
-}}
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-  
-       >
-   Selesai
-    </button>
-  </td>
+    alert("Status berhasil diperbarui");
+    loadDisposisi();
+  }}
+>
+  Selesai
+</button>
+</td>
     
       </tr>
     ))}
