@@ -227,7 +227,8 @@ onClick={async () => {
         alert(
         "ID=" + item.id +
        "\nERROR=" + JSON.stringify(error) +
-             "\nDATA=" + JSON.stringify(data)
+             "\nDATA=" + JSON.stringify(data) +
+             "x"
          );
                                     
 }}
