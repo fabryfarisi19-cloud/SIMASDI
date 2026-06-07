@@ -74,13 +74,18 @@ export default function ArsipPage() {
                                                                                                                                                                                                                                                       marginBottom: "20px",
                                                                                                                                                                                                                                                               }}
                                                                                                                                                                                                                                                                     >
-                                                                                      <input
-                                                                                        type="file"
-                                                                                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                                                                            onChange={(e) =>
-                                                                                                setFile(e.target.files ? e.target.files[0] : null)
-                                                                                                  }
-                                                                                                  />                                                                                                                                                                                      
+      <input
+        type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,*/*"
+            onChange={(e) =>
+                setFile(e.target.files ? e.target.files[0] : null)
+                  }
+                  />                                                                              
+                                                                                    
+                                                                                                                                                                                                                                                            )
+                                                                                          
+                                                                                                  
+                                                                                                                                                                                                                          
                                                                                                                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                           
                                                                                                                                                                                                                                                                                                 
