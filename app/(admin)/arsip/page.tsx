@@ -27,7 +27,7 @@ export default function ArsipPage() {
                      const fileName = Date.now() + "-" + file.name;
 
                       const { error: uploadError } = await supabase.storage
-                       .from("ARSIP")
+                       .from("arsip")
                         .upload(fileName, file);
 
                                                                           if (uploadError) {
@@ -36,7 +36,7 @@ export default function ArsipPage() {
                                                                                           }
 
                                                                                               const { data } = supabase.storage
-                                                                                                    .from("ARSIP")
+                                                                                                    .from("arsip")
                                                                                                           .getPublicUrl(fileName);
 
                                                                                                               await supabase.from("arsip_digital").insert({
