@@ -142,11 +142,12 @@ doc.save("laporan-arsip.pdf");
         >
           <thead>
             <tr>
-              <th>Dokumen</th>
-              <th>Kategori</th>
-              <th>File</th>
-              <th>Aksi</th>
-            </tr>
+  <th>Dokumen</th>
+  <th>Kategori</th>
+  <th>Tanggal Upload</th>
+  <th>File</th>
+  <th>Aksi</th>
+</tr>
           </thead>
 
           <tbody>
@@ -163,17 +164,23 @@ doc.save("laporan-arsip.pdf");
   )
   .map((item) => (
               <tr key={item.id}>
-                <td>{item.nama_dokumen}</td>
-                <td>{item.kategori}</td>
+  <td>{item.nama_dokumen}</td>
+<td>{item.kategori}</td>
+<td>
+  {item.created_at
+    ? new Date(item.created_at).toLocaleDateString("id-ID")
+    : "-"}
+</td>
 
-                <td>
-                  <a
-                    href={item.file_url}
-                    target="_blank"
-                  >
-                    Lihat
-                  </a>
-                </td>
+<td>
+  <a
+    href={item.file_url}
+    target="_blank"
+    rel="noreferrer"
+  >
+    Lihat
+  </a>
+</td>
 
                 <td>
                   <button
