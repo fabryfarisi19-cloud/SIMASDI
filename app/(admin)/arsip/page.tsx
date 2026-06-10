@@ -9,6 +9,7 @@ export default function ArsipPage() {
   const [file, setFile] = useState<File | null>(null);
   const [kategori, setKategori] = useState("");
   const [arsip, setArsip] = useState<any[]>([]);
+  const [cari, setCari] = useState("");
 
    useEffect(() => {
   loadArsip();
@@ -81,6 +82,19 @@ doc.save("laporan-arsip.pdf");
   return (
    <div style={{ padding: "20px" }}>
   <h2>Arsip Digital</h2>
+  <br />
+
+<input
+  type="text"
+  placeholder="Cari berdasarkan nama atau kategori..."
+  value={cari}
+  onChange={(e) => setCari(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "8px",
+    marginBottom: "15px",
+  }}
+/>
     
   <div  
   style={{
@@ -124,7 +138,18 @@ doc.save("laporan-arsip.pdf");
           </thead>
 
           <tbody>
-            {arsip.map((item) => (
+            
+            {arsip
+  .filter(
+    (item) =>
+      item.nama_dokumen
+        ?.toLowerCase()
+        .includes(cari.toLowerCase()) ||
+      item.kategori
+        ?.toLowerCase()
+        .includes(cari.toLowerCase())
+  )
+  .map((item) => (
               <tr key={item.id}>
                 <td>{item.nama_dokumen}</td>
                 <td>{item.kategori}</td>
