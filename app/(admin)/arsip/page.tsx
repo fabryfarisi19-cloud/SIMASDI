@@ -10,6 +10,7 @@ export default function ArsipPage() {
   const [kategori, setKategori] = useState("");
   const [arsip, setArsip] = useState<any[]>([]);
   const [cari, setCari] = useState("");
+  const [filterTanggal, setFilterTanggal] = useState("");
 
    useEffect(() => {
   loadArsip();
@@ -94,6 +95,17 @@ doc.save("laporan-arsip.pdf");
     padding: "8px",
     marginBottom: "15px",
   }}
+  />
+<br />
+
+<input
+  type="date"
+  value={filterTanggal}
+  onChange={(e) => setFilterTanggal(e.target.value)}
+  style={{
+    padding: "8px",
+    marginBottom: "15px",
+  }}
 />
     
   <div  
@@ -107,7 +119,7 @@ doc.save("laporan-arsip.pdf");
 
   <input
    type="file"
-    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,*/*"
+    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} /><input
    placeholder="Kategori Arsip"
   value={kategori}
