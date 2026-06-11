@@ -44,30 +44,35 @@ export default function ArsipPage() {
 
   // UPLOAD
   const uploadFile = async () => {
-    if (!file) return alert("Pilih file");
+  if (!file) return alert("Pilih file dulu");
 
-    const fileName = Date.now() + "-" + file.name;
+  const formData = new FormData();
+  formData.append("file", file);
 
-    const { error } = await supabase.storage
-      .from("arsip")
-      .upload(fileName, file);
+  const res = await fetch("/api/upload-drive", {
+    method: "POST",
+    body: formData,
+  });
 
-    if (error) return alert(error.message);
+  const result = await res.json();
 
-    const { data } = supabase.storage
-      .from("arsip")
-      .getPublicUrl(fileName);
+  if (!result.success) {
+    return alert("Upload gagal ke Google Drive");
+  }
 
-    await supabase.from("arsip_digital").insert({
-      nama_dokumen: file.name,
-      kategori,
-      file_url: data.publicUrl,
-      created_at: new Date().toISOString(),
-    });
+  await supabase.from("arsip_digital").insert({
+    nama_dokumen: file.name,
+    kategori,
+    file_url: result.fileUrl,
+    created_at: new Date().toISOString(),
+  });
 
-    setFile(null);
-    loadArsip();
-  };
+  setFile(null);
+  setKategori("");
+  loadArsip();
+
+  alert("Upload berhasil 🚀");
+};
 
   // HAPUS
   const hapusFile = async (item: ArsipItem) => {
