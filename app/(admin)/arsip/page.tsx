@@ -5,347 +5,249 @@ import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+type ArsipItem = {
+  id: number;
+  nama_dokumen: string;
+  kategori: string;
+  file_url: string;
+  created_at: string | null;
+};
+
 export default function ArsipPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [kategori, setKategori] = useState("");
-  const [filterKategori, setFilterKategori] = useState("Semua");
-  const [arsip, setArsip] = useState<any[]>([]);
+  const [kategori, setKategori] = useState("Surat Masuk");
+  const [arsip, setArsip] = useState<ArsipItem[]>([]);
   const [cari, setCari] = useState("");
-  const [filterTanggal, setFilterTanggal] = useState("");
+  const [filterKategori, setFilterKategori] = useState("Semua");
 
-   useEffect(() => {
-  loadArsip();
-   }, []);
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  // LOAD DATA
+  useEffect(() => {
+    loadArsip();
+  }, []);
 
   const loadArsip = async () => {
- const { data } = await supabase
-  .from("arsip_digital")
-  .select("*")
-  .order("id", { ascending: false });
+    const { data } = await supabase
+      .from("arsip_digital")
+      .select("*")
+      .order("id", { ascending: false });
 
-  setArsip(data || []);
+    setArsip(data || []);
   };
 
- const uploadFile = async () => {
- if (!file) return alert("Pilih file");
+  // RESET PAGE SAAT FILTER / SEARCH
+  useEffect(() => {
+    setPage(1);
+  }, [cari, filterKategori]);
 
- const fileName = Date.now() + "-" + file.name;
+  // UPLOAD
+  const uploadFile = async () => {
+    if (!file) return alert("Pilih file");
 
- const { error: uploadError } = await supabase.storage
- .from("arsip")
- .upload(fileName, file);
+    const fileName = Date.now() + "-" + file.name;
 
- if (uploadError) {
- alert(uploadError.message);
-   return;
-     }
+    const { error } = await supabase.storage
+      .from("arsip")
+      .upload(fileName, file);
 
-  const { data } = supabase.storage
-  .from("arsip")
- .getPublicUrl(fileName);
+    if (error) return alert(error.message);
 
-await supabase.from("arsip_digital").insert({
-  nama_dokumen: file.name,
-  kategori,
-  file_url: data.publicUrl,
-  created_at: new Date().toISOString(),
-});
+    const { data } = supabase.storage
+      .from("arsip")
+      .getPublicUrl(fileName);
 
-  alert("Upload berhasil");
+    await supabase.from("arsip_digital").insert({
+      nama_dokumen: file.name,
+      kategori,
+      file_url: data.publicUrl,
+      created_at: new Date().toISOString(),
+    });
 
- setFile(null);
-  setKategori("");
+    setFile(null);
+    loadArsip();
+  };
 
-loadArsip();
- };
+  // HAPUS
+  const hapusFile = async (item: ArsipItem) => {
+    if (!confirm("Yakin hapus?")) return;
+
+    await supabase
+      .from("arsip_digital")
+      .delete()
+      .eq("id", item.id);
+
+    loadArsip();
+  };
+
+  // PDF
   const exportPDF = () => {
- const doc = new jsPDF();
+    const doc = new jsPDF();
 
-doc.text("Laporan Arsip Digital SIMASDI", 14, 15);
+    doc.text("Laporan Arsip SIMASDI", 14, 15);
 
- autoTable(doc, {
-   head: [["Dokumen", "Kategori"]],
-  body: arsip.map((item) => [
-  item.nama_dokumen,
-  item.kategori,
-   ]),
-   });
+    autoTable(doc, {
+      head: [["Dokumen", "Kategori"]],
+      body: arsip.map((a) => [a.nama_dokumen, a.kategori]),
+    });
 
-doc.save("laporan-arsip.pdf");
- };
-                                                                                                                                                                                          
-const hapusFile = async (item: any) => {
-  const yakin = confirm(
-    `Yakin ingin menghapus arsip "${item.nama_dokumen}"?`
-  );
+    doc.save("arsip.pdf");
+  };
 
-  if (!yakin) return;
-
-  await supabase
-    .from("arsip_digital")
-    .delete()
-    .eq("id", item.id);
-
-  loadArsip();
-};
-
-const editKategori = async (item: any) => {
-  const kategoriBaru = prompt(
-    "Masukkan kategori baru:",
-    item.kategori
-  );
-
-  if (!kategoriBaru) return;
-
-  await supabase
-    .from("arsip_digital")
-    .update({ kategori: kategoriBaru })
-    .eq("id", item.id);
-
-  loadArsip();
-};
-
-return (
-  <div style={{ padding: "20px" }}>
-  <h2>Arsip Digital</h2>
-  <br />
-
-<div
-  style={{
-    display: "flex",
-    gap: "15px",
-    marginBottom: "20px",
-  }}
->
-  <div
-    style={{
-      background: "#2563eb",
-      color: "white",
-      padding: "15px",
-      borderRadius: "10px",
-      minWidth: "180px",
-      textAlign: "center",
-    }}
-  >
-    <h3>{arsip.length}</h3>
-    <p>Total Arsip</p>
-  </div>
-
-  <div
-    style={{
-      background: "#16a34a",
-      color: "white",
-      padding: "15px",
-      borderRadius: "10px",
-      minWidth: "180px",
-      textAlign: "center",
-    }}
-  >
-    <h3>
-      {
-        arsip.filter(
-          (item) =>
-            item.kategori &&
-            item.kategori.toLowerCase() === "surat masuk"
-        ).length
-      }
-    </h3>
-    <p>Surat Masuk</p>
-  </div>
-
-  <div
-    style={{
-      background: "#ea580c",
-      color: "white",
-      padding: "15px",
-      borderRadius: "10px",
-      minWidth: "180px",
-      textAlign: "center",
-    }}
-  >
-    <h3>
-      {
-        arsip.filter(
-          (item) =>
-            item.kategori &&
-            item.kategori.toLowerCase() === "surat keluar"
-        ).length
-      }
-    </h3>
-    <p>Surat Keluar</p>
-  </div>
-</div>
-  <br />
-
-<input
-  type="text"
-  placeholder="Cari berdasarkan nama atau kategori..."
-  value={cari}
-  onChange={(e) => setCari(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "8px",
-    marginBottom: "15px",
-  }}
-  />
-<br />
-
-<input
-  type="date"
-  value={filterTanggal}
-  onChange={(e) => setFilterTanggal(e.target.value)}
-  style={{
-    padding: "8px",
-    marginBottom: "15px",
-  }}
-/>
-    
-  <div  
-  style={{
-   background: "white",
- padding: "20px",
-   borderRadius: "10px",
-  marginBottom: "20px",
-    }}
-    >
-
-  <input
-   type="file"
-    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-   onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} /><input
-   placeholder="Kategori Arsip"
-  value={kategori}
-   onChange={(e) => setKategori(e.target.value)} /><br /><br /><button onClick={uploadFile}>
-          Upload Arsip
-        </button><button
-          onClick={exportPDF}
-          style={{
-            marginLeft: "10px",
-            padding: "8px 12px",
-          }}
-        >
-          📄 Cetak Laporan PDF
-        </button><table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-          }}
-        >
-          <thead>
-<tr>
-  <th>Dokumen</th>
-  <th>Kategori</th>
-  <th>Tanggal</th>
-  <th>File</th>
-  <th>Download</th>
-  <th>Aksi</th>
-</tr>
-          </thead>
-
-          <tbody>
-            
-            {arsip
-  .filter((item) => {
+  // FILTER DATA
+  const filteredData = arsip.filter((item) => {
     const cocokCari =
-      item.nama_dokumen
-        ?.toLowerCase()
-        .includes(cari.toLowerCase()) ||
-      item.kategori
-        ?.toLowerCase()
-        .includes(cari.toLowerCase());
+      item.nama_dokumen?.toLowerCase().includes(cari.toLowerCase()) ||
+      item.kategori?.toLowerCase().includes(cari.toLowerCase());
 
     const cocokKategori =
       filterKategori === "Semua" ||
-      item.kategori === filterKategori;
+      item.kategori?.toLowerCase() === filterKategori.toLowerCase();
 
     return cocokCari && cocokKategori;
-  })
-  .map((item) => (
-              <tr key={item.id}>
-  <td>{item.nama_dokumen}</td>
-<td>{item.kategori}</td>
-<td>
-  {item.created_at
-    ? new Date(item.created_at).toLocaleDateString("id-ID")
-    : "-"}
-</td>
+  });
 
-<td>
-  {item.file_url && item.file_url.match(/\.(jpg|jpeg|png)$/i) ? (
-    <img
-      src={item.file_url}
-      alt={item.nama_dokumen}
-      style={{
-        width: "80px",
-        height: "80px",
-        objectFit: "cover",
-        borderRadius: "5px",
-      }}
-    />
-  ) : (
-    <a
-      href={item.file_url}
-      target="_blank"
-      rel="noreferrer"
-    >
-      Lihat File
-    </a>
-  )}
-</td>
-<td>
-  <a
-    href={item.file_url}
-    download={item.nama_dokumen}
-    style={{
-      textDecoration: "none",
-      padding: "5px 10px",
-      background: "#2563eb",
-      color: "white",
-      borderRadius: "5px",
-    }}
-  >
-    ⬇️ Download
-  </a>
-</td>
-<td>
- <button
-  onClick={() => editKategori(item)}
-  style={{
-    marginRight: "8px",
-    padding: "5px 10px",
-    background: "#f59e0b",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  }}
->
-  ✏️ Edit
-</button>
-<button
-  onClick={() => hapusFile(item)}
-  style={{
-    padding: "5px 10px",
-    background: "#dc2626",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  }}
->
-  🗑️ Hapus
-</button>
-</td>
-    </tr>
-            ))}
-          </tbody>
-       
-   </table>
-  </div>
-  </div>
-   );
-   }
-                                                                                                                                                                                
-                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+  // PAGINATION
+  const startIndex = (page - 1) * limit;
+  const paginatedData = filteredData.slice(startIndex, startIndex + limit);
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Arsip Digital SIMASDI</h2>
+
+      {/* DASHBOARD */}
+      <div style={{ display: "flex", gap: 15, marginBottom: 20 }}>
+        <div style={{ background: "#2563eb", color: "#fff", padding: 15, borderRadius: 10 }}>
+          <h3>{arsip.length}</h3>
+          <p>Total</p>
+        </div>
+
+        <div style={{ background: "#16a34a", color: "#fff", padding: 15, borderRadius: 10 }}>
+          <h3>{arsip.filter(a => a.kategori?.toLowerCase() === "surat masuk").length}</h3>
+          <p>Masuk</p>
+        </div>
+
+        <div style={{ background: "#ea580c", color: "#fff", padding: 15, borderRadius: 10 }}>
+          <h3>{arsip.filter(a => a.kategori?.toLowerCase() === "surat keluar").length}</h3>
+          <p>Keluar</p>
+        </div>
+      </div>
+
+      {/* FILTER */}
+      <input
+        placeholder="Cari..."
+        value={cari}
+        onChange={(e) => setCari(e.target.value)}
+        style={{ padding: 8, width: "100%", marginBottom: 10 }}
+      />
+
+      <div style={{ marginBottom: 15 }}>
+        <select
+          value={filterKategori}
+          onChange={(e) => setFilterKategori(e.target.value)}
+          style={{ padding: 8, marginRight: 10 }}
+        >
+          <option value="Semua">Semua</option>
+          <option value="Surat Masuk">Surat Masuk</option>
+          <option value="Surat Keluar">Surat Keluar</option>
+        </select>
+
+        <button onClick={exportPDF}>Cetak PDF</button>
+      </div>
+
+      {/* UPLOAD */}
+      <div style={{ marginBottom: 20 }}>
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        />
+
+        <select
+          value={kategori}
+          onChange={(e) => setKategori(e.target.value)}
+          style={{ marginLeft: 10 }}
+        >
+          <option value="Surat Masuk">Surat Masuk</option>
+          <option value="Surat Keluar">Surat Keluar</option>
+        </select>
+
+        <button onClick={uploadFile} style={{ marginLeft: 10 }}>
+          Upload
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <table width="100%" border={1} cellPadding={8}>
+        <thead>
+          <tr>
+            <th>Dokumen</th>
+            <th>Kategori</th>
+            <th>Tanggal</th>
+            <th>File</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {paginatedData.map((item) => (
+            <tr key={item.id}>
+              <td>{item.nama_dokumen}</td>
+
+              <td>
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 5,
+                    color: "#fff",
+                    background:
+                      item.kategori?.toLowerCase() === "surat masuk"
+                        ? "#16a34a"
+                        : "#ea580c",
+                  }}
+                >
+                  {item.kategori}
+                </span>
+              </td>
+
+              <td>
+                {item.created_at
+                  ? new Date(item.created_at).toLocaleDateString("id-ID")
+                  : "-"}
+              </td>
+
+              <td>
+                <a href={item.file_url} target="_blank">
+                  Lihat
+                </a>
+              </td>
+
+              <td>
+                <button onClick={() => hapusFile(item)}>Hapus</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* PAGINATION */}
+      <div style={{ marginTop: 15 }}>
+        <button
+          onClick={() => setPage(page - 1)}
+          disabled={page === 1}
+        >
+          Prev
+        </button>
+
+        <span style={{ margin: "0 10px" }}>Page {page}</span>
+
+        <button
+          onClick={() => setPage(page + 1)}
+          disabled={startIndex + limit >= filteredData.length}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
