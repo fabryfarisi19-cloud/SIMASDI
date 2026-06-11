@@ -8,6 +8,7 @@ import autoTable from "jspdf-autotable";
 export default function ArsipPage() {
   const [file, setFile] = useState<File | null>(null);
   const [kategori, setKategori] = useState("");
+  const [filterKategori, setFilterKategori] = useState("Semua");
   const [arsip, setArsip] = useState<any[]>([]);
   const [cari, setCari] = useState("");
   const [filterTanggal, setFilterTanggal] = useState("");
@@ -43,11 +44,13 @@ export default function ArsipPage() {
   .from("arsip")
  .getPublicUrl(fileName);
 
- await supabase.from("arsip_digital").insert({
-     nama_dokumen: file.name,
-   kategori,
-file_url: data.publicUrl,
- });
+await supabase.from("arsip_digital").insert({
+  nama_dokumen: file.name,
+  kategori,
+  file_url: data.publicUrl,
+  created_at: new Date().toISOString(),
+});
+
   alert("Upload berhasil");
 
  setFile(null);
@@ -71,18 +74,107 @@ doc.text("Laporan Arsip Digital SIMASDI", 14, 15);
 doc.save("laporan-arsip.pdf");
  };
                                                                                                                                                                                           
- const hapusFile = async (item: any) => {
- await supabase
-  .from("arsip_digital")
-  .delete()
-   .eq("id", item.id);
+const hapusFile = async (item: any) => {
+  const yakin = confirm(
+    `Yakin ingin menghapus arsip "${item.nama_dokumen}"?`
+  );
 
-   loadArsip();
-    };
+  if (!yakin) return;
 
-  return (
-   <div style={{ padding: "20px" }}>
+  await supabase
+    .from("arsip_digital")
+    .delete()
+    .eq("id", item.id);
+
+  loadArsip();
+};
+
+const editKategori = async (item: any) => {
+  const kategoriBaru = prompt(
+    "Masukkan kategori baru:",
+    item.kategori
+  );
+
+  if (!kategoriBaru) return;
+
+  await supabase
+    .from("arsip_digital")
+    .update({ kategori: kategoriBaru })
+    .eq("id", item.id);
+
+  loadArsip();
+};
+
+return (
+  <div style={{ padding: "20px" }}>
   <h2>Arsip Digital</h2>
+  <br />
+
+<div
+  style={{
+    display: "flex",
+    gap: "15px",
+    marginBottom: "20px",
+  }}
+>
+  <div
+    style={{
+      background: "#2563eb",
+      color: "white",
+      padding: "15px",
+      borderRadius: "10px",
+      minWidth: "180px",
+      textAlign: "center",
+    }}
+  >
+    <h3>{arsip.length}</h3>
+    <p>Total Arsip</p>
+  </div>
+
+  <div
+    style={{
+      background: "#16a34a",
+      color: "white",
+      padding: "15px",
+      borderRadius: "10px",
+      minWidth: "180px",
+      textAlign: "center",
+    }}
+  >
+    <h3>
+      {
+        arsip.filter(
+          (item) =>
+            item.kategori &&
+            item.kategori.toLowerCase() === "surat masuk"
+        ).length
+      }
+    </h3>
+    <p>Surat Masuk</p>
+  </div>
+
+  <div
+    style={{
+      background: "#ea580c",
+      color: "white",
+      padding: "15px",
+      borderRadius: "10px",
+      minWidth: "180px",
+      textAlign: "center",
+    }}
+  >
+    <h3>
+      {
+        arsip.filter(
+          (item) =>
+            item.kategori &&
+            item.kategori.toLowerCase() === "surat keluar"
+        ).length
+      }
+    </h3>
+    <p>Surat Keluar</p>
+  </div>
+</div>
   <br />
 
 <input
@@ -141,11 +233,12 @@ doc.save("laporan-arsip.pdf");
           }}
         >
           <thead>
-            <tr>
+<tr>
   <th>Dokumen</th>
   <th>Kategori</th>
-  <th>Tanggal Upload</th>
+  <th>Tanggal</th>
   <th>File</th>
+  <th>Download</th>
   <th>Aksi</th>
 </tr>
           </thead>
@@ -153,15 +246,21 @@ doc.save("laporan-arsip.pdf");
           <tbody>
             
             {arsip
-  .filter(
-    (item) =>
+  .filter((item) => {
+    const cocokCari =
       item.nama_dokumen
         ?.toLowerCase()
         .includes(cari.toLowerCase()) ||
       item.kategori
         ?.toLowerCase()
-        .includes(cari.toLowerCase())
-  )
+        .includes(cari.toLowerCase());
+
+    const cocokKategori =
+      filterKategori === "Semua" ||
+      item.kategori === filterKategori;
+
+    return cocokCari && cocokKategori;
+  })
   .map((item) => (
               <tr key={item.id}>
   <td>{item.nama_dokumen}</td>
@@ -173,23 +272,72 @@ doc.save("laporan-arsip.pdf");
 </td>
 
 <td>
+  {item.file_url && item.file_url.match(/\.(jpg|jpeg|png)$/i) ? (
+    <img
+      src={item.file_url}
+      alt={item.nama_dokumen}
+      style={{
+        width: "80px",
+        height: "80px",
+        objectFit: "cover",
+        borderRadius: "5px",
+      }}
+    />
+  ) : (
+    <a
+      href={item.file_url}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Lihat File
+    </a>
+  )}
+</td>
+<td>
   <a
     href={item.file_url}
-    target="_blank"
-    rel="noreferrer"
+    download={item.nama_dokumen}
+    style={{
+      textDecoration: "none",
+      padding: "5px 10px",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: "5px",
+    }}
   >
-    Lihat
+    ⬇️ Download
   </a>
 </td>
-
-                <td>
-                  <button
-                    onClick={() => hapusFile(item)}
-                  >
-                    Hapus
-                  </button>
-                </td>
-              </tr>
+<td>
+ <button
+  onClick={() => editKategori(item)}
+  style={{
+    marginRight: "8px",
+    padding: "5px 10px",
+    background: "#f59e0b",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  }}
+>
+  ✏️ Edit
+</button>
+<button
+  onClick={() => hapusFile(item)}
+  style={{
+    padding: "5px 10px",
+    background: "#dc2626",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  }}
+>
+  🗑️ Hapus
+</button>
+</td>
+    </tr>
             ))}
           </tbody>
        
