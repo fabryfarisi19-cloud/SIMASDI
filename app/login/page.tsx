@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -76,7 +77,17 @@ export default function LoginPage() {
           </button>
 
         </form>
+<div className="my-4 text-center text-gray-500">
+  atau
+</div>
 
+<button
+  type="button"
+  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+  className="w-full bg-red-600 text-white py-3 rounded-lg"
+>
+  Login dengan Google
+</button>
       </div>
     </div>
   );
