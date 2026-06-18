@@ -1,18 +1,35 @@
-"use client";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import Providers from "@/app/providers";
 
-import Sidebar from "../components/Sidebar";
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-export default function AdminLayout({
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "SIMASDI",
+  description: "Sistem Manajemen Surat dan Disposisi",
+};
+
+export default function RootLayout({
   children,
-  }: {
-    children: React.ReactNode;
-    }) {
-      return (
-          <div style={{ display: "flex" }}>
-                <Sidebar />
-                      <main style={{ flex: 1 }}>
-                              {children}
-                                    </main>
-                                        </div>
-                                          );
-                                          }
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
