@@ -41,7 +41,7 @@ export default function LoginPage() {
           </h1>
 
           <p className="text-gray-500">
-            Sistem Manajemen Surat dan Disposisi
+            Sistem Manajemen Arsip Digital
           </p>
         </div>
 

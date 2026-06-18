@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Sidebar() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 const [showCalendar, setShowCalendar] = useState(false);
 const [catatan, setCatatan] = useState("");
-   const handleLogout = () => {
-    localStorage.removeItem("login");
-    router.push("/login");
-  };
+  const handleLogout = async () => {
+  localStorage.removeItem("login");
+  await signOut({ callbackUrl: "/login" });
+};
   return (
     <div
       style={{
@@ -25,7 +27,42 @@ const [catatan, setCatatan] = useState("");
     >
       <h2>SIMASDI</h2>
 
-      <hr />
+{session?.user && (
+  <div
+    style={{
+      marginTop: "15px",
+      marginBottom: "15px",
+      textAlign: "center",
+    }}
+  >
+    <img
+      src={session.user.image || ""}
+      alt="Profile"
+      style={{
+        width: "60px",
+        height: "60px",
+        borderRadius: "50%",
+        margin: "auto",
+      }}
+    />
+
+    <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+      {session.user.name}
+    </p>
+
+    <p
+      style={{
+        fontSize: "12px",
+        color: "#cbd5e1",
+        wordBreak: "break-all",
+      }}
+    >
+      {session.user.email}
+    </p>
+  </div>
+)}
+
+<hr />
 
       <p><Link href="/dashboard">Dashboard</Link></p>
       <p><Link href="/surat-masuk">Surat Masuk</Link></p>
