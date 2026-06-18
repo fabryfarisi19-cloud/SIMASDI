@@ -7,7 +7,8 @@ import { useSession, signOut } from "next-auth/react";
 
 export default function Sidebar() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const sessionResult = useSession?.();
+const session = sessionResult?.data;
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 const [showCalendar, setShowCalendar] = useState(false);
 const [catatan, setCatatan] = useState("");
