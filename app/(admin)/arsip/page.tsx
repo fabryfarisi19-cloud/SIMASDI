@@ -57,7 +57,7 @@ export default function ArsipPage() {
   const result = await res.json();
 
   if (!result.success) {
-    return alert("Upload gagal ke Google Drive");
+    return alert("Upload gagal ke Google Drive: " + (result.error || "Error tidak diketahui"));
   }
 
   await supabase.from("arsip_digital").insert({
