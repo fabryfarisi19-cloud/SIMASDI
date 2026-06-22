@@ -130,13 +130,16 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
       }}
     />
 
-    <div
-      style={{
-        display: "flex",
-        gap: "10px",
-        marginTop: "15px"
-      }}
-    >
+ <div
+  style={{
+    display: "flex",
+    gap: "10px",
+    marginTop: "15px",
+    marginBottom: "25px",
+    alignItems: "center",
+    flexWrap: "wrap",
+  }}
+>  
       <button
     
   onClick={kirimWA}
@@ -190,82 +193,116 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Nomor Surat</th>
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Tujuan</th>
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Status</th>
-    <th style={{border:"1px solid #ddd",padding:"8px"}}>
-        Aksi
-        </th>
+<th
+  style={{
+    border: "1px solid #ddd",
+    padding: "8px",
+    textAlign: "center",
+  }}
+>
+  Aksi
+</th>   
     </tr>
   </thead>
 
-  <tbody>
-    {disposisiList.map((item) => (
-      
-  
-      <tr key={item.id}>
-       <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-  {item.status !== "Selesai" ? (
-    <button
-      onClick={async () => {
-        const { error } = await supabase
-          .from("disposisi")
-          .update({ status: "Selesai" })
-          .eq("id", item.id);
+ <tbody>
+  {disposisiList.map((item) => (
+    <tr key={item.id}>
+      <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+        {item.nomor_surat}
+      </td>
 
-        if (error) {
-          alert(error.message);
-          return;
-        }
+      <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+        {item.tujuan}
+      </td>
 
-        alert("Status disposisi sudah menjadi Selesai");
-        await loadDisposisi();
-      }}
-      style={{
-        background: "#16a34a",
-        color: "white",
-        border: "none",
-        padding: "7px 10px",
-        borderRadius: "5px",
-        cursor: "pointer",
-        marginRight: "8px",
-      }}
-    >
-      ✓ Selesaikan
-    </button>
-  ) : null}
-
-  <button
-    onClick={async () => {
-      const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
-      if (!yakin) return;
-
-      const { error } = await supabase
-        .from("disposisi")
-        .delete()
-        .eq("id", item.id);
-
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      alert("Riwayat disposisi berhasil dihapus");
-      await loadDisposisi();
-    }}
+<td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
+  <span
     style={{
-      background: "#dc2626",
-      color: "white",
-      border: "none",
-      padding: "7px 10px",
-      borderRadius: "5px",
-      cursor: "pointer",
+      display: "inline-block",
+      padding: "5px 9px",
+      borderRadius: "999px",
+      fontSize: "12px",
+      fontWeight: "bold",
+      background: item.status === "Selesai" ? "#16a34a" : "#facc15",
+      color: item.status === "Selesai" ? "white" : "black",
     }}
   >
-    🗑 Hapus
-  </button>
-</td>
-    
-      </tr>
-    ))}
-  </tbody>
+    {item.status}
+  </span>
+</td>     
+
+<td
+  style={{
+    border: "1px solid #ddd",
+    padding: "8px",
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  }}
+>      
+        {item.status !== "Selesai" ? (
+          <button
+            onClick={async () => {
+              const { error } = await supabase
+                .from("disposisi")
+                .update({ status: "Selesai" })
+                .eq("id", item.id);
+
+              if (error) {
+                alert(error.message);
+                return;
+              }
+
+              alert("Status disposisi sudah menjadi Selesai");
+              await loadDisposisi();
+            }}
+            style={{
+              background: "#16a34a",
+              color: "white",
+              border: "none",
+              padding: "7px 10px",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginRight: "8px",
+            }}
+          >
+            ✓ Selesaikan
+          </button>
+        ) : null}
+
+        <button
+          onClick={async () => {
+            const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
+            if (!yakin) return;
+
+            const { error } = await supabase
+              .from("disposisi")
+              .delete()
+              .eq("id", item.id);
+
+            if (error) {
+              alert(error.message);
+              return;
+            }
+
+            alert("Riwayat disposisi berhasil dihapus");
+            await loadDisposisi();
+          }}
+          style={{
+            background: "#dc2626",
+            color: "white",
+            border: "none",
+            padding: "7px 10px",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          🗑 Hapus
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
 </table>
     </div>
   </div>
