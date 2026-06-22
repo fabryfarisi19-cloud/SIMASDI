@@ -10,6 +10,7 @@ type ArsipItem = {
   nama_dokumen: string;
   kategori: string;
   file_url: string;
+  drive_file_id: string | null;
   created_at: string | null;
 };
 
@@ -67,13 +68,13 @@ const [uploading, setUploading] = useState(false);
       );
     }
 
-    const { error } = await supabase.from("arsip_digital").insert({
-      nama_dokumen: file.name,
-      kategori,
-      file_url: result.fileUrl,
-      created_at: new Date().toISOString(),
-    });
-
+   const { error } = await supabase.from("arsip_digital").insert({
+  nama_dokumen: file.name,
+  kategori,
+  file_url: result.fileUrl,
+  drive_file_id: result.fileId,
+  created_at: new Date().toISOString(),
+});
     if (error) {
       return alert("File masuk Drive, tetapi data arsip gagal disimpan.");
     }
@@ -92,16 +93,47 @@ const [uploading, setUploading] = useState(false);
 };
 
   // HAPUS
-  const hapusFile = async (item: ArsipItem) => {
-    if (!confirm("Yakin hapus?")) return;
+ const hapusFile = async (item: ArsipItem) => {
+  if (!confirm(`Yakin hapus "${item.nama_dokumen}"?`)) return;
 
-    await supabase
+  try {
+    if (item.drive_file_id) {
+      const res = await fetch("/api/delete-drive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: item.drive_file_id,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!result.success) {
+        return alert(
+          "File Google Drive gagal dihapus: " +
+            (result.error || "Error tidak diketahui")
+        );
+      }
+    }
+
+    const { error } = await supabase
       .from("arsip_digital")
       .delete()
       .eq("id", item.id);
 
-    loadArsip();
-  };
+    if (error) {
+      return alert("Data arsip gagal dihapus dari database.");
+    }
+
+    await loadArsip();
+    alert("Arsip berhasil dihapus.");
+  } catch (error) {
+    console.error(error);
+    alert("Terjadi kesalahan saat menghapus arsip.");
+  }
+};
 
   // PDF
   const exportPDF = () => {

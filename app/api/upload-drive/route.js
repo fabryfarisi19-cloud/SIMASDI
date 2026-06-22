@@ -103,12 +103,14 @@ parents: [folderTahun],
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      fileUrl:
-        response.data.webViewLink ||
-        `https://drive.google.com/file/d/${response.data.id}/view`,
-    });
+ return NextResponse.json({
+  success: true,
+  fileId: response.data.id,
+  fileUrl:
+    response.data.webViewLink ||
+    `https://drive.google.com/file/d/${response.data.id}/view`,
+});
+  
   } catch (err) {
     console.error("UPLOAD DRIVE ERROR:", err);
 
