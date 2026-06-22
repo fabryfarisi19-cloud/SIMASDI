@@ -19,7 +19,7 @@ export default function ArsipPage() {
   const [arsip, setArsip] = useState<ArsipItem[]>([]);
   const [cari, setCari] = useState("");
   const [filterKategori, setFilterKategori] = useState("Semua");
-
+const [uploading, setUploading] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -43,35 +43,52 @@ export default function ArsipPage() {
   }, [cari, filterKategori]);
 
   // UPLOAD
-  const uploadFile = async () => {
+ const uploadFile = async () => {
   if (!file) return alert("Pilih file dulu");
 
-  const formData = new FormData();
-  formData.append("file", file);
+  try {
+    setUploading(true);
 
-  const res = await fetch("/api/upload-drive", {
-    method: "POST",
-    body: formData,
-  });
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("kategori", kategori);
 
-  const result = await res.json();
+    const res = await fetch("/api/upload-drive", {
+      method: "POST",
+      body: formData,
+    });
 
-  if (!result.success) {
-    return alert("Upload gagal ke Google Drive: " + (result.error || "Error tidak diketahui"));
+    const result = await res.json();
+
+    if (!result.success) {
+      return alert(
+        "Upload gagal ke Google Drive: " +
+          (result.error || "Error tidak diketahui")
+      );
+    }
+
+    const { error } = await supabase.from("arsip_digital").insert({
+      nama_dokumen: file.name,
+      kategori,
+      file_url: result.fileUrl,
+      created_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      return alert("File masuk Drive, tetapi data arsip gagal disimpan.");
+    }
+
+    setFile(null);
+    setKategori("Surat Masuk");
+    await loadArsip();
+
+    alert("Upload berhasil 🚀");
+  } catch (error) {
+    console.error(error);
+    alert("Terjadi kesalahan saat upload.");
+  } finally {
+    setUploading(false);
   }
-
-  await supabase.from("arsip_digital").insert({
-    nama_dokumen: file.name,
-    kategori,
-    file_url: result.fileUrl,
-    created_at: new Date().toISOString(),
-  });
-
-  setFile(null);
-  setKategori("Surat Masuk");
-  loadArsip();
-
-  alert("Upload berhasil 🚀");
 };
 
   // HAPUS
@@ -210,20 +227,21 @@ export default function ArsipPage() {
       <option value="Arsip Lainnya">Arsip Lainnya</option>
     </select>
 
-    <button
-      onClick={uploadFile}
-      style={{
-        padding: "10px 18px",
-        background: "#2563eb",
-        color: "white",
-        border: "none",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontWeight: "bold",
-      }}
-    >
-      ⬆ Upload ke Google Drive
-    </button>
+   <button
+  onClick={uploadFile}
+  disabled={uploading}
+  style={{
+    padding: "10px 18px",
+    background: uploading ? "#94a3b8" : "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: uploading ? "not-allowed" : "pointer",
+    fontWeight: "bold",
+  }}
+>
+  {uploading ? "⏳ Sedang upload..." : "⬆ Upload ke Google Drive"}
+</button>
   </div>
 
   {file && (
