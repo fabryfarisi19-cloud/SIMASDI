@@ -251,58 +251,139 @@ const [uploading, setUploading] = useState(false);
   )}
 </div>
 
-      {/* TABLE */}
-      <table width="100%" border={1} cellPadding={8}>
-        <thead>
-          <tr>
-            <th>Dokumen</th>
-            <th>Kategori</th>
-            <th>Tanggal</th>
-            <th>File</th>
-            <th>Aksi</th>
+    {/* TABLE */}
+<div
+  style={{
+    overflowX: "auto",
+    background: "white",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  }}
+>
+  <table
+    style={{
+      width: "100%",
+      minWidth: "760px",
+      borderCollapse: "collapse",
+    }}
+  >
+    <thead>
+      <tr style={{ background: "#1e3a8a", color: "white" }}>
+        <th style={{ padding: "12px", textAlign: "left" }}>No</th>
+        <th style={{ padding: "12px", textAlign: "left" }}>Dokumen</th>
+        <th style={{ padding: "12px", textAlign: "center" }}>Kategori</th>
+        <th style={{ padding: "12px", textAlign: "center" }}>Tanggal</th>
+        <th style={{ padding: "12px", textAlign: "center" }}>File</th>
+        <th style={{ padding: "12px", textAlign: "center" }}>Aksi</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {paginatedData.length === 0 ? (
+        <tr>
+          <td
+            colSpan={6}
+            style={{
+              padding: "25px",
+              textAlign: "center",
+              color: "#64748b",
+            }}
+          >
+            Belum ada data arsip.
+          </td>
+        </tr>
+      ) : (
+        paginatedData.map((item, index) => (
+          <tr
+            key={item.id}
+            style={{
+              borderBottom: "1px solid #e2e8f0",
+            }}
+          >
+            <td style={{ padding: "12px" }}>
+              {startIndex + index + 1}
+            </td>
+
+            <td
+              style={{
+                padding: "12px",
+                maxWidth: "330px",
+                wordBreak: "break-word",
+              }}
+            >
+              {item.nama_dokumen}
+            </td>
+
+            <td style={{ padding: "12px", textAlign: "center" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "5px 9px",
+                  borderRadius: "999px",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  background:
+                    item.kategori?.toLowerCase() === "surat masuk"
+                      ? "#16a34a"
+                      : item.kategori?.toLowerCase() === "surat keluar"
+                      ? "#ea580c"
+                      : "#64748b",
+                }}
+              >
+                {item.kategori}
+              </span>
+            </td>
+
+            <td style={{ padding: "12px", textAlign: "center" }}>
+              {item.created_at
+                ? new Date(item.created_at).toLocaleDateString("id-ID")
+                : "-"}
+            </td>
+
+            <td style={{ padding: "12px", textAlign: "center" }}>
+              <a
+                href={item.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-block",
+                  background: "#16a34a",
+                  color: "white",
+                  padding: "7px 10px",
+                  borderRadius: "7px",
+                  textDecoration: "none",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                }}
+              >
+                👁 Lihat
+              </a>
+            </td>
+
+            <td style={{ padding: "12px", textAlign: "center" }}>
+              <button
+                onClick={() => hapusFile(item)}
+                style={{
+                  background: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  padding: "7px 10px",
+                  borderRadius: "7px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                }}
+              >
+                🗑 Hapus
+              </button>
+            </td>
           </tr>
-        </thead>
-
-        <tbody>
-          {paginatedData.map((item) => (
-            <tr key={item.id}>
-              <td>{item.nama_dokumen}</td>
-
-              <td>
-                <span
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 5,
-                    color: "#fff",
-                    background:
-                      item.kategori?.toLowerCase() === "surat masuk"
-                        ? "#16a34a"
-                        : "#ea580c",
-                  }}
-                >
-                  {item.kategori}
-                </span>
-              </td>
-
-              <td>
-                {item.created_at
-                  ? new Date(item.created_at).toLocaleDateString("id-ID")
-                  : "-"}
-              </td>
-
-              <td>
-                <a href={item.file_url} target="_blank">
-                  Lihat
-                </a>
-              </td>
-
-              <td>
-                <button onClick={() => hapusFile(item)}>Hapus</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
 
       {/* PAGINATION */}
       <div style={{ marginTop: 15 }}>
