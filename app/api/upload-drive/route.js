@@ -4,6 +4,32 @@ import { Readable } from "stream";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
+async function getOrCreateFolder(drive, folderName, parentId) {
+  const result = await drive.files.list({
+    q: `
+      name = '${folderName}'
+      and mimeType = 'application/vnd.google-apps.folder'
+      and '${parentId}' in parents
+      and trashed = false
+    `,
+    fields: "files(id, name)",
+  });
+
+  if (result.data.files && result.data.files.length > 0) {
+    return result.data.files[0].id;
+  }
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+    fields: "id",
+  });
+
+  return folder.data.id;
+}
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,6 +46,8 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const file = formData.get("file");
+    const kategori = formData.get("kategori") || "Arsip Lainnya";
+const tahun = new Date().getFullYear().toString();
 
     if (!file) {
       return NextResponse.json(
@@ -40,11 +68,25 @@ export async function POST(req) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 const stream = Readable.from(buffer);
+const folderUtama = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+const folderKategori = await getOrCreateFolder(
+  drive,
+  kategori.toString(),
+  folderUtama
+);
+
+const folderTahun = await getOrCreateFolder(
+  drive,
+  tahun,
+  folderKategori
+);
+
 
     const response = await drive.files.create({
       requestBody: {
         name: file.name,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+parents: [folderTahun],
       },
       media: {
         mimeType: file.type || "application/octet-stream",
