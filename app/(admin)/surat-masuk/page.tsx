@@ -5,6 +5,13 @@ import { supabase } from "@/lib/supabase";
 
 export default function SuratMasukPage() {
   const [surat, setSurat] = useState<any[]>([]);
+  const [showDisposisi, setShowDisposisi] = useState(false);
+const [suratDipilih, setSuratDipilih] = useState<any>(null);
+const [tujuan, setTujuan] = useState("");
+const [isiDisposisi, setIsiDisposisi] = useState(
+  "Mohon ditindaklanjuti."
+);
+const [loadingDisposisi, setLoadingDisposisi] = useState(false);
   const [noAgenda, setNoAgenda] = useState("");
   const [nomorSurat, setNomorSurat] = useState("");
   const [asalSurat, setAsalSurat] = useState("");
@@ -108,27 +115,48 @@ export default function SuratMasukPage() {
     await loadData();
   };
 
-  const buatDisposisi = async (item: any) => {
-    const tujuan = prompt("Tujuan disposisi:");
+ 
+  
+const bukaDisposisi = (item: any) => {
+  setSuratDipilih(item);
+  setTujuan("");
+  setIsiDisposisi("Mohon ditindaklanjuti.");
+  setShowDisposisi(true);
+};
 
-    if (!tujuan) return;
+const simpanDisposisi = async () => {
+  if (!suratDipilih) return;
 
-    const { error } = await supabase.from("disposisi").insert({
-      nomor_surat: item.nomor_surat,
-      asal_surat: item.asal_surat,
-      perihal: item.perihal,
-      tujuan,
-      isi_disposisi: "Mohon ditindaklanjuti",
+  if (!tujuan.trim()) {
+    alert("Tujuan disposisi wajib diisi.");
+    return;
+  }
+
+  setLoadingDisposisi(true);
+
+  const { error } = await supabase.from("disposisi").insert([
+    {
+      surat_masuk_id: suratDipilih.id,
+      nomor_surat: suratDipilih.nomor_surat,
+      asal_surat: suratDipilih.asal_surat,
+      perihal: suratDipilih.perihal,
+      tujuan: tujuan,
+      isi_disposisi: isiDisposisi,
       status: "Menunggu",
-    });
+    },
+  ]);
 
-    if (error) {
-      return alert("Disposisi gagal disimpan.");
-    }
+  setLoadingDisposisi(false);
 
-    alert("Disposisi berhasil disimpan.");
-  };
+  if (error) {
+    alert("Gagal menyimpan disposisi: " + error.message);
+    return;
+  }
 
+  alert("Disposisi berhasil disimpan.");
+  setShowDisposisi(false);
+  setSuratDipilih(null);
+};
   return (
     <div style={{ padding: "20px" }}>
       <h2>Surat Masuk</h2>
@@ -282,19 +310,20 @@ export default function SuratMasukPage() {
 
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                      <button
-                        onClick={() => buatDisposisi(item)}
-                        style={{
-                          background: "#f59e0b",
-                          color: "white",
-                          border: "none",
-                          padding: "7px 10px",
-                          borderRadius: "7px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Disposisi
-                      </button>
+
+<button
+  onClick={() => bukaDisposisi(item)}
+  style={{
+    background: "#f59e0b",
+    color: "white",
+    border: "none",
+    padding: "7px 10px",
+    borderRadius: "7px",
+    cursor: "pointer",
+  }}
+>
+  Disposisi
+</button>                      
 
                       <button
                         onClick={() => hapusSurat(item.id)}
@@ -317,6 +346,112 @@ export default function SuratMasukPage() {
           </tbody>
         </table>
       </div>
+      {showDisposisi && suratDipilih && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              width: "100%",
+              maxWidth: 600,
+              borderRadius: 12,
+              padding: 24,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Buat Disposisi Surat</h3>
+
+            <p><b>Nomor Surat:</b> {suratDipilih.nomor_surat || "-"}</p>
+            <p><b>Asal Surat:</b> {suratDipilih.asal_surat || "-"}</p>
+            <p><b>Perihal:</b> {suratDipilih.perihal || "-"}</p>
+
+            <label style={{ display: "block", marginBottom: 6 }}>
+              Tujuan Disposisi
+            </label>
+
+            <input
+              value={tujuan}
+              onChange={(e) => setTujuan(e.target.value)}
+              placeholder="Contoh: Kasi Bimbingan Klien Dewasa"
+              style={{
+                width: "100%",
+                padding: 10,
+                borderRadius: 7,
+                border: "1px solid #cbd5e1",
+                marginBottom: 15,
+                boxSizing: "border-box",
+              }}
+            />
+
+            <label style={{ display: "block", marginBottom: 6 }}>
+              Isi Disposisi
+            </label>
+
+            <textarea
+              value={isiDisposisi}
+              onChange={(e) => setIsiDisposisi(e.target.value)}
+              rows={4}
+              style={{
+                width: "100%",
+                padding: 10,
+                borderRadius: 7,
+                border: "1px solid #cbd5e1",
+                boxSizing: "border-box",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <button
+                onClick={() => setShowDisposisi(false)}
+                disabled={loadingDisposisi}
+                style={{
+                  padding: "10px 14px",
+                  border: "none",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                }}
+              >
+                Batal
+              </button>
+
+              <button
+                onClick={simpanDisposisi}
+                disabled={loadingDisposisi}
+                style={{
+                  padding: "10px 14px",
+                  border: "none",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  background: "#2563eb",
+                  color: "#fff",
+                  fontWeight: "bold",
+                }}
+              >
+                {loadingDisposisi ? "Menyimpan..." : "Simpan Disposisi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
-}
+}      
+  
