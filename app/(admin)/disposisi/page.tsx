@@ -15,7 +15,6 @@ const loadDisposisi = async () => {
     .from("disposisi")
     .select("*")
     .order("tanggal", { ascending: false });
-    alert(JSON.stringify(data));
 
   setDisposisiList(data || []);
 };
@@ -210,44 +209,45 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
           {item.tujuan}
         </td>
 
-   <td style={{border:"1px solid #ddd",padding:"8px"}}>
-      <span
-     style={{
-      background:
-     item.status === "Selesai" ? "#22c55e" : "#facc15",
-        color:
-      item.status === "Selesai" ? "white" : "black",
-      padding: "4px 8px",
-     borderRadius: "6px",
-       fontWeight: "bold",
-     }}
-       >
-    {item.status}
-          </span>
-               </td> 
+ <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
+  {item.status === "Selesai" ? (
+    <span
+      style={{
+        color: "#16a34a",
+        fontWeight: "bold",
+      }}
+    >
+      ✓ Selesai
+    </span>
+  ) : (
+    <button
+      onClick={async () => {
+        const { error } = await supabase
+          .from("disposisi")
+          .update({ status: "Selesai" })
+          .eq("id", item.id);
 
+        if (error) {
+          alert("Gagal mengubah status: " + error.message);
+          return;
+        }
 
-<td style={{border:"1px solid #ddd",padding:"8px"}}>
-
-<button
-
-onClick={async () => {
-    const { error } = await supabase
-  .from("disposisi")
-  .update({ status: "Selesai" })
-  .eq("id", item.id);
-
-    if (error) {
-   alert(error.message);
-   return;
-    }
-
-      await loadDisposisi();
-    }}
-
->
-  Selesai
-</button>
+        await loadDisposisi();
+        alert("Status disposisi sudah menjadi Selesai");
+      }}
+      style={{
+        background: "#16a34a",
+        color: "white",
+        border: "none",
+        padding: "7px 10px",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      ✓ Selesaikan
+    </button>
+  )}
 </td>
     
       </tr>
