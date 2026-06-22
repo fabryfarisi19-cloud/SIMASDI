@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
+import { Readable } from "stream";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
@@ -38,6 +39,7 @@ export async function POST(req) {
     });
 
     const buffer = Buffer.from(await file.arrayBuffer());
+const stream = Readable.from(buffer);
 
     const response = await drive.files.create({
       requestBody: {
@@ -46,7 +48,7 @@ export async function POST(req) {
       },
       media: {
         mimeType: file.type || "application/octet-stream",
-        body: buffer,
+        body: stream,
       },
       fields: "id, webViewLink",
     });
