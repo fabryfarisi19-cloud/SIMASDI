@@ -1,63 +1,55 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
-import { Readable } from "stream";
-
-export const runtime = "nodejs";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.accessToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Silakan login Google kembali terlebih dahulu.",
+        },
+        { status: 401 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file");
 
-    if (!file || typeof file === "string") {
+    if (!file) {
       return NextResponse.json(
-        { success: false, error: "File tidak ditemukan" },
+        { success: false, error: "File tidak ditemukan." },
         { status: 400 }
       );
     }
 
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-
-    if (!clientEmail || !privateKey || !folderId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Environment variable Google Drive belum lengkap. Periksa GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, dan GOOGLE_DRIVE_FOLDER_ID di Vercel.",
-        },
-        { status: 500 }
-      );
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/drive"],
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials({
+      access_token: session.accessToken,
     });
 
-    const drive = google.drive({ version: "v3", auth });
+    const drive = google.drive({
+      version: "v3",
+      auth,
+    });
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const response = await drive.files.create({
       requestBody: {
         name: file.name,
-        parents: [folderId],
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
       },
       media: {
         mimeType: file.type || "application/octet-stream",
-        body: Readable.from(buffer),
+        body: buffer,
       },
-      fields: "id,name,webViewLink",
+      fields: "id, webViewLink",
     });
-
-    if (!response.data.id) {
-      throw new Error("Google Drive tidak mengembalikan ID file.");
-    }
 
     await drive.permissions.create({
       fileId: response.data.id,
@@ -67,21 +59,19 @@ export async function POST(req) {
       },
     });
 
-    const fileUrl = `https://drive.google.com/uc?export=download&id=${response.data.id}`;
-
     return NextResponse.json({
       success: true,
-      fileUrl,
-      fileId: response.data.id,
-      fileName: response.data.name,
+      fileUrl:
+        response.data.webViewLink ||
+        `https://drive.google.com/file/d/${response.data.id}/view`,
     });
   } catch (err) {
-    console.error("GOOGLE DRIVE UPLOAD ERROR:", err);
+    console.error("UPLOAD DRIVE ERROR:", err);
 
     return NextResponse.json(
       {
         success: false,
-        error: err?.message || "Upload Google Drive gagal",
+        error: err instanceof Error ? err.message : "Upload gagal ke Google Drive.",
       },
       { status: 500 }
     );
