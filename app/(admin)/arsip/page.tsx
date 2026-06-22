@@ -68,7 +68,7 @@ export default function ArsipPage() {
   });
 
   setFile(null);
-  setKategori("");
+  setKategori("Surat Masuk");
   loadArsip();
 
   alert("Upload berhasil 🚀");
@@ -162,25 +162,76 @@ export default function ArsipPage() {
       </div>
 
       {/* UPLOAD */}
-      <div style={{ marginBottom: 20 }}>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+<div
+  style={{
+    background: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  }}
+>
+  <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
+    Upload Arsip Baru
+  </h3>
 
-        <select
-          value={kategori}
-          onChange={(e) => setKategori(e.target.value)}
-          style={{ marginLeft: 10 }}
-        >
-          <option value="Surat Masuk">Surat Masuk</option>
-          <option value="Surat Keluar">Surat Keluar</option>
-        </select>
+  <div
+    style={{
+      display: "flex",
+      gap: "12px",
+      flexWrap: "wrap",
+      alignItems: "center",
+    }}
+  >
+    <input
+      type="file"
+      onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      style={{
+        border: "1px solid #cbd5e1",
+        padding: "10px",
+        borderRadius: "8px",
+        background: "#f8fafc",
+        maxWidth: "100%",
+      }}
+    />
 
-        <button onClick={uploadFile} style={{ marginLeft: 10 }}>
-          Upload
-        </button>
-      </div>
+    <select
+      value={kategori}
+      onChange={(e) => setKategori(e.target.value)}
+      style={{
+        padding: "10px",
+        borderRadius: "8px",
+        border: "1px solid #cbd5e1",
+        background: "white",
+      }}
+    >
+      <option value="Surat Masuk">Surat Masuk</option>
+      <option value="Surat Keluar">Surat Keluar</option>
+      <option value="Arsip Lainnya">Arsip Lainnya</option>
+    </select>
+
+    <button
+      onClick={uploadFile}
+      style={{
+        padding: "10px 18px",
+        background: "#2563eb",
+        color: "white",
+        border: "none",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      ⬆ Upload ke Google Drive
+    </button>
+  </div>
+
+  {file && (
+    <p style={{ marginTop: "12px", color: "#475569", fontSize: "14px" }}>
+      File dipilih: <b>{file.name}</b>
+    </p>
+  )}
+</div>
 
       {/* TABLE */}
       <table width="100%" border={1} cellPadding={8}>
