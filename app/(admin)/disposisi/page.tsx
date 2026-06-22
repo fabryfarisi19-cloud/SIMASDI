@@ -169,25 +169,30 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
 >
   Simpan Disposisi
 </button>
-
-      <h2
-  style={{
-    display: "flex",
-    gap: "10px",
-  }}
->
-  
-  Riwayat Disposisi
-</h2>
+      
 <hr />
-
-<table
+<div
   style={{
     width: "100%",
-    borderCollapse: "collapse",
-    background: "white",
+    marginTop: "20px",
+    marginBottom: "12px",
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "#1e3a8a",
   }}
 >
+  Riwayat Disposisi
+</div>
+
+<div style={{ overflowX: "auto", width: "100%" }}>
+  <table
+    style={{
+      width: "100%",
+      minWidth: "760px",
+      borderCollapse: "collapse",
+      background: "white",
+    }}
+  >
   <thead>
     <tr>
       <th style={{border:"1px solid #ddd",padding:"8px"}}>Nomor Surat</th>
@@ -304,6 +309,7 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
   ))}
 </tbody>
 </table>
+</div>
     </div>
   </div>
 </div>
