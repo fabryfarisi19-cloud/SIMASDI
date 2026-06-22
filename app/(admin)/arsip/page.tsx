@@ -331,7 +331,7 @@ const [uploading, setUploading] = useState(false);
                       : "#64748b",
                 }}
               >
-                {item.kategori}
+              {item.kategori || "Arsip Lainnya"}
               </span>
             </td>
 
