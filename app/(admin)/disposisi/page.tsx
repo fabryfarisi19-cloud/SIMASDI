@@ -201,25 +201,8 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
       
   
       <tr key={item.id}>
-        <td style={{border:"1px solid #ddd",padding:"8px"}}>
-          {item.nomor_surat}
-        </td>
-
-        <td style={{border:"1px solid #ddd",padding:"8px"}}>
-          {item.tujuan}
-        </td>
-
- <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
-  {item.status === "Selesai" ? (
-    <span
-      style={{
-        color: "#16a34a",
-        fontWeight: "bold",
-      }}
-    >
-      ✓ Selesai
-    </span>
-  ) : (
+       <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+  {item.status !== "Selesai" ? (
     <button
       onClick={async () => {
         const { error } = await supabase
@@ -228,26 +211,56 @@ Nomor Surat: ${surat.nomor_surat} Asal Surat: ${surat.asal_surat} Perihal: ${sur
           .eq("id", item.id);
 
         if (error) {
-          alert("Gagal mengubah status: " + error.message);
+          alert(error.message);
           return;
         }
 
-        await loadDisposisi();
         alert("Status disposisi sudah menjadi Selesai");
+        await loadDisposisi();
       }}
       style={{
         background: "#16a34a",
         color: "white",
         border: "none",
         padding: "7px 10px",
-        borderRadius: "6px",
+        borderRadius: "5px",
         cursor: "pointer",
-        fontWeight: "bold",
+        marginRight: "8px",
       }}
     >
       ✓ Selesaikan
     </button>
-  )}
+  ) : null}
+
+  <button
+    onClick={async () => {
+      const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
+      if (!yakin) return;
+
+      const { error } = await supabase
+        .from("disposisi")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert("Riwayat disposisi berhasil dihapus");
+      await loadDisposisi();
+    }}
+    style={{
+      background: "#dc2626",
+      color: "white",
+      border: "none",
+      padding: "7px 10px",
+      borderRadius: "5px",
+      cursor: "pointer",
+    }}
+  >
+    🗑 Hapus
+  </button>
 </td>
     
       </tr>
