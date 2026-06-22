@@ -6,16 +6,31 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+
+      authorization: {
+        params: {
+          scope:
+            "openid email profile https://www.googleapis.com/auth/drive.file",
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     }),
   ],
 
   secret: process.env.NEXTAUTH_SECRET,
 
-  debug: true,
-
   callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+
+      return token;
+    },
+
     async session({ session, token }) {
-      console.log("SESSION CALLBACK:", session);
+      session.accessToken = token.accessToken;
       return session;
     },
   },
