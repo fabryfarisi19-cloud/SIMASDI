@@ -20,13 +20,21 @@ type Disposisi = {
 
 const inputStyle = {
   width: "100%",
+  boxSizing: "border-box" as const,
   padding: "13px 14px",
   border: "1px solid #cbd5e1",
   borderRadius: "10px",
   outline: "none",
-  fontSize: "14px",
-  boxSizing: "border-box" as const,
+  fontSize: "15px",
   background: "white",
+};
+
+const labelStyle = {
+  display: "block",
+  marginBottom: "8px",
+  color: "#0f172a",
+  fontWeight: "800",
+  fontSize: "15px",
 };
 
 export default function DisposisiPage() {
@@ -59,17 +67,16 @@ export default function DisposisiPage() {
       ]);
 
       if (suratRes.error) {
-        alert("Gagal memuat surat masuk: " + suratRes.error.message);
-        return;
+        alert("Gagal memuat surat: " + suratRes.error.message);
+      } else {
+        setSuratList((suratRes.data || []) as SuratMasuk[]);
       }
 
       if (disposisiRes.error) {
         alert("Gagal memuat riwayat disposisi: " + disposisiRes.error.message);
-        return;
+      } else {
+        setRiwayat((disposisiRes.data || []) as Disposisi[]);
       }
-
-      setSuratList((suratRes.data || []) as SuratMasuk[]);
-      setRiwayat((disposisiRes.data || []) as Disposisi[]);
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan saat memuat data.");
@@ -78,7 +85,29 @@ export default function DisposisiPage() {
     }
   };
 
-  const suratDipilih = suratList.find((item) => item.id === Number(suratId));
+  const suratDipilih = suratList.find(
+    (item) => String(item.id) === suratId
+  );
+
+  // Otomatis isi disposisi ketika surat atau tujuan dipilih
+  useEffect(() => {
+    if (!suratDipilih || !tujuan) return;
+
+    const isiOtomatis =
+      `Mohon ${tujuan} untuk menindaklanjuti surat berikut.\n\n` +
+      `Nomor Surat: ${suratDipilih.nomor_surat || "-"}\n` +
+      `Asal Surat: ${suratDipilih.asal_surat || "-"}\n` +
+      `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
+      `Harap diproses sesuai ketentuan yang berlaku.`;
+
+    setIsiDisposisi(isiOtomatis);
+  }, [suratId, tujuan]);
+
+  const resetForm = () => {
+    setSuratId("");
+    setTujuan("");
+    setIsiDisposisi("");
+  };
 
   const simpanDisposisi = async () => {
     if (!suratDipilih) {
@@ -87,7 +116,7 @@ export default function DisposisiPage() {
     }
 
     if (!tujuan) {
-      alert("Pilih tujuan disposisi.");
+      alert("Pilih tujuan disposisi terlebih dahulu.");
       return;
     }
 
@@ -103,7 +132,7 @@ export default function DisposisiPage() {
         {
           nomor_surat: suratDipilih.nomor_surat || "-",
           tujuan,
-          isi_disposisi: isiDisposisi.trim(),
+          isi_disposisi: isiDisposisi,
           status: "Menunggu",
         },
       ]);
@@ -114,11 +143,7 @@ export default function DisposisiPage() {
       }
 
       alert("Disposisi berhasil disimpan.");
-
-      setSuratId("");
-      setTujuan("");
-      setIsiDisposisi("");
-
+      resetForm();
       await loadData();
     } catch (error) {
       console.error(error);
@@ -135,122 +160,171 @@ export default function DisposisiPage() {
     }
 
     if (!tujuan) {
-      alert("Pilih tujuan disposisi.");
+      alert("Pilih tujuan disposisi terlebih dahulu.");
       return;
     }
 
-    if (!isiDisposisi.trim()) {
-      alert("Isi disposisi masih kosong.");
-      return;
-    }
+    const isiOtomatis =
+      isiDisposisi.trim() ||
+      `Mohon ${tujuan} untuk menindaklanjuti surat berikut.\n\n` +
+        `Nomor Surat: ${suratDipilih.nomor_surat || "-"}\n` +
+        `Asal Surat: ${suratDipilih.asal_surat || "-"}\n` +
+        `Perihal: ${suratDipilih.perihal || "-"}.`;
 
-    const pesan = `*DISPOSISI SIMASDI*
+    setIsiDisposisi(isiOtomatis);
 
-Kepada Yth.
-${tujuan}
+    const pesan =
+      `*DISPOSISI SURAT - SIMASDI*\n\n` +
+      `Tujuan: ${tujuan}\n` +
+      `Nomor Surat: ${suratDipilih.nomor_surat || "-"}\n` +
+      `Asal Surat: ${suratDipilih.asal_surat || "-"}\n` +
+      `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
+      `*Isi Disposisi:*\n${isiOtomatis}`;
 
-Nomor Surat: ${suratDipilih.nomor_surat || "-"}
-Asal Surat: ${suratDipilih.asal_surat || "-"}
-Perihal: ${suratDipilih.perihal || "-"}
-
-Isi Disposisi:
-${isiDisposisi}`;
+    // Ganti jika nomor WhatsApp tujuan berbeda
+    const nomorWhatsApp = "6285113680385";
 
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(pesan)}`,
+      `https://wa.me/${nomorWhatsApp}?text=${encodeURIComponent(pesan)}`,
       "_blank"
     );
   };
 
   const hapusDisposisi = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus disposisi ini?");
+    const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
     if (!yakin) return;
 
-    try {
-      const { error } = await supabase
-        .from("disposisi")
-        .delete()
-        .eq("id", id);
+    const { error } = await supabase
+      .from("disposisi")
+      .delete()
+      .eq("id", id);
 
-      if (error) {
-        alert("Gagal menghapus disposisi: " + error.message);
-        return;
-      }
-
-      alert("Disposisi berhasil dihapus.");
-      await loadData();
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menghapus disposisi.");
+    if (error) {
+      alert("Gagal menghapus disposisi: " + error.message);
+      return;
     }
+
+    alert("Riwayat disposisi berhasil dihapus.");
+    await loadData();
   };
 
   return (
-    <main className="halaman-disposisi">
-      <div className="judul-halaman">
-        <h1>Disposisi Surat</h1>
-        <p>Buat dan kelola disposisi surat masuk.</p>
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: "32px",
+        background: "#f5f7fb",
+      }}
+    >
+      <div style={{ marginBottom: "24px" }}>
+        <h1
+          style={{
+            margin: 0,
+            color: "#0f172a",
+            fontSize: "29px",
+            fontWeight: "800",
+          }}
+        >
+          Disposisi Surat
+        </h1>
+
+        <p style={{ margin: "7px 0 0", color: "#64748b" }}>
+          Kirim dan catat disposisi surat secara digital.
+        </p>
       </div>
 
-      <section className="kartu-form">
-        <div className="form-dua-kolom">
+      <section
+        style={{
+          background: "white",
+          borderRadius: "16px",
+          padding: "26px",
+          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
+          marginBottom: "26px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "16px",
+            marginBottom: "18px",
+          }}
+        >
           <div>
-            <label>Pilih Surat</label>
+            <label style={labelStyle}>Pilih Surat</label>
             <select
               value={suratId}
               onChange={(e) => setSuratId(e.target.value)}
               style={inputStyle}
             >
-              <option value="">Pilih Surat Masuk</option>
+              <option value="">-- Pilih Surat Masuk --</option>
               {suratList.map((surat) => (
                 <option key={surat.id} value={surat.id}>
-                  {surat.nomor_surat || "-"} — {surat.perihal || "Tanpa perihal"}
+                  {surat.nomor_surat || "Tanpa Nomor"} —{" "}
+                  {surat.perihal || "Tanpa Perihal"}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label>Tujuan Disposisi</label>
+            <label style={labelStyle}>Tujuan Disposisi</label>
             <select
               value={tujuan}
               onChange={(e) => setTujuan(e.target.value)}
               style={inputStyle}
             >
-              <option value="">Pilih Tujuan Disposisi</option>
+              <option value="">-- Pilih Tujuan Disposisi --</option>
               <option value="Kepala Bapas">Kepala Bapas</option>
               <option value="Kaur Umum">Kaur Umum</option>
-              <option value="Kasi Bimbingan Klien Dewasa">Kasi Bimbingan Klien Dewasa</option>
-              <option value="Kasi Bimbingan Klien Anak">Kasi Bimbingan Klien Anak</option>
-              <option value="PK Pertama">PK Pertama</option>
-              <option value="PK Muda">PK Muda</option>
-              <option value="PK Madya">PK Madya</option>
+              <option value="Kasi Bimbingan Klien Dewasa">
+                Kasi Bimbingan Klien Dewasa
+              </option>
+              <option value="Kasi Bimbingan Klien Anak">
+                Kasi Bimbingan Klien Anak
+              </option>
+              <option value="Pembimbing Kemasyarakatan">
+                Pembimbing Kemasyarakatan
+              </option>
               <option value="Staf Tata Usaha">Staf Tata Usaha</option>
             </select>
           </div>
         </div>
 
-        <div>
-          <label>Isi Disposisi</label>
+        <div style={{ marginBottom: "18px" }}>
+          <label style={labelStyle}>Isi Disposisi</label>
           <textarea
             value={isiDisposisi}
             onChange={(e) => setIsiDisposisi(e.target.value)}
-            placeholder="Tuliskan isi disposisi..."
+            placeholder="Isi disposisi akan terisi otomatis setelah surat dan tujuan dipilih."
             rows={7}
             style={{
               ...inputStyle,
               resize: "vertical",
-              marginTop: "8px",
-              lineHeight: 1.6,
+              lineHeight: "1.5",
             }}
           />
         </div>
 
-        <div className="tombol-disposisi">
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
           <button
             type="button"
             onClick={kirimWhatsApp}
-            className="tombol-wa"
+            style={{
+              border: "none",
+              borderRadius: "9px",
+              padding: "13px 18px",
+              background: "#16a34a",
+              color: "white",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
           >
             Kirim Disposisi WA
           </button>
@@ -259,67 +333,157 @@ ${isiDisposisi}`;
             type="button"
             onClick={simpanDisposisi}
             disabled={menyimpan}
-            className="tombol-simpan"
+            style={{
+              border: "none",
+              borderRadius: "9px",
+              padding: "13px 18px",
+              background: "#2563eb",
+              color: "white",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
           >
             {menyimpan ? "Menyimpan..." : "Simpan Disposisi"}
+          </button>
+
+          <button
+            type="button"
+            onClick={resetForm}
+            style={{
+              border: "none",
+              borderRadius: "9px",
+              padding: "13px 18px",
+              background: "#64748b",
+              color: "white",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
+          >
+            Reset
           </button>
         </div>
       </section>
 
-      <section className="kartu-riwayat">
-        <div className="header-riwayat">
-          <h2>Riwayat Disposisi</h2>
-          <button onClick={loadData} className="tombol-refresh">
-            ↻ Perbarui
+      <section
+        style={{
+          background: "white",
+          borderRadius: "16px",
+          overflow: "hidden",
+          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
+        }}
+      >
+        <div
+          style={{
+            padding: "20px",
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              color: "#1e3a8a",
+              fontSize: "21px",
+              fontWeight: "800",
+            }}
+          >
+            Riwayat Disposisi
+          </h2>
+
+          <button
+            onClick={loadData}
+            style={{
+              border: "1px solid #cbd5e1",
+              borderRadius: "8px",
+              padding: "9px 13px",
+              background: "white",
+              color: "#1d4ed8",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
+          >
+            Perbarui
           </button>
         </div>
 
-        <div className="tabel-wrapper">
-          <table>
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              minWidth: "850px",
+              borderCollapse: "collapse",
+            }}
+          >
             <thead>
-              <tr>
-                <th>Nomor Surat</th>
-                <th>Tujuan</th>
-                <th>Isi Disposisi</th>
-                <th>Status</th>
-                <th>Aksi</th>
+              <tr style={{ background: "#f8fafc" }}>
+                <th style={thStyle}>No</th>
+                <th style={thStyle}>Nomor Surat</th>
+                <th style={thStyle}>Tujuan</th>
+                <th style={thStyle}>Isi Disposisi</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="kosong">
+                  <td colSpan={6} style={emptyStyle}>
                     Memuat data...
                   </td>
                 </tr>
               ) : riwayat.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="kosong">
+                  <td colSpan={6} style={emptyStyle}>
                     Belum ada riwayat disposisi.
                   </td>
                 </tr>
               ) : (
-                riwayat.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.nomor_surat || "-"}</td>
-                    <td>{item.tujuan || "-"}</td>
-                    <td className="isi-tabel">{item.isi_disposisi || "-"}</td>
-                    <td>
+                riwayat.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    style={{ borderTop: "1px solid #e2e8f0" }}
+                  >
+                    <td style={tdStyle}>{index + 1}</td>
+                    <td style={tdStyle}>{item.nomor_surat || "-"}</td>
+                    <td style={tdStyle}>{item.tujuan || "-"}</td>
+                    <td style={{ ...tdStyle, whiteSpace: "pre-line" }}>
+                      {item.isi_disposisi || "-"}
+                    </td>
+                    <td style={tdStyle}>
                       <span
-                        className={
-                          item.status === "Selesai"
-                            ? "badge selesai"
-                            : "badge menunggu"
-                        }
+                        style={{
+                          display: "inline-block",
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          background:
+                            item.status === "Selesai" ? "#dcfce7" : "#fef3c7",
+                          color:
+                            item.status === "Selesai" ? "#15803d" : "#92400e",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {item.status || "Menunggu"}
                       </span>
                     </td>
-                    <td>
+                    <td style={tdStyle}>
                       <button
                         onClick={() => hapusDisposisi(item.id)}
-                        className="tombol-hapus"
+                        style={{
+                          border: "none",
+                          borderRadius: "7px",
+                          padding: "8px 11px",
+                          background: "#dc2626",
+                          color: "white",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                        }}
                       >
                         Hapus
                       </button>
@@ -333,209 +497,42 @@ ${isiDisposisi}`;
       </section>
 
       <style jsx>{`
-        .halaman-disposisi {
-          min-height: 100vh;
-          padding: 32px;
-          background: #f5f7fb;
-        }
-
-        .judul-halaman {
-          margin-bottom: 24px;
-        }
-
-        .judul-halaman h1 {
-          margin: 0;
-          color: #0f172a;
-          font-size: 29px;
-          font-weight: 800;
-        }
-
-        .judul-halaman p {
-          margin: 7px 0 0;
-          color: #64748b;
-        }
-
-        .kartu-form,
-        .kartu-riwayat {
-          background: white;
-          border-radius: 16px;
-          padding: 26px;
-          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-          margin-bottom: 26px;
-        }
-
-        label {
-          display: block;
-          margin-bottom: 8px;
-          color: #334155;
-          font-size: 14px;
-          font-weight: 800;
-        }
-
-        .form-dua-kolom {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px;
-          margin-bottom: 18px;
-        }
-
-        .tombol-disposisi {
-          display: flex;
-          gap: 12px;
-          margin-top: 20px;
-        }
-
-        .tombol-disposisi button {
-          flex: 1;
-          border: none;
-          border-radius: 10px;
-          padding: 14px;
-          color: white;
-          font-size: 15px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .tombol-wa {
-          background: #16a34a;
-        }
-
-        .tombol-simpan {
-          background: #2563eb;
-        }
-
-        .tombol-simpan:disabled {
-          background: #93c5fd;
-          cursor: not-allowed;
-        }
-
-        .header-riwayat {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 18px;
-        }
-
-        .header-riwayat h2 {
-          margin: 0;
-          color: #1e3a8a;
-          font-size: 22px;
-          font-weight: 800;
-        }
-
-        .tombol-refresh {
-          border: none;
-          border-radius: 8px;
-          padding: 10px 13px;
-          background: #2563eb;
-          color: white;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .tabel-wrapper {
-          overflow-x: auto;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-        }
-
-        table {
-          width: 100%;
-          min-width: 900px;
-          border-collapse: collapse;
-        }
-
-        th {
-          padding: 14px 16px;
-          background: #f8fafc;
-          color: #0f172a;
-          text-align: left;
-          font-size: 13px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        td {
-          padding: 15px 16px;
-          color: #334155;
-          font-size: 14px;
-          vertical-align: top;
-          border-top: 1px solid #e2e8f0;
-        }
-
-        .isi-tabel {
-          min-width: 280px;
-          line-height: 1.6;
-        }
-
-        .kosong {
-          padding: 32px;
-          text-align: center;
-          color: #64748b;
-        }
-
-        .badge {
-          display: inline-block;
-          padding: 6px 10px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .badge.menunggu {
-          background: #fef3c7;
-          color: #92400e;
-        }
-
-        .badge.selesai {
-          background: #dcfce7;
-          color: #15803d;
-        }
-
-        .tombol-hapus {
-          border: none;
-          border-radius: 7px;
-          padding: 8px 11px;
-          background: #dc2626;
-          color: white;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-          .halaman-disposisi {
-            padding: 26px 18px;
+        @media (max-width: 700px) {
+          main {
+            padding: 22px 18px !important;
           }
 
-          .judul-halaman h1 {
-            font-size: 27px;
+          section {
+            padding: 20px !important;
           }
 
-          .kartu-form,
-          .kartu-riwayat {
-            padding: 22px 18px;
-          }
-
-          .form-dua-kolom {
-            grid-template-columns: 1fr;
-          }
-
-          .tombol-disposisi {
-            flex-direction: column;
-          }
-
-          .tombol-disposisi button {
-            width: 100%;
-          }
-
-          .header-riwayat {
-            align-items: flex-start;
-            flex-direction: column;
+          main > section:first-of-type > div:first-of-type {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>
     </main>
   );
 }
+
+const thStyle = {
+  padding: "14px 16px",
+  textAlign: "left" as const,
+  color: "#0f172a",
+  fontSize: "13px",
+  fontWeight: "800",
+  whiteSpace: "nowrap" as const,
+};
+
+const tdStyle = {
+  padding: "14px 16px",
+  color: "#334155",
+  fontSize: "14px",
+  verticalAlign: "top" as const,
+};
+
+const emptyStyle = {
+  padding: "32px",
+  textAlign: "center" as const,
+  color: "#64748b",
+};
