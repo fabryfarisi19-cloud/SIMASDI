@@ -2,195 +2,185 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { UserPlus, Trash2, Users, ShieldCheck } from "lucide-react";
 
 type Pengguna = {
   id: number;
-  nama: string;
-  username: string;
-  password: string;
-  role: string;
+  nama_lengkap: string | null;
+  username: string | null;
+  password: string | null;
+  role: string | null;
 };
 
 export default function PenggunaPage() {
-  const [dataPengguna, setDataPengguna] = useState<Pengguna[]>([]);
-  const [nama, setNama] = useState("");
+  const [pengguna, setPengguna] = useState<Pengguna[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [menyimpan, setMenyimpan] = useState(false);
+
+  const [namaLengkap, setNamaLengkap] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Staf");
-  const [loading, setLoading] = useState(false);
 
-  const ambilData = async () => {
-    const { data, error } = await supabase
-      .from("pengguna")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      alert("Gagal mengambil data pengguna.");
-      return;
-    }
-
-    setDataPengguna(data || []);
-  };
-
-  useEffect(() => {
-    ambilData();
-  }, []);
-
-  const simpanPengguna = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!nama || !username || !password) {
-      alert("Nama, username, dan password wajib diisi.");
-      return;
-    }
-
-    setLoading(true);
-
+  const loadPengguna = async () => {
     try {
-      const { error } = await supabase.from("pengguna").insert([
-        {
-          nama,
-          username,
-          password,
-          role,
-        },
-      ]);
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("pengguna")
+        .select("*")
+        .order("id", { ascending: true });
 
       if (error) {
-        if (error.code === "23505") {
-          alert("Username sudah digunakan. Gunakan username lain.");
-        } else {
-          alert(error.message);
-        }
+        alert("Gagal memuat pengguna: " + error.message);
         return;
       }
 
-      alert("Pengguna berhasil ditambahkan.");
-
-      setNama("");
-      setUsername("");
-      setPassword("");
-      setRole("Staf");
-
-      ambilData();
+      setPengguna((data || []) as Pengguna[]);
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan saat menyimpan pengguna.");
+      alert("Terjadi kesalahan saat memuat pengguna.");
     } finally {
       setLoading(false);
     }
   };
 
-  const hapusPengguna = async (id: number, username: string) => {
-    if (username === "admin") {
-      alert("Akun admin utama tidak boleh dihapus.");
+  useEffect(() => {
+    loadPengguna();
+  }, []);
+
+  const simpanPengguna = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!namaLengkap.trim() || !username.trim() || !password.trim()) {
+      alert("Nama lengkap, username, dan password wajib diisi.");
       return;
     }
 
-    const yakin = confirm(`Hapus pengguna ${username}?`);
+    try {
+      setMenyimpan(true);
+
+      const { data: penggunaSama, error: cekError } = await supabase
+        .from("pengguna")
+        .select("id")
+        .eq("username", username.trim())
+        .maybeSingle();
+
+      if (cekError) {
+        alert("Gagal memeriksa username: " + cekError.message);
+        return;
+      }
+
+      if (penggunaSama) {
+        alert("Username sudah digunakan. Silakan gunakan username lain.");
+        return;
+      }
+
+      const { error } = await supabase.from("pengguna").insert([
+        {
+          nama_lengkap: namaLengkap.trim(),
+          username: username.trim(),
+          password: password,
+          role,
+        },
+      ]);
+
+      if (error) {
+        alert("Gagal menyimpan pengguna: " + error.message);
+        return;
+      }
+
+      alert("Pengguna berhasil ditambahkan.");
+
+      setNamaLengkap("");
+      setUsername("");
+      setPassword("");
+      setRole("Staf");
+
+      await loadPengguna();
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat menyimpan pengguna.");
+    } finally {
+      setMenyimpan(false);
+    }
+  };
+
+  const hapusPengguna = async (item: Pengguna) => {
+    if (item.username === "admin") {
+      alert("Akun administrator utama tidak dapat dihapus.");
+      return;
+    }
+
+    const yakin = confirm(
+      `Yakin ingin menghapus pengguna ${item.nama_lengkap || item.username}?`
+    );
 
     if (!yakin) return;
 
-    const { error } = await supabase.from("pengguna").delete().eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("pengguna")
+        .delete()
+        .eq("id", item.id);
 
-    if (error) {
-      alert(error.message);
-      return;
+      if (error) {
+        alert("Gagal menghapus pengguna: " + error.message);
+        return;
+      }
+
+      alert("Pengguna berhasil dihapus.");
+      await loadPengguna();
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat menghapus pengguna.");
     }
-
-    alert("Pengguna berhasil dihapus.");
-    ambilData();
   };
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "26px" }}>
-        <h1
-          style={{
-            margin: 0,
-            color: "#0f172a",
-            fontSize: "28px",
-            fontWeight: "800",
-          }}
-        >
-          Manajemen Pengguna
-        </h1>
-
-        <p style={{ margin: "8px 0 0", color: "#64748b" }}>
-          Tambahkan akun admin atau staf untuk mengakses SIMASDI.
-        </p>
+    <main className="halaman-pengguna">
+      <div className="judul-halaman">
+        <h1>Manajemen Pengguna</h1>
+        <p>Tambahkan akun admin atau staf untuk mengakses SIMASDI.</p>
       </div>
 
-      <section
-        style={{
-          background: "#ffffff",
-          borderRadius: "16px",
-          padding: "26px",
-          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
-          border: "1px solid #e2e8f0",
-          marginBottom: "28px",
-        }}
-      >
-        <h2
-          style={{
-            margin: "0 0 22px",
-            color: "#1e3a8a",
-            fontSize: "20px",
-            fontWeight: "800",
-          }}
-        >
-          Tambah Pengguna
-        </h2>
+      <section className="kartu">
+        <h2>Tambah Pengguna</h2>
 
         <form onSubmit={simpanPengguna}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: "16px",
-            }}
-          >
-            <div>
-              <label style={labelStyle}>Nama Lengkap</label>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Nama Lengkap</label>
               <input
-                value={nama}
-                onChange={(e) => setNama(e.target.value)}
-                placeholder="Masukkan nama pengguna"
-                style={inputStyle}
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                value={namaLengkap}
+                onChange={(e) => setNamaLengkap(e.target.value)}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Username</label>
+            <div className="form-group">
+              <label>Username</label>
               <input
+                type="text"
+                placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan username"
-                style={inputStyle}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Password</label>
+            <div className="form-group">
+              <label>Password</label>
               <input
                 type="password"
+                placeholder="Buat password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Buat password"
-                style={inputStyle}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Role / Akses</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                style={inputStyle}
-              >
+            <div className="form-group">
+              <label>Role / Akses</label>
+              <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="Staf">Staf</option>
                 <option value="Admin">Admin</option>
               </select>
@@ -199,147 +189,71 @@ export default function PenggunaPage() {
 
           <button
             type="submit"
-            disabled={loading}
-            style={{
-              marginTop: "22px",
-              border: "none",
-              borderRadius: "9px",
-              background: loading ? "#93c5fd" : "#2563eb",
-              color: "white",
-              padding: "12px 18px",
-              fontWeight: "700",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            disabled={menyimpan}
+            className="tombol-simpan"
           >
-            <UserPlus size={18} />
-            {loading ? "Menyimpan..." : "Simpan Pengguna"}
+            {menyimpan ? "Menyimpan..." : "♧ Simpan Pengguna"}
           </button>
         </form>
       </section>
 
-      <section
-        style={{
-          background: "#ffffff",
-          borderRadius: "16px",
-          overflow: "hidden",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-        }}
-      >
-        <div
-          style={{
-            padding: "22px 26px",
-            borderBottom: "1px solid #e2e8f0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              color: "#1e3a8a",
-              fontSize: "20px",
-              fontWeight: "800",
-            }}
-          >
-            Daftar Pengguna
-          </h2>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              color: "#64748b",
-              fontSize: "14px",
-              fontWeight: "700",
-            }}
-          >
-            <Users size={18} />
-            {dataPengguna.length} Pengguna
-          </div>
+      <section className="kartu daftar-kartu">
+        <div className="header-daftar">
+          <h2>Daftar Pengguna</h2>
+          <span className="jumlah-pengguna">♧ {pengguna.length} Pengguna</span>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="tabel-wrapper">
+          <table>
             <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                <th style={thStyle}>Nama</th>
-                <th style={thStyle}>Username</th>
-                <th style={thStyle}>Role</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+              <tr>
+                <th>Nama</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
-              {dataPengguna.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    style={{
-                      padding: "34px",
-                      textAlign: "center",
-                      color: "#64748b",
-                    }}
-                  >
+                  <td colSpan={4} className="kosong">
+                    Memuat data pengguna...
+                  </td>
+                </tr>
+              ) : pengguna.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="kosong">
                     Belum ada pengguna.
                   </td>
                 </tr>
               ) : (
-                dataPengguna.map((item) => (
-                  <tr key={item.id} style={{ borderTop: "1px solid #e2e8f0" }}>
-                    <td style={tdStyle}>{item.nama}</td>
-                    <td style={tdStyle}>{item.username}</td>
-                    <td style={tdStyle}>
+                pengguna.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.nama_lengkap || "-"}</td>
+                    <td>{item.username || "-"}</td>
+                    <td>
                       <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          borderRadius: "999px",
-                          padding: "6px 10px",
-                          fontSize: "12px",
-                          fontWeight: "800",
-                          color:
-                            item.role === "Admin" ? "#1d4ed8" : "#047857",
-                          background:
-                            item.role === "Admin" ? "#dbeafe" : "#d1fae5",
-                        }}
+                        className={
+                          item.role === "Admin"
+                            ? "badge-role admin"
+                            : "badge-role staf"
+                        }
                       >
-                        <ShieldCheck size={14} />
-                        {item.role}
+                        {item.role || "Staf"}
                       </span>
                     </td>
-
-                    <td style={{ ...tdStyle, textAlign: "center" }}>
-                      <button
-                        onClick={() => hapusPengguna(item.id, item.username)}
-                        disabled={item.username === "admin"}
-                        style={{
-                          border: "none",
-                          borderRadius: "8px",
-                          padding: "9px 12px",
-                          background:
-                            item.username === "admin" ? "#cbd5e1" : "#dc2626",
-                          color: "white",
-                          fontSize: "13px",
-                          fontWeight: "700",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          cursor:
-                            item.username === "admin"
-                              ? "not-allowed"
-                              : "pointer",
-                        }}
-                      >
-                        <Trash2 size={15} />
-                        Hapus
-                      </button>
+                    <td>
+                      {item.username === "admin" ? (
+                        <span className="admin-utama">Admin Utama</span>
+                      ) : (
+                        <button
+                          onClick={() => hapusPengguna(item)}
+                          className="tombol-hapus"
+                        >
+                          🗑 Hapus
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -348,40 +262,245 @@ export default function PenggunaPage() {
           </table>
         </div>
       </section>
-    </div>
+
+      <style jsx>{`
+        .halaman-pengguna {
+          min-height: 100vh;
+          padding: 32px;
+          background: #f5f7fb;
+        }
+
+        .judul-halaman {
+          margin-bottom: 24px;
+        }
+
+        .judul-halaman h1 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 29px;
+          font-weight: 800;
+        }
+
+        .judul-halaman p {
+          margin: 8px 0 0;
+          color: #64748b;
+          font-size: 16px;
+        }
+
+        .kartu {
+          background: #ffffff;
+          border-radius: 18px;
+          padding: 28px;
+          margin-bottom: 26px;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+          border: 1px solid #e2e8f0;
+        }
+
+        .kartu h2 {
+          margin: 0 0 22px;
+          color: #1e3a8a;
+          font-size: 24px;
+          font-weight: 800;
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+          margin-bottom: 22px;
+        }
+
+        .form-group {
+          min-width: 0;
+        }
+
+        label {
+          display: block;
+          margin-bottom: 8px;
+          color: #334155;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        input,
+        select {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 12px 13px;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          background: white;
+          color: #0f172a;
+          font-size: 14px;
+          outline: none;
+        }
+
+        input:focus,
+        select:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .tombol-simpan {
+          border: none;
+          border-radius: 10px;
+          padding: 13px 18px;
+          background: #2563eb;
+          color: white;
+          font-size: 15px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .tombol-simpan:disabled {
+          background: #93c5fd;
+          cursor: not-allowed;
+        }
+
+        .header-daftar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 15px;
+          margin-bottom: 18px;
+        }
+
+        .header-daftar h2 {
+          margin: 0;
+        }
+
+        .jumlah-pengguna {
+          color: #64748b;
+          font-size: 17px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .tabel-wrapper {
+          overflow-x: auto;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+        }
+
+        table {
+          width: 100%;
+          min-width: 650px;
+          border-collapse: collapse;
+        }
+
+        th {
+          padding: 15px;
+          background: #f8fafc;
+          color: #334155;
+          text-align: left;
+          font-size: 14px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        td {
+          padding: 16px 15px;
+          border-top: 1px solid #e2e8f0;
+          color: #334155;
+          font-size: 15px;
+          vertical-align: middle;
+        }
+
+        .badge-role {
+          display: inline-block;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .badge-role.admin {
+          background: #dbeafe;
+          color: #1d4ed8;
+        }
+
+        .badge-role.staf {
+          background: #dcfce7;
+          color: #15803d;
+        }
+
+        .tombol-hapus {
+          border: none;
+          border-radius: 8px;
+          padding: 9px 12px;
+          background: #dc2626;
+          color: white;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .admin-utama {
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .kosong {
+          padding: 30px;
+          text-align: center;
+          color: #64748b;
+        }
+
+        @media (max-width: 900px) {
+          .form-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 768px) {
+          .halaman-pengguna {
+            padding: 28px 18px;
+          }
+
+          .judul-halaman h1 {
+            font-size: 27px;
+          }
+
+          .judul-halaman p {
+            font-size: 15px;
+            line-height: 1.4;
+          }
+
+          .kartu {
+            padding: 24px 18px;
+          }
+
+          .kartu h2 {
+            font-size: 22px;
+          }
+
+          .form-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+
+          .tombol-simpan {
+            width: 100%;
+          }
+
+          .header-daftar {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .jumlah-pengguna {
+            font-size: 15px;
+          }
+
+          table {
+            min-width: 620px;
+          }
+        }
+      `}</style>
+    </main>
   );
 }
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "8px",
-  color: "#334155",
-  fontSize: "14px",
-  fontWeight: "700",
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  border: "1px solid #cbd5e1",
-  borderRadius: "9px",
-  padding: "12px 13px",
-  fontSize: "14px",
-  outline: "none",
-  color: "#0f172a",
-  background: "#ffffff",
-};
-
-const thStyle = {
-  padding: "15px 18px",
-  textAlign: "left" as const,
-  color: "#334155",
-  fontSize: "14px",
-  fontWeight: "800",
-};
-
-const tdStyle = {
-  padding: "15px 18px",
-  color: "#334155",
-  fontSize: "14px",
-};
