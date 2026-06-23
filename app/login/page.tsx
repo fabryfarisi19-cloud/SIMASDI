@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { FcGoogle } from "react-icons/fc";
+import { supabase } from "@/lib/supabase";
 import {
   LockKeyhole,
   User,
@@ -21,20 +21,52 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [pesan, setPesan] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setPesan("");
     setLoading(true);
 
-    setTimeout(() => {
-      if (username === "admin" && password === "admin123") {
-        localStorage.setItem("login", "true");
-        router.push("/dashboard");
-      } else {
+    try {
+      const { data, error } = await supabase
+        .from("pengguna")
+        .select("*")
+        .eq("username", username.trim())
+        .eq("password", password)
+        .single();
+
+      if (error || !data) {
         setPesan("Username atau password salah.");
-        setLoading(false);
+        return;
       }
-    }, 500);
+
+      localStorage.setItem("login", "true");
+      localStorage.setItem("nama", data.nama || "");
+      localStorage.setItem("username", data.username || "");
+      localStorage.setItem("role", data.role || "Staf");
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      setPesan("Terjadi kesalahan saat login.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setPesan("");
+    setLoading(true);
+
+    try {
+      await signIn("google", {
+        callbackUrl: "/dashboard",
+      });
+    } catch (error) {
+      console.error(error);
+      setPesan("Login Google gagal. Periksa konfigurasi Google di Vercel.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +94,6 @@ export default function LoginPage() {
           boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
         }}
       >
-        {/* BAGIAN KIRI */}
         <section
           style={{
             padding: "56px",
@@ -129,7 +160,6 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* BAGIAN KANAN */}
         <section
           style={{
             padding: "56px",
@@ -188,6 +218,7 @@ export default function LoginPage() {
                 required
                 style={{
                   width: "100%",
+                  boxSizing: "border-box",
                   padding: "13px 14px 13px 45px",
                   border: "1px solid #cbd5e1",
                   borderRadius: "10px",
@@ -229,6 +260,7 @@ export default function LoginPage() {
                 required
                 style={{
                   width: "100%",
+                  boxSizing: "border-box",
                   padding: "13px 48px 13px 45px",
                   border: "1px solid #cbd5e1",
                   borderRadius: "10px",
@@ -251,6 +283,7 @@ export default function LoginPage() {
                   padding: "4px",
                   display: "flex",
                   alignItems: "center",
+                  cursor: "pointer",
                 }}
                 aria-label="Lihat password"
               >
@@ -291,50 +324,59 @@ export default function LoginPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "10px",
+                cursor: loading ? "not-allowed" : "pointer",
               }}
             >
               {loading ? "Memproses..." : "Masuk ke SIMASDI"}
               {!loading && <ArrowRight size={18} />}
- </button>
+            </button>
+          </form>
 
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    margin: "24px 0",
-    color: "#94a3b8",
-    fontSize: "12px",
-  }}
->
-  <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
-  atau
-  <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
-</div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              margin: "28px 0",
+              color: "#94a3b8",
+              fontSize: "12px",
+            }}
+          >
+            <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
+            atau
+            <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
+          </div>
 
-<button
-  type="button"
-  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            style={{
+              width: "100%",
+              border: "1px solid #cbd5e1",
+              borderRadius: "10px",
+              padding: "13px",
+              background: "white",
+              color: "#334155",
+              fontSize: "14px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+<img
+  src="/google.svg"
+  alt="Google"
   style={{
-    width: "100%",
-    border: "1px solid #cbd5e1",
-    borderRadius: "10px",
-    padding: "13px",
-    background: "white",
-    color: "#334155",
-    fontSize: "14px",
-    fontWeight: "700",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    cursor: "pointer",
+    width: "20px",
+    height: "20px",
   }}
->
-  <FcGoogle size={21} />
-  Login dengan Google
-</button>
-</form>           
+/>
+            Login dengan Google
+          </button>
 
           <p
             style={{

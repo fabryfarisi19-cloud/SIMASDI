@@ -13,21 +13,32 @@ type SuratKeluar = {
   file_url: string | null;
 };
 
+type FormSuratKeluar = {
+  nomor_surat: string;
+  tanggal_surat: string;
+  tujuan_surat: string;
+  perihal: string;
+};
+
+const formKosong: FormSuratKeluar = {
+  nomor_surat: "",
+  tanggal_surat: "",
+  tujuan_surat: "",
+  perihal: "",
+};
+
 export default function SuratKeluarPage() {
   const [dataSurat, setDataSurat] = useState<SuratKeluar[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cari, setCari] = useState("");
+  const [editId, setEditId] = useState<number | null>(null);
+  const [fileLama, setFileLama] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({
-    nomor_surat: "",
-    tanggal_surat: "",
-    tujuan_surat: "",
-    perihal: "",
-  });
+  const [form, setForm] = useState<FormSuratKeluar>(formKosong);
 
   useEffect(() => {
     ambilData();
@@ -41,10 +52,22 @@ export default function SuratKeluarPage() {
 
     if (error) {
       console.error(error);
+      alert("Gagal mengambil data: " + error.message);
       return;
     }
 
     setDataSurat(data || []);
+  };
+
+  const resetForm = () => {
+    setForm(formKosong);
+    setSelectedFile(null);
+    setEditId(null);
+    setFileLama(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const ubahTanggalKeInput = (tanggal: string) => {
@@ -71,6 +94,7 @@ export default function SuratKeluarPage() {
       const hari = cocokIndonesia[1].padStart(2, "0");
       const bulanAngka = bulan[cocokIndonesia[2].toLowerCase()];
       const tahun = cocokIndonesia[3];
+
       return `${tahun}-${bulanAngka}-${hari}`;
     }
 
@@ -86,12 +110,29 @@ export default function SuratKeluarPage() {
     return "";
   };
 
-  const ambilDataSuratKeluar = (teks: string) => {
-    const bersih = teks.replace(/\s+/g, " ").trim();
+  const namaFileMenjadiPerihal = (namaFile: string) => {
+    return namaFile
+      .replace(/\.(pdf|jpg|jpeg|png)$/i, "")
+      .replace(/[_-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const bersihkanPerihal = (teks: string) => {
+    return teks
+      .replace(/\s+/g, " ")
+      .replace(/^(perihal|hal)\s*[:.\-]?\s*/i, "")
+      .replace(/^(kepada|yth)\.?\s*/i, "")
+      .trim();
+  };
+
+  const ambilDataSuratKeluar = (teks: string, namaFile: string) => {
+    const teksBaris = teks.replace(/\r/g, "");
+    const bersih = teksBaris.replace(/\s+/g, " ").trim();
 
     const nomorMatch =
       bersih.match(
-        /Nomor\s*(Surat)?\s*[:.]?\s*([A-Z0-9./\-\s]{5,}?)(?=\s*(Lampiran|Perihal|Kepada|Yth|Tanggal|$))/i
+        /Nomor\s*(Surat)?\s*[:.]?\s*([A-Z0-9./\-\s]{5,}?)(?=\s*(Lampiran|Perihal|Hal\.?|Kepada|Yth|Tanggal|$))/i
       ) || bersih.match(/\b[A-Z]{1,6}[A-Z0-9./-]{5,}\b/);
 
     const tanggalMatch =
@@ -99,32 +140,42 @@ export default function SuratKeluarPage() {
         /\b\d{1,2}\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4}\b/i
       ) || bersih.match(/\b\d{1,2}[/-]\d{1,2}[/-]\d{4}\b/);
 
-    const tujuanMatch = bersih.match(
-      /(?:Kepada Yth\.?|Yth\.?)\s*[:.]?\s*(.*?)(?=(?:Perihal|Nomor|Lampiran|Dengan hormat|$))/i
-    );
+    const tujuanMatch =
+      teksBaris.match(
+        /(?:Kepada\s+Yth\.?|Yth\.?)\s*[:.]?\s*([\s\S]{3,250}?)(?=\n\s*(?:Perihal|Hal\.?|Nomor|Lampiran|Dengan hormat)|$)/i
+      ) ||
+      bersih.match(
+        /(?:Kepada\s+Yth\.?|Yth\.?)\s*[:.]?\s*(.*?)(?=(?:Perihal|Hal\.?|Nomor|Lampiran|Dengan hormat|$))/i
+      );
 
-    const perihalMatch = bersih.match(
-      /Perihal\s*[:.]?\s*(.*?)(?=(?:Kepada|Yth|Dengan hormat|Nomor|Lampiran|$))/i
-    );
+    const perihalMatch =
+      teksBaris.match(
+        /(?:Perihal|Hal\.?)\s*[:.\-]?\s*([\s\S]{4,300}?)(?=\n\s*(?:Kepada|Yth\.?|Dengan hormat|Nomor|Lampiran)|$)/i
+      ) ||
+      bersih.match(
+        /(?:Perihal|Hal\.?)\s*[:.\-]?\s*(.*?)(?=(?:Kepada|Yth\.?|Dengan hormat|Nomor|Lampiran|$))/i
+      );
+
+    const perihalOtomatis = perihalMatch?.[1]
+      ? bersihkanPerihal(perihalMatch[1])
+      : namaFileMenjadiPerihal(namaFile);
 
     setForm((lama) => ({
       ...lama,
       nomor_surat: nomorMatch
-        ? (nomorMatch[2] || nomorMatch[0]).trim()
+        ? (nomorMatch[2] || nomorMatch[0]).replace(/\s+/g, " ").trim()
         : lama.nomor_surat,
       tanggal_surat: tanggalMatch
         ? ubahTanggalKeInput(tanggalMatch[0])
         : lama.tanggal_surat,
-      tujuan_surat: tujuanMatch
-        ? tujuanMatch[1].trim()
+      tujuan_surat: tujuanMatch?.[1]
+        ? tujuanMatch[1].replace(/\s+/g, " ").trim()
         : lama.tujuan_surat,
-      perihal: perihalMatch ? perihalMatch[1].trim() : lama.perihal,
+      perihal: perihalOtomatis || lama.perihal,
     }));
   };
 
   const bacaFileSuratKeluar = async (file: File) => {
-    setSelectedFile(file);
-
     if (
       file.type !== "application/pdf" &&
       !file.type.startsWith("image/")
@@ -133,21 +184,23 @@ export default function SuratKeluarPage() {
       return;
     }
 
+    setSelectedFile(file);
+
     try {
       setLoading(true);
 
-      let sumberGambar: File | string = file;
+      let sumberGambar: string | File = file;
 
       if (file.type === "application/pdf") {
- const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
- pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-const dataPdf = new Uint8Array(await file.arrayBuffer());
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-const pdf = await pdfjsLib.getDocument({
-  data: dataPdf,
+        const dataPdf = new Uint8Array(await file.arrayBuffer());
 
-}).promise;      
+        const pdf = await pdfjsLib.getDocument({
+          data: dataPdf,
+        }).promise;
 
         const halaman = await pdf.getPage(1);
         const viewport = halaman.getViewport({ scale: 2 });
@@ -162,27 +215,28 @@ const pdf = await pdfjsLib.getDocument({
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
-const tugasRender = halaman.render({
-  canvasContext: context,
-  viewport: viewport,
-} as any);
-
-await tugasRender.promise;      
+        await halaman.render({
+          canvasContext: context,
+          viewport,
+        } as any).promise;
 
         sumberGambar = canvas.toDataURL("image/png");
       }
 
       const hasil = await Tesseract.recognize(sumberGambar, "ind");
 
-      ambilDataSuratKeluar(hasil.data.text);
+      ambilDataSuratKeluar(hasil.data.text, file.name);
 
-      alert("Data surat berhasil dibaca. Silakan cek kembali sebelum disimpan.");
+      alert("Data surat berhasil dibaca. Silakan periksa kembali sebelum disimpan.");
     } catch (error) {
       console.error(error);
 
-      alert(
-        "File belum dapat dibaca otomatis. Pastikan PDF tidak terkunci dan halaman pertama berisi surat."
-      );
+      setForm((lama) => ({
+        ...lama,
+        perihal: lama.perihal || namaFileMenjadiPerihal(file.name),
+      }));
+
+      alert("OCR belum membaca seluruh isi file. Perihal diisi dari nama file.");
     } finally {
       setLoading(false);
     }
@@ -199,7 +253,25 @@ await tugasRender.promise;
     }
   };
 
-  const simpanSuratKeluar = async () => {
+  const uploadFile = async () => {
+    if (!selectedFile) return fileLama || null;
+
+    const namaFile = `surat-keluar/${Date.now()}-${selectedFile.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("surat")
+      .upload(namaFile, selectedFile);
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrl } = supabase.storage
+      .from("surat")
+      .getPublicUrl(namaFile);
+
+    return publicUrl.publicUrl;
+  };
+
+  const simpanAtauUpdateSuratKeluar = async () => {
     if (!form.nomor_surat || !form.tujuan_surat || !form.perihal) {
       alert("Nomor surat, tujuan surat, dan perihal wajib diisi.");
       return;
@@ -208,58 +280,66 @@ await tugasRender.promise;
     try {
       setLoading(true);
 
-      let fileUrl = "";
+      const fileUrl = await uploadFile();
 
-      if (selectedFile) {
-        const namaFile = `surat-keluar/${Date.now()}-${selectedFile.name}`;
+      const payload = {
+        nomor_surat: form.nomor_surat,
+        tanggal_surat: form.tanggal_surat || null,
+        tujuan_surat: form.tujuan_surat,
+        perihal: form.perihal,
+        file_url: fileUrl,
+      };
 
-        const { error: uploadError } = await supabase.storage
-          .from("surat")
-          .upload(namaFile, selectedFile);
+      let error;
 
-        if (uploadError) throw uploadError;
+      if (editId) {
+        const hasil = await supabase
+          .from("surat_keluar")
+          .update(payload)
+          .eq("id", editId);
 
-        const { data: publicUrl } = supabase.storage
-          .from("surat")
-          .getPublicUrl(namaFile);
+        error = hasil.error;
+      } else {
+        const hasil = await supabase.from("surat_keluar").insert([payload]);
 
-        fileUrl = publicUrl.publicUrl;
+        error = hasil.error;
       }
-
-      const { error } = await supabase.from("surat_keluar").insert([
-        {
-          nomor_surat: form.nomor_surat,
-          tanggal_surat: form.tanggal_surat || null,
-          tujuan_surat: form.tujuan_surat,
-          perihal: form.perihal,
-          file_url: fileUrl || null,
-        },
-      ]);
 
       if (error) throw error;
 
-      alert("Surat keluar berhasil disimpan.");
+      alert(
+        editId
+          ? "Surat keluar berhasil diperbarui."
+          : "Surat keluar berhasil disimpan."
+      );
 
-      setForm({
-        nomor_surat: "",
-        tanggal_surat: "",
-        tujuan_surat: "",
-        perihal: "",
-      });
-
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-
-      ambilData();
+      resetForm();
+      await ambilData();
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Gagal menyimpan surat keluar.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const mulaiEdit = (item: SuratKeluar) => {
+    setEditId(item.id);
+    setFileLama(item.file_url);
+
+    setForm({
+      nomor_surat: item.nomor_surat || "",
+      tanggal_surat: item.tanggal_surat || "",
+      tujuan_surat: item.tujuan_surat || "",
+      perihal: item.perihal || "",
+    });
+
+    setSelectedFile(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const hapusSuratKeluar = async (id: number) => {
@@ -271,11 +351,17 @@ await tugasRender.promise;
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      alert("Gagal menghapus: " + error.message);
       return;
     }
 
-    ambilData();
+    alert("Surat keluar berhasil dihapus.");
+
+    if (editId === id) {
+      resetForm();
+    }
+
+    await ambilData();
   };
 
   const dataTampil = dataSurat.filter((item) => {
@@ -286,8 +372,16 @@ await tugasRender.promise;
   });
 
   return (
-    <main style={{ padding: "32px", background: "#f5f7fb", minHeight: "100vh" }}>
-      <h1 style={{ marginBottom: "24px" }}>Surat Keluar</h1>
+    <main
+      style={{
+        padding: "32px",
+        background: "#f5f7fb",
+        minHeight: "100vh",
+      }}
+    >
+      <h1 style={{ marginBottom: "24px", color: "#0f172a" }}>
+        Surat Keluar
+      </h1>
 
       <section
         style={{
@@ -298,8 +392,14 @@ await tugasRender.promise;
           marginBottom: "26px",
         }}
       >
-        <h2 style={{ fontSize: "20px", color: "#0f3d91", marginBottom: "18px" }}>
-          Upload & Data Surat Keluar
+        <h2
+          style={{
+            fontSize: "20px",
+            color: editId ? "#d97706" : "#0f3d91",
+            marginBottom: "18px",
+          }}
+        >
+          {editId ? "Edit Surat Keluar" : "Upload & Data Surat Keluar"}
         </h2>
 
         <div
@@ -332,20 +432,30 @@ await tugasRender.promise;
           />
 
           <div style={{ fontSize: "32px", marginBottom: "8px" }}>📄</div>
-          <b>Tarik dan lepas file surat keluar di sini</b>
+          <b>
+            {editId
+              ? "Klik untuk mengganti file surat keluar"
+              : "Tarik dan lepas file surat keluar di sini"}
+          </b>
 
           <p style={{ color: "#64748b", marginTop: "8px" }}>
-            atau klik untuk mencari file PDF, JPG, JPEG, atau PNG
+            PDF, JPG, JPEG, atau PNG
           </p>
 
           {selectedFile && (
-            <p style={{ color: "#008b5b", fontWeight: "bold", marginTop: "10px" }}>
-              File dipilih: {selectedFile.name}
+            <p style={{ color: "#008b5b", fontWeight: "bold" }}>
+              File baru: {selectedFile.name}
+            </p>
+          )}
+
+          {!selectedFile && fileLama && (
+            <p style={{ color: "#2563eb", fontWeight: "bold" }}>
+              File lama tetap digunakan
             </p>
           )}
 
           {loading && (
-            <p style={{ color: "#2563eb", fontWeight: "bold", marginTop: "10px" }}>
+            <p style={{ color: "#2563eb", fontWeight: "bold" }}>
               Sedang membaca / menyimpan data...
             </p>
           )}
@@ -400,29 +510,53 @@ await tugasRender.promise;
           <textarea
             value={form.perihal}
             onChange={(e) => setForm({ ...form, perihal: e.target.value })}
-            placeholder="Masukkan perihal surat"
+            placeholder="Perihal akan dibaca otomatis dari surat"
             rows={4}
             style={{ ...inputStyle, resize: "vertical" }}
           />
         </label>
 
-        <button
-          onClick={simpanSuratKeluar}
-          disabled={loading}
-          style={{
-            marginTop: "20px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            padding: "13px 22px",
-            borderRadius: "8px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          💾 {loading ? "Memproses..." : "Simpan Surat Keluar"}
-        </button>
+        <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
+          <button
+            onClick={simpanAtauUpdateSuratKeluar}
+            disabled={loading}
+            style={{
+              background: editId ? "#d97706" : "#2563eb",
+              color: "white",
+              border: "none",
+              padding: "13px 22px",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            💾{" "}
+            {loading
+              ? "Memproses..."
+              : editId
+                ? "Update Surat Keluar"
+                : "Simpan Surat Keluar"}
+          </button>
+
+          {editId && (
+            <button
+              onClick={resetForm}
+              disabled={loading}
+              style={{
+                background: "#64748b",
+                color: "white",
+                border: "none",
+                padding: "13px 22px",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              Batal Edit
+            </button>
+          )}
+        </div>
       </section>
 
       <section>
@@ -432,9 +566,10 @@ await tugasRender.promise;
             justifyContent: "space-between",
             gap: "16px",
             marginBottom: "16px",
+            alignItems: "center",
           }}
         >
-          <h2>Daftar Surat Keluar</h2>
+          <h2 style={{ color: "#0f172a" }}>Daftar Surat Keluar</h2>
 
           <input
             value={cari}
@@ -469,14 +604,21 @@ await tugasRender.promise;
                 <tr>
                   <td
                     colSpan={6}
-                    style={{ textAlign: "center", padding: "28px", color: "#64748b" }}
+                    style={{
+                      textAlign: "center",
+                      padding: "28px",
+                      color: "#64748b",
+                    }}
                   >
                     Belum ada data surat keluar.
                   </td>
                 </tr>
               ) : (
                 dataTampil.map((item) => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <tr
+                    key={item.id}
+                    style={{ borderBottom: "1px solid #e2e8f0" }}
+                  >
                     <td style={tdStyle}>{item.nomor_surat}</td>
                     <td style={tdStyle}>{item.tanggal_surat || "-"}</td>
                     <td style={tdStyle}>{item.tujuan_surat}</td>
@@ -496,19 +638,37 @@ await tugasRender.promise;
                       )}
                     </td>
                     <td style={tdStyle}>
-                      <button
-                        onClick={() => hapusSuratKeluar(item.id)}
-                        style={{
-                          background: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          padding: "9px 12px",
-                          borderRadius: "7px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        🗑 Hapus
-                      </button>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          onClick={() => mulaiEdit(item)}
+                          style={{
+                            background: "#d97706",
+                            color: "white",
+                            border: "none",
+                            padding: "9px 12px",
+                            borderRadius: "7px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          ✏ Edit
+                        </button>
+
+                        <button
+                          onClick={() => hapusSuratKeluar(item.id)}
+                          style={{
+                            background: "#dc2626",
+                            color: "white",
+                            border: "none",
+                            padding: "9px 12px",
+                            borderRadius: "7px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          🗑 Hapus
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

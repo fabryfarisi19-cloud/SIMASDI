@@ -109,23 +109,30 @@ Perihal     : ${surat.perihal || "-"}`);
     );
   };
 
-  const hapusDisposisi = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
-    if (!yakin) return;
+ const hapusDisposisi = async (id: number) => {
+  const yakin = confirm("Yakin ingin menghapus disposisi ini?");
 
+  if (!yakin) return;
+
+  try {
     const { error } = await supabase
       .from("disposisi")
       .delete()
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      console.error(error);
+      alert("Gagal menghapus disposisi: " + error.message);
       return;
     }
 
-    alert("Riwayat disposisi berhasil dihapus");
+    alert("Disposisi berhasil dihapus.");
     await loadDisposisi();
-  };
+  } catch (error) {
+    console.error(error);
+    alert("Terjadi kesalahan saat menghapus disposisi.");
+  }
+};
 
   const selesaikanDisposisi = async (id: number) => {
     const { error } = await supabase
@@ -193,7 +200,7 @@ Perihal     : ${surat.perihal || "-"}`);
             <select
               value={suratDipilih}
               onChange={(e) => {
-                const noAgenda = e.target.value;
+     const noAgenda = e.target.value;
                 setSuratDipilih(noAgenda);
                 buatIsiDisposisi(noAgenda, tujuan);
               }}
@@ -230,7 +237,7 @@ Perihal     : ${surat.perihal || "-"}`);
             <select
               value={tujuan}
               onChange={(e) => {
-                const tujuanBaru = e.target.value;
+      const tujuanBaru = e.target.value;
                 setTujuan(tujuanBaru);
                 buatIsiDisposisi(suratDipilih, tujuanBaru);
               }}
@@ -444,19 +451,21 @@ Perihal     : ${surat.perihal || "-"}`);
                       </button>
                     )}
 
-                    <button
-                      onClick={() => hapusDisposisi(item.id)}
-                      style={{
-                        background: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        padding: "8px 10px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      🗑 Hapus
-                    </button>
+<button
+  type="button"
+  onClick={() => hapusDisposisi(item.id)}
+  style={{
+    border: "none",
+    borderRadius: "7px",
+    background: "#dc2626",
+    color: "white",
+    padding: "8px 12px",
+    fontWeight: "700",
+    cursor: "pointer",
+  }}
+>
+  🗑 Hapus
+</button>                    
                   </td>
                 </tr>
               ))
