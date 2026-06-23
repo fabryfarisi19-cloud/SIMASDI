@@ -3,340 +3,603 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function AgendaPage() {
-  const [form, setForm] = useState({
-    tanggal: "",
-    waktu: "",
-    kegiatan: "",
-    lokasi: "",
-    keterangan: "",
-  });
+type SuratMasuk = {
+  id: number;
+  nomor_surat: string | null;
+  tanggal_surat: string | null;
+  asal_surat: string | null;
+  perihal: string | null;
+};
 
-  const [agendaList, setAgendaList] = useState<any[]>([]);
+type Disposisi = {
+  id: number;
+  nomor_surat: string | null;
+  tujuan: string | null;
+  isi_disposisi: string | null;
+  status: string | null;
+};
 
-  const loadAgenda = async () => {
-    const { data, error } = await supabase
-      .from("agenda")
-      .select("*")
-      .order("tanggal", { ascending: true });
+type Agenda = {
+  id: number;
+  judul: string;
+  tanggal: string;
+  jam: string | null;
+  lokasi: string | null;
+  status: string | null;
+};
 
-    if (error) {
-      console.log(error.message);
-      return;
-    }
-
-    setAgendaList(data || []);
-  };
+export default function DashboardPage() {
+  const [suratMasuk, setSuratMasuk] = useState<SuratMasuk[]>([]);
+  const [disposisiMenunggu, setDisposisiMenunggu] = useState<Disposisi[]>([]);
+  const [jumlahSuratKeluar, setJumlahSuratKeluar] = useState(0);
+  const [jumlahArsip, setJumlahArsip] = useState(0);
+  const [jumlahAgendaHariIni, setJumlahAgendaHariIni] = useState(0);
+  const [agendaHariIniList, setAgendaHariIniList] = useState<Agenda[]>([]);
+  const [agendaBesokList, setAgendaBesokList] = useState<Agenda[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAgenda();
+    loadDashboard();
   }, []);
 
-  const simpanAgenda = async () => {
-    if (
-      !form.tanggal ||
-      !form.waktu ||
-      !form.kegiatan ||
-      !form.lokasi
-    ) {
-      alert("Lengkapi tanggal, waktu, kegiatan, dan lokasi terlebih dahulu");
-      return;
-    }
+  const formatTanggal = (tanggal: Date) => {
+    const tahun = tanggal.getFullYear();
+    const bulan = String(tanggal.getMonth() + 1).padStart(2, "0");
+    const hari = String(tanggal.getDate()).padStart(2, "0");
 
-    const { error } = await supabase.from("agenda").insert([
-      {
-        tanggal: form.tanggal,
-        waktu: form.waktu,
-        kegiatan: form.kegiatan,
-        lokasi: form.lokasi,
-        keterangan: form.keterangan,
-      },
-    ]);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    alert("✅ Agenda kegiatan berhasil disimpan");
-
-    setForm({
-      tanggal: "",
-      waktu: "",
-      kegiatan: "",
-      lokasi: "",
-      keterangan: "",
-    });
-
-    await loadAgenda();
+    return `${tahun}-${bulan}-${hari}`;
   };
 
-  const hapusAgenda = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus agenda kegiatan ini?");
-    if (!yakin) return;
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
 
-    const { error } = await supabase
-      .from("agenda")
-      .delete()
-      .eq("id", id);
+      const [masukRes, keluarRes, disposisiRes, arsipRes, agendaRes] =
+        await Promise.all([
+          supabase
+            .from("surat_masuk")
+            .select("*")
+            .order("id", { ascending: false }),
 
-    if (error) {
-      alert(error.message);
-      return;
+          supabase.from("surat_keluar").select("id"),
+
+          supabase
+            .from("disposisi")
+            .select("*")
+            .order("id", { ascending: false }),
+
+          supabase.from("arsip_digital").select("id"),
+
+          supabase
+            .from("agenda")
+            .select("*")
+            .order("tanggal", { ascending: true })
+            .order("jam", { ascending: true }),
+        ]);
+
+      if (masukRes.error) console.error("Surat masuk:", masukRes.error);
+      if (keluarRes.error) console.error("Surat keluar:", keluarRes.error);
+      if (disposisiRes.error) console.error("Disposisi:", disposisiRes.error);
+      if (arsipRes.error) console.error("Arsip:", arsipRes.error);
+      if (agendaRes.error) console.error("Agenda:", agendaRes.error);
+
+      const dataMasuk = masukRes.data || [];
+      const dataKeluar = keluarRes.data || [];
+      const dataDisposisi = disposisiRes.data || [];
+      const dataArsip = arsipRes.data || [];
+      const semuaAgenda = (agendaRes.data || []) as Agenda[];
+
+      const sekarang = new Date();
+      const hariIni = formatTanggal(sekarang);
+
+      const besok = new Date(sekarang);
+      besok.setDate(sekarang.getDate() + 1);
+      const tanggalBesok = formatTanggal(besok);
+
+      const agendaHariIni = semuaAgenda.filter(
+        (item) => item.tanggal === hariIni
+      );
+
+      const agendaBesok = semuaAgenda.filter(
+        (item) => item.tanggal === tanggalBesok
+      );
+
+      const disposisiBelumSelesai = dataDisposisi.filter(
+        (item) => item.status !== "Selesai"
+      );
+
+      setSuratMasuk(dataMasuk.slice(0, 5));
+      setJumlahSuratKeluar(dataKeluar.length);
+      setJumlahArsip(dataArsip.length);
+      setDisposisiMenunggu(disposisiBelumSelesai.slice(0, 5));
+
+      setJumlahAgendaHariIni(agendaHariIni.length);
+      setAgendaHariIniList(agendaHariIni);
+      setAgendaBesokList(agendaBesok);
+    } catch (error) {
+      console.error("Gagal memuat dashboard:", error);
+      alert("Gagal memuat data dashboard.");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Agenda kegiatan berhasil dihapus");
-    await loadAgenda();
   };
 
   return (
-    <div
+    <main
       style={{
+        minHeight: "100vh",
         padding: "32px",
         background: "#f5f7fb",
-        minHeight: "100vh",
       }}
     >
-      <h1
-        style={{
-          margin: "0 0 24px",
-          fontSize: "24px",
-          color: "#0f172a",
-        }}
-      >
-        Agenda Kegiatan
-      </h1>
-
       <div
         style={{
-          background: "white",
-          padding: "24px",
-          borderRadius: "14px",
-          boxShadow: "0 4px 18px rgba(15, 23, 42, 0.08)",
-          border: "1px solid #e2e8f0",
-          marginBottom: "28px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+          marginBottom: "26px",
         }}
       >
-        <h2
-          style={{
-            margin: "0 0 18px",
-            fontSize: "18px",
-            color: "#1e3a8a",
-          }}
-        >
-          Tambah Agenda Kegiatan
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "18px",
-          }}
-        >
-          <div>
-            <label style={labelStyle}>Tanggal</label>
-            <input
-              type="date"
-              value={form.tanggal}
-              onChange={(e) =>
-                setForm({ ...form, tanggal: e.target.value })
-              }
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Waktu</label>
-            <input
-              type="time"
-              value={form.waktu}
-              onChange={(e) =>
-                setForm({ ...form, waktu: e.target.value })
-              }
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Lokasi</label>
-            <input
-              value={form.lokasi}
-              onChange={(e) =>
-                setForm({ ...form, lokasi: e.target.value })
-              }
-              placeholder="Contoh: Aula Bapas Jakarta Barat"
-              style={inputStyle}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginTop: "18px" }}>
-          <label style={labelStyle}>Nama Kegiatan</label>
-          <input
-            value={form.kegiatan}
-            onChange={(e) =>
-              setForm({ ...form, kegiatan: e.target.value })
-            }
-            placeholder="Contoh: Rapat koordinasi bulanan"
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={{ marginTop: "18px" }}>
-          <label style={labelStyle}>Keterangan</label>
-          <textarea
-            value={form.keterangan}
-            onChange={(e) =>
-              setForm({ ...form, keterangan: e.target.value })
-            }
-            placeholder="Tambahkan keterangan jika diperlukan"
-            rows={4}
+        <div>
+          <h1
             style={{
-              ...inputStyle,
-              resize: "vertical",
-              minHeight: "105px",
-              boxSizing: "border-box",
+              margin: 0,
+              color: "#0f172a",
+              fontSize: "28px",
+              fontWeight: "800",
             }}
-          />
+          >
+            Dashboard SIMASDI
+          </h1>
+
+          <p style={{ margin: "7px 0 0", color: "#64748b" }}>
+            Ringkasan administrasi surat dan agenda kegiatan.
+          </p>
         </div>
 
         <button
-          onClick={simpanAgenda}
+          onClick={loadDashboard}
           style={{
-            marginTop: "18px",
+            border: "none",
+            borderRadius: "8px",
+            padding: "11px 16px",
             background: "#2563eb",
             color: "white",
-            border: "none",
-            padding: "12px 18px",
-            borderRadius: "8px",
+            fontWeight: "700",
             cursor: "pointer",
-            fontWeight: "600",
+            whiteSpace: "nowrap",
           }}
         >
-          Simpan Agenda
+          ↻ Perbarui Data
         </button>
       </div>
 
-      <h2
+      <div
         style={{
-          margin: "0 0 14px",
-          fontSize: "20px",
-          color: "#1e3a8a",
+          display: "grid",
+          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+          gap: "16px",
+          marginBottom: "26px",
         }}
       >
-        Daftar Agenda Kegiatan
-      </h2>
+        <StatCard
+          judul="Surat Masuk"
+          nilai={suratMasuk.length}
+          keterangan="Total surat masuk"
+          warna="#2563eb"
+        />
+
+        <StatCard
+          judul="Surat Keluar"
+          nilai={jumlahSuratKeluar}
+          keterangan="Total surat keluar"
+          warna="#7c3aed"
+        />
+
+        <StatCard
+          judul="Disposisi Menunggu"
+          nilai={disposisiMenunggu.length}
+          keterangan="Perlu ditindaklanjuti"
+          warna="#f59e0b"
+        />
+
+        <StatCard
+          judul="Arsip Digital"
+          nilai={jumlahArsip}
+          keterangan="Dokumen tersimpan"
+          warna="#16a34a"
+        />
+
+        <StatCard
+          judul="Agenda Hari Ini"
+          nilai={jumlahAgendaHariIni}
+          keterangan="Kegiatan hari ini"
+          warna="#dc2626"
+        />
+      </div>
 
       <div
         style={{
-          background: "white",
-          borderRadius: "12px",
-          border: "1px solid #e2e8f0",
-          overflowX: "auto",
-          boxShadow: "0 2px 10px rgba(15, 23, 42, 0.05)",
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: "18px",
+          marginBottom: "26px",
         }}
       >
-        <table
+        <AgendaCard
+          judul="Agenda Hari Ini"
+          label="Hari Ini"
+          warna="#dc2626"
+          warnaLatar="#fef2f2"
+          agenda={agendaHariIniList}
+          kosong="Tidak ada agenda untuk hari ini."
+        />
+
+        <AgendaCard
+          judul="Agenda Besok"
+          label="Besok"
+          warna="#2563eb"
+          warnaLatar="#eff6ff"
+          agenda={agendaBesokList}
+          kosong="Tidak ada agenda untuk besok."
+        />
+      </div>
+
+      <section style={cardStyle}>
+        <h2 style={judulStyle}>Surat Masuk Terbaru</h2>
+
+        <div style={tableWrapperStyle}>
+          <table style={tableStyle}>
+            <thead>
+              <tr style={{ background: "#f8fafc" }}>
+                <th style={thStyle}>Tanggal</th>
+                <th style={thStyle}>Nomor Surat</th>
+                <th style={thStyle}>Asal Surat</th>
+                <th style={thStyle}>Perihal</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} style={emptyStyle}>
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : suratMasuk.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={emptyStyle}>
+                    Belum ada surat masuk.
+                  </td>
+                </tr>
+              ) : (
+                suratMasuk.map((item) => (
+                  <tr
+                    key={item.id}
+                    style={{ borderTop: "1px solid #e2e8f0" }}
+                  >
+                    <td style={tdStyle}>
+                      {item.tanggal_surat
+                        ? new Date(item.tanggal_surat).toLocaleDateString(
+                            "id-ID"
+                          )
+                        : "-"}
+                    </td>
+                    <td style={tdStyle}>{item.nomor_surat || "-"}</td>
+                    <td style={tdStyle}>{item.asal_surat || "-"}</td>
+                    <td style={tdStyle}>{item.perihal || "-"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section style={cardStyle}>
+        <div
           style={{
-            width: "100%",
-            minWidth: "900px",
-            borderCollapse: "collapse",
+            padding: "18px 20px",
+            borderBottom: "1px solid #fde68a",
+            background: "#fffbeb",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <thead>
-            <tr style={{ background: "#f8fafc" }}>
-              <th style={headerStyle}>Tanggal</th>
-              <th style={headerStyle}>Waktu</th>
-              <th style={headerStyle}>Kegiatan</th>
-              <th style={headerStyle}>Lokasi</th>
-              <th style={headerStyle}>Keterangan</th>
-              <th style={headerStyle}>Aksi</th>
-            </tr>
-          </thead>
+          <h2
+            style={{
+              margin: 0,
+              color: "#c2410c",
+              fontSize: "20px",
+              fontWeight: "800",
+            }}
+          >
+            Disposisi Menunggu
+          </h2>
 
-          <tbody>
-            {agendaList.map((item) => (
-              <tr key={item.id}>
-                <td style={{ ...cellStyle, textAlign: "center" }}>
-                  {item.tanggal
-                    ? new Date(item.tanggal).toLocaleDateString("id-ID")
-                    : "-"}
-                </td>
-                <td style={{ ...cellStyle, textAlign: "center" }}>
-                  {item.waktu || "-"}
-                </td>
-                <td style={cellStyle}>{item.kegiatan}</td>
-                <td style={cellStyle}>{item.lokasi}</td>
-                <td style={cellStyle}>{item.keterangan || "-"}</td>
-                <td style={{ ...cellStyle, textAlign: "center" }}>
-                  <button
-                    onClick={() => hapusAgenda(item.id)}
-                    style={{
-                      background: "#dc2626",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
+          <span
+            style={{
+              background: "#fef3c7",
+              color: "#92400e",
+              borderRadius: "999px",
+              padding: "6px 11px",
+              fontSize: "12px",
+              fontWeight: "800",
+            }}
+          >
+            {disposisiMenunggu.length} Menunggu
+          </span>
+        </div>
+
+        <div style={tableWrapperStyle}>
+          <table style={tableStyle}>
+            <thead>
+              <tr style={{ background: "#fffbeb" }}>
+                <th style={thStyle}>Nomor Surat</th>
+                <th style={thStyle}>Tujuan</th>
+                <th style={thStyle}>Isi Disposisi</th>
+                <th style={thStyle}>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} style={emptyStyle}>
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : disposisiMenunggu.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={emptyStyle}>
+                    Tidak ada disposisi yang menunggu.
+                  </td>
+                </tr>
+              ) : (
+                disposisiMenunggu.map((item) => (
+                  <tr
+                    key={item.id}
+                    style={{ borderTop: "1px solid #fde68a" }}
                   >
-                    🗑 Hapus
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    <td style={tdStyle}>{item.nomor_surat || "-"}</td>
+                    <td style={tdStyle}>{item.tujuan || "-"}</td>
+                    <td style={tdStyle}>
+                      <div
+                        style={{
+                          maxWidth: "520px",
+                          overflow: "hidden",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {item.isi_disposisi || "-"}
+                      </div>
+                    </td>
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          background: "#facc15",
+                          color: "#713f12",
+                          borderRadius: "999px",
+                          padding: "6px 10px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                        }}
+                      >
+                        {item.status || "Menunggu"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
+}
 
-            {agendaList.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  style={{
-                    padding: "24px",
-                    textAlign: "center",
-                    color: "#64748b",
-                  }}
-                >
-                  Belum ada agenda kegiatan.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+function StatCard({
+  judul,
+  nilai,
+  keterangan,
+  warna,
+}: {
+  judul: string;
+  nilai: number;
+  keterangan: string;
+  warna: string;
+}) {
+  return (
+    <div
+      style={{
+        background: "white",
+        borderRadius: "14px",
+        padding: "18px",
+        borderLeft: `6px solid ${warna}`,
+        boxShadow: "0 6px 16px rgba(15, 23, 42, 0.07)",
+      }}
+    >
+      <div style={{ color: "#334155", fontSize: "14px", fontWeight: "700" }}>
+        {judul}
+      </div>
+
+      <div
+        style={{
+          marginTop: "10px",
+          color: warna,
+          fontSize: "34px",
+          fontWeight: "800",
+        }}
+      >
+        {nilai}
+      </div>
+
+      <div style={{ marginTop: "5px", color: "#94a3b8", fontSize: "13px" }}>
+        {keterangan}
       </div>
     </div>
   );
 }
 
-const labelStyle = {
-  display: "block",
-  marginBottom: "8px",
-  fontWeight: "600",
-  color: "#334155",
-};
+function AgendaCard({
+  judul,
+  label,
+  warna,
+  warnaLatar,
+  agenda,
+  kosong,
+}: {
+  judul: string;
+  label: string;
+  warna: string;
+  warnaLatar: string;
+  agenda: Agenda[];
+  kosong: string;
+}) {
+  return (
+    <section
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        border: "1px solid #e2e8f0",
+        overflow: "hidden",
+        boxShadow: "0 8px 18px rgba(15, 23, 42, 0.06)",
+      }}
+    >
+      <div
+        style={{
+          padding: "16px 18px",
+          background: warnaLatar,
+          borderBottom: `1px solid ${warna}`,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <div style={{ color: warna, fontSize: "17px", fontWeight: "800" }}>
+            {judul}
+          </div>
 
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "8px",
-  fontSize: "14px",
-  color: "#0f172a",
+          <div style={{ color: warna, fontSize: "12px", marginTop: "4px" }}>
+            {agenda.length} kegiatan terjadwal
+          </div>
+        </div>
+
+        <span
+          style={{
+            background: warna,
+            color: "white",
+            padding: "6px 10px",
+            borderRadius: "999px",
+            fontSize: "12px",
+            fontWeight: "800",
+          }}
+        >
+          {label}
+        </span>
+      </div>
+
+      <div style={{ padding: "8px 18px 18px" }}>
+        {agenda.length === 0 ? (
+          <p style={{ color: "#64748b", fontSize: "14px" }}>{kosong}</p>
+        ) : (
+          agenda.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                padding: "14px 0",
+                borderBottom: "1px solid #f1f5f9",
+              }}
+            >
+              <div
+                style={{
+                  color: "#0f172a",
+                  fontSize: "14px",
+                  fontWeight: "800",
+                }}
+              >
+                {item.judul}
+              </div>
+
+              <div
+                style={{
+                  marginTop: "6px",
+                  color: "#64748b",
+                  fontSize: "13px",
+                }}
+              >
+                🕒 {item.jam ? `${item.jam} WIB` : "Jam belum diisi"}
+              </div>
+
+              <div
+                style={{
+                  marginTop: "4px",
+                  color: "#64748b",
+                  fontSize: "13px",
+                }}
+              >
+                📍 {item.lokasi || "Lokasi belum diisi"}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+const cardStyle = {
   background: "white",
-  boxSizing: "border-box" as const,
+  borderRadius: "16px",
+  border: "1px solid #e2e8f0",
+  overflow: "hidden",
+  boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
+  marginBottom: "26px",
 };
 
-const headerStyle = {
+const judulStyle = {
+  margin: 0,
+  padding: "20px",
+  color: "#1e3a8a",
+  fontSize: "20px",
+  fontWeight: "800",
   borderBottom: "1px solid #e2e8f0",
-  padding: "14px",
-  textAlign: "center" as const,
+};
+
+const tableWrapperStyle = {
+  overflowX: "auto" as const,
+};
+
+const tableStyle = {
+  width: "100%",
+  minWidth: "850px",
+  borderCollapse: "collapse" as const,
+};
+
+const thStyle = {
+  padding: "14px 16px",
+  textAlign: "left" as const,
+  color: "#0f172a",
+  fontSize: "13px",
+  fontWeight: "800",
+  whiteSpace: "nowrap" as const,
+};
+
+const tdStyle = {
+  padding: "14px 16px",
   color: "#334155",
   fontSize: "14px",
+  verticalAlign: "top" as const,
 };
 
-const cellStyle = {
-  borderBottom: "1px solid #e2e8f0",
-  padding: "14px",
-  color: "#1e293b",
-  fontSize: "14px",
+const emptyStyle = {
+  padding: "30px",
+  textAlign: "center" as const,
+  color: "#64748b",
 };
