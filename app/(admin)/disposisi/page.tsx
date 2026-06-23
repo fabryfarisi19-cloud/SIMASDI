@@ -89,18 +89,16 @@ export default function DisposisiPage() {
     (item) => String(item.id) === suratId
   );
 
-  // Otomatis isi disposisi ketika surat atau tujuan dipilih
   useEffect(() => {
     if (!suratDipilih || !tujuan) return;
 
-    const isiOtomatis =
+    setIsiDisposisi(
       `Mohon ${tujuan} untuk menindaklanjuti surat berikut.\n\n` +
-      `Nomor Surat: ${suratDipilih.nomor_surat || "-"}\n` +
-      `Asal Surat: ${suratDipilih.asal_surat || "-"}\n` +
-      `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
-      `Harap diproses sesuai ketentuan yang berlaku.`;
-
-    setIsiDisposisi(isiOtomatis);
+        `Nomor Surat: ${suratDipilih.nomor_surat || "-"}\n` +
+        `Asal Surat: ${suratDipilih.asal_surat || "-"}\n` +
+        `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
+        `Harap diproses sesuai ketentuan yang berlaku.`
+    );
   }, [suratId, tujuan]);
 
   const resetForm = () => {
@@ -181,8 +179,7 @@ export default function DisposisiPage() {
       `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
       `*Isi Disposisi:*\n${isiOtomatis}`;
 
-    // Ganti jika nomor WhatsApp tujuan berbeda
-    const nomorWhatsApp = "6285113680385";
+    const nomorWhatsApp = "628179888792";
 
     window.open(
       `https://wa.me/${nomorWhatsApp}?text=${encodeURIComponent(pesan)}`,
@@ -191,8 +188,7 @@ export default function DisposisiPage() {
   };
 
   const hapusDisposisi = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus riwayat disposisi ini?");
-    if (!yakin) return;
+    if (!confirm("Yakin ingin menghapus riwayat disposisi ini?")) return;
 
     const { error } = await supabase
       .from("disposisi")
@@ -306,11 +302,12 @@ export default function DisposisiPage() {
           />
         </div>
 
+        {/* Tombol rapi di HP */}
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
             gap: "12px",
-            flexWrap: "wrap",
           }}
         >
           <button
@@ -318,15 +315,18 @@ export default function DisposisiPage() {
             onClick={kirimWhatsApp}
             style={{
               border: "none",
-              borderRadius: "9px",
-              padding: "13px 18px",
+              borderRadius: "10px",
+              padding: "14px 8px",
               background: "#16a34a",
               color: "white",
               fontWeight: "800",
+              fontSize: "14px",
               cursor: "pointer",
+              width: "100%",
+              whiteSpace: "nowrap",
             }}
           >
-            Kirim Disposisi WA
+            Kirim WA
           </button>
 
           <button
@@ -335,31 +335,37 @@ export default function DisposisiPage() {
             disabled={menyimpan}
             style={{
               border: "none",
-              borderRadius: "9px",
-              padding: "13px 18px",
+              borderRadius: "10px",
+              padding: "14px 8px",
               background: "#2563eb",
               color: "white",
               fontWeight: "800",
+              fontSize: "14px",
               cursor: "pointer",
+              width: "100%",
+              whiteSpace: "nowrap",
             }}
           >
-            {menyimpan ? "Menyimpan..." : "Simpan Disposisi"}
+            {menyimpan ? "Menyimpan..." : "Simpan"}
           </button>
 
           <button
             type="button"
             onClick={resetForm}
             style={{
+              gridColumn: "1 / -1",
               border: "none",
-              borderRadius: "9px",
-              padding: "13px 18px",
+              borderRadius: "10px",
+              padding: "13px 10px",
               background: "#64748b",
               color: "white",
               fontWeight: "800",
+              fontSize: "14px",
               cursor: "pointer",
+              width: "100%",
             }}
           >
-            Reset
+            Reset Form
           </button>
         </div>
       </section>
