@@ -29,7 +29,7 @@ const menu = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [menuBuka, setMenuBuka] = useState(false);
+  const [bukaMenu, setBukaMenu] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("login");
@@ -38,184 +38,195 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* HEADER KHUSUS HP */}
-      <header
-        className="mobile-header"
-        style={{
-          display: "none",
-          height: "64px",
-          padding: "0 16px",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "#1e293b",
-          color: "white",
-          position: "sticky",
-          top: 0,
-          zIndex: 60,
-        }}
-      >
-        <div style={{ fontWeight: "800", fontSize: "20px" }}>SIMASDI</div>
+      {/* Header khusus HP */}
+      <header className="header-mobile">
+        <b>SIMASDI</b>
 
         <button
-          onClick={() => setMenuBuka(true)}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "white",
-            display: "flex",
-            padding: "8px",
-            cursor: "pointer",
-          }}
+          onClick={() => setBukaMenu(true)}
+          className="tombol-hamburger"
           aria-label="Buka menu"
         >
           <Menu size={28} />
         </button>
       </header>
 
-      {/* LAPISAN GELAP SAAT MENU HP TERBUKA */}
-      {menuBuka && (
+      {/* Latar gelap ketika menu terbuka */}
+      {bukaMenu && (
         <div
-          onClick={() => setMenuBuka(false)}
-          className="mobile-overlay"
-          style={{
-            display: "none",
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.55)",
-            zIndex: 70,
-          }}
+          className="overlay-mobile"
+          onClick={() => setBukaMenu(false)}
         />
       )}
 
-      {/* SIDEBAR */}
-      <aside
-        className={`sidebar ${menuBuka ? "sidebar-open" : ""}`}
-        style={{
-          width: "258px",
-          minHeight: "100vh",
-          padding: "26px 16px",
-          background: "#1e293b",
-          color: "white",
-          boxSizing: "border-box",
-          position: "fixed",
-          left: 0,
-          top: 0,
-          zIndex: 80,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "0 10px 22px",
-            borderBottom: "1px solid rgba(255,255,255,0.2)",
-            marginBottom: "18px",
-          }}
-        >
-          <div style={{ fontSize: "25px", fontWeight: "800" }}>SIMASDI</div>
+      <aside className={`sidebar ${bukaMenu ? "buka" : ""}`}>
+        <div className="sidebar-judul">
+          <b>SIMASDI</b>
 
           <button
-            onClick={() => setMenuBuka(false)}
-            className="close-mobile-menu"
-            style={{
-              display: "none",
-              background: "transparent",
-              border: "none",
-              color: "white",
-              cursor: "pointer",
-              padding: "4px",
-            }}
+            onClick={() => setBukaMenu(false)}
+            className="tombol-tutup"
             aria-label="Tutup menu"
           >
             <X size={26} />
           </button>
         </div>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+        <nav className="sidebar-menu">
           {menu.map((item) => {
             const Icon = item.icon;
             const aktif =
               pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              (item.href !== "/dashboard" &&
+                pathname.startsWith(item.href));
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMenuBuka(false)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "13px 14px",
-                  borderRadius: "10px",
-                  textDecoration: "none",
-                  color: "white",
-                  fontWeight: aktif ? "800" : "600",
-                  background: aktif ? "#2563eb" : "transparent",
-                  fontSize: "15px",
-                }}
+                onClick={() => setBukaMenu(false)}
+                className={`menu-link ${aktif ? "aktif" : ""}`}
               >
-                <Icon size={20} />
-                {item.nama}
+                <Icon size={19} />
+                <span>{item.nama}</span>
               </Link>
             );
           })}
         </nav>
 
-        <button
-          onClick={logout}
-          style={{
-            marginTop: "auto",
-            width: "100%",
-            border: "none",
-            borderRadius: "10px",
-            padding: "14px",
-            background: "#ef2525",
-            color: "white",
-            fontWeight: "800",
-            fontSize: "15px",
-            cursor: "pointer",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
+        <button onClick={logout} className="tombol-logout">
           <LogOut size={19} />
           Logout
         </button>
       </aside>
 
       <style jsx global>{`
-        @media (max-width: 768px) {
-          .mobile-header {
-            display: flex !important;
-          }
+        .header-mobile {
+          display: none;
+        }
 
-          .mobile-overlay {
-            display: block !important;
+        .sidebar {
+          width: 258px;
+          min-height: 100vh;
+          background: #1e293b;
+          color: white;
+          padding: 26px 16px;
+          box-sizing: border-box;
+          position: fixed;
+          left: 0;
+          top: 0;
+          z-index: 80;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .sidebar-judul {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 10px 22px;
+          margin-bottom: 18px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+          font-size: 25px;
+        }
+
+        .sidebar-menu {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+        }
+
+        .menu-link {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 14px;
+          border-radius: 10px;
+          color: white;
+          text-decoration: none;
+          font-size: 15px;
+          font-weight: 600;
+        }
+
+        .menu-link.aktif {
+          background: #2563eb;
+          font-weight: 800;
+        }
+
+        .tombol-logout {
+          margin-top: auto;
+          width: 100%;
+          border: none;
+          border-radius: 10px;
+          padding: 14px;
+          background: #ef2525;
+          color: white;
+          font-weight: 800;
+          font-size: 15px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .tombol-hamburger,
+        .tombol-tutup {
+          background: transparent;
+          border: none;
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+        }
+
+        .tombol-tutup {
+          display: none;
+        }
+
+        .overlay-mobile {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .header-mobile {
+            height: 62px;
+            background: #1e293b;
+            color: white;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 70;
+            font-size: 20px;
           }
 
           .sidebar {
             transform: translateX(-100%);
             transition: transform 0.25s ease;
-            top: 0 !important;
             height: 100vh;
+            top: 0;
           }
 
-          .sidebar.sidebar-open {
+          .sidebar.buka {
             transform: translateX(0);
           }
 
-          .close-mobile-menu {
-            display: flex !important;
+          .tombol-tutup {
+            display: flex;
+          }
+
+          .overlay-mobile {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            z-index: 75;
           }
         }
       `}</style>
     </>
   );
-              }
+}
