@@ -19,15 +19,21 @@ type Arsip = {
 const formatTanggal = (tanggal: string | null) => {
   if (!tanggal) return "-";
 
-  return new Date(tanggal).toLocaleDateString("id-ID");
+  const hasil = new Date(tanggal);
+
+  if (Number.isNaN(hasil.getTime())) return "-";
+
+  return hasil.toLocaleDateString("id-ID");
 };
 
 export default function ArsipDigitalPage() {
   const [arsipList, setArsipList] = useState<Arsip[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [kataKunci, setKataKunci] = useState("");
   const [filterJenis, setFilterJenis] = useState("Semua Jenis");
   const [filterTahun, setFilterTahun] = useState("Semua Tahun");
+
   const [file, setFile] = useState<File | null>(null);
   const [jenisUpload, setJenisUpload] = useState("Arsip Lainnya");
   const [uploading, setUploading] = useState(false);
@@ -59,32 +65,53 @@ export default function ArsipDigitalPage() {
     }
   };
 
-  const daftarTahun = useMemo(() => {
-    const tahun = arsipList
-      .map((item) => {
-        if (!item.tanggal) return null;
-        return new Date(item.tanggal).getFullYear().toString();
-      })
-      .filter(Boolean);
+  const daftarTahun = useMemo<string[]>(() => {
+    const tahun: string[] = [];
 
-    return [...new Set(tahun)].sort((a, b) => Number(b) - Number(a));
+    arsipList.forEach((item) => {
+      if (!item.tanggal) return;
+
+      const tanggal = new Date(item.tanggal);
+
+      if (Number.isNaN(tanggal.getTime())) return;
+
+      const nilaiTahun = tanggal.getFullYear().toString();
+
+      if (!tahun.includes(nilaiTahun)) {
+        tahun.push(nilaiTahun);
+      }
+    });
+
+    return tahun.sort((a, b) => Number(b) - Number(a));
   }, [arsipList]);
 
   const arsipTampil = useMemo(() => {
     return arsipList.filter((item) => {
-      const teks =
-        `${item.nomor_surat || ""} ${item.dokumen || ""} ${
-          item.asal_tujuan || ""
-        } ${item.jenis || ""}`.toLowerCase();
+      const teksGabungan = [
+        item.nomor_surat || "",
+        item.dokumen || "",
+        item.jenis || "",
+        item.asal_tujuan || "",
+      ]
+        .join(" ")
+        .toLowerCase();
 
-      const cocokKataKunci = teks.includes(kataKunci.toLowerCase());
+      const cocokKataKunci = teksGabungan.includes(
+        kataKunci.trim().toLowerCase()
+      );
 
       const cocokJenis =
         filterJenis === "Semua Jenis" || item.jenis === filterJenis;
 
-      const tahunItem = item.tanggal
-        ? new Date(item.tanggal).getFullYear().toString()
-        : "";
+      let tahunItem = "";
+
+      if (item.tanggal) {
+        const tanggal = new Date(item.tanggal);
+
+        if (!Number.isNaN(tanggal.getTime())) {
+          tahunItem = tanggal.getFullYear().toString();
+        }
+      }
 
       const cocokTahun =
         filterTahun === "Semua Tahun" || tahunItem === filterTahun;
@@ -130,7 +157,10 @@ export default function ArsipDigitalPage() {
       ]);
 
       if (error) {
-        alert("File berhasil diupload, tetapi gagal menyimpan data: " + error.message);
+        alert(
+          "File berhasil diupload, tetapi data arsip gagal disimpan: " +
+            error.message
+        );
         return;
       }
 
@@ -141,7 +171,7 @@ export default function ArsipDigitalPage() {
 
       const inputFile = document.getElementById(
         "fileArsip"
-      ) as HTMLInputElement;
+      ) as HTMLInputElement | null;
 
       if (inputFile) inputFile.value = "";
 
@@ -160,7 +190,8 @@ export default function ArsipDigitalPage() {
       return;
     }
 
-    const yakin = confirm(`Hapus arsip "${item.dokumen || "-"}"?`);
+    const yakin = confirm(`Yakin ingin menghapus "${item.dokumen || "-"}"?`);
+
     if (!yakin) return;
 
     try {
@@ -229,6 +260,18 @@ export default function ArsipDigitalPage() {
     );
   };
 
+  const jumlahSuratMasuk = arsipList.filter(
+    (item) => item.jenis === "Surat Masuk"
+  ).length;
+
+  const jumlahSuratKeluar = arsipList.filter(
+    (item) => item.jenis === "Surat Keluar"
+  ).length;
+
+  const jumlahArsipLainnya = arsipList.filter(
+    (item) => item.jenis === "Arsip Lainnya"
+  ).length;
+
   return (
     <main className="halaman-arsip">
       <div className="judul-halaman">
@@ -238,26 +281,24 @@ export default function ArsipDigitalPage() {
 
       <div className="stat-grid">
         <StatBox judul="Total Arsip" nilai={arsipList.length} warna="#2563eb" />
-        <StatBox
-          judul="Surat Masuk"
-          nilai={arsipList.filter((item) => item.jenis === "Surat Masuk").length}
-          warna="#16a34a"
-        />
+        <StatBox judul="Surat Masuk" nilai={jumlahSuratMasuk} warna="#16a34a" />
         <StatBox
           judul="Surat Keluar"
-          nilai={arsipList.filter((item) => item.jenis === "Surat Keluar").length}
+          nilai={jumlahSuratKeluar}
           warna="#ea580c"
         />
         <StatBox
           judul="Arsip Lainnya"
-          nilai={arsipList.filter((item) => item.jenis === "Arsip Lainnya").length}
+          nilai={jumlahArsipLainnya}
           warna="#64748b"
         />
       </div>
 
-      <section className="kartu upload-card">
+      <section className="kartu">
         <h2>Upload Arsip Lainnya</h2>
-        <p>Surat Masuk dan Surat Keluar sudah otomatis masuk ke halaman ini.</p>
+        <p className="keterangan">
+          Surat Masuk dan Surat Keluar sudah otomatis masuk ke halaman ini.
+        </p>
 
         <input
           id="fileArsip"
@@ -283,9 +324,10 @@ export default function ArsipDigitalPage() {
         </div>
       </section>
 
-      <section className="kartu daftar-card">
+      <section className="kartu">
         <div className="header-daftar">
           <h2>Daftar Arsip</h2>
+
           <button onClick={cetakPDF} className="tombol-pdf">
             🖨 Cetak PDF
           </button>
@@ -317,6 +359,7 @@ export default function ArsipDigitalPage() {
             onChange={(e) => setFilterTahun(e.target.value)}
           >
             <option value="Semua Tahun">Semua Tahun</option>
+
             {daftarTahun.map((tahun) => (
               <option key={tahun} value={tahun}>
                 {tahun}
@@ -360,15 +403,17 @@ export default function ArsipDigitalPage() {
                     <td>{item.nomor_surat || "-"}</td>
                     <td>{item.dokumen || "-"}</td>
                     <td>
-                      <span className={`badge ${item.jenis?.replaceAll(" ", "-")}`}>
-                        {item.jenis || "-"}
-                      </span>
+                      <span className="badge">{item.jenis || "-"}</span>
                     </td>
                     <td>{item.asal_tujuan || "-"}</td>
                     <td>{formatTanggal(item.tanggal)}</td>
                     <td>
                       {item.file_url ? (
-                        <a href={item.file_url} target="_blank">
+                        <a
+                          href={item.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
                           👁 Lihat
                         </a>
                       ) : (
@@ -376,15 +421,16 @@ export default function ArsipDigitalPage() {
                       )}
                     </td>
                     <td>
-                      {item.file_url && (
+                      {item.file_url ? (
                         <a
                           href={item.file_url}
                           target="_blank"
+                          rel="noreferrer"
                           className="tombol-unduh"
                         >
                           Unduh
                         </a>
-                      )}
+                      ) : null}
 
                       {item.sumber === "Arsip Lainnya" ? (
                         <button
@@ -394,7 +440,9 @@ export default function ArsipDigitalPage() {
                           Hapus
                         </button>
                       ) : (
-                        <span className="kelola-asal">Kelola di menu asal</span>
+                        <span className="kelola-asal">
+                          Kelola di menu asal
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -426,7 +474,6 @@ export default function ArsipDigitalPage() {
         .judul-halaman p {
           margin: 7px 0 0;
           color: #64748b;
-          max-width: 520px;
         }
 
         .stat-grid {
@@ -451,18 +498,18 @@ export default function ArsipDigitalPage() {
           font-weight: 800;
         }
 
-        .upload-card p {
-          color: #64748b;
+        .keterangan {
           margin: 12px 0 16px;
+          color: #64748b;
         }
 
         input,
         select {
-          box-sizing: border-box;
           width: 100%;
+          box-sizing: border-box;
+          padding: 12px;
           border: 1px solid #cbd5e1;
           border-radius: 9px;
-          padding: 12px;
           background: white;
           color: #334155;
           font-size: 14px;
@@ -483,8 +530,8 @@ export default function ArsipDigitalPage() {
           border: none;
           border-radius: 9px;
           padding: 12px 15px;
-          color: white;
           background: #2563eb;
+          color: white;
           font-weight: 800;
           cursor: pointer;
           white-space: nowrap;
@@ -497,8 +544,8 @@ export default function ArsipDigitalPage() {
 
         .header-daftar {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           gap: 14px;
           margin-bottom: 18px;
         }
@@ -551,29 +598,21 @@ export default function ArsipDigitalPage() {
 
         .badge {
           display: inline-block;
-          border-radius: 999px;
           padding: 6px 9px;
+          border-radius: 999px;
+          background: #64748b;
           color: white;
           font-size: 11px;
           font-weight: 800;
           white-space: nowrap;
-          background: #64748b;
-        }
-
-        .badge.Surat-Masuk {
-          background: #16a34a;
-        }
-
-        .badge.Surat-Keluar {
-          background: #ea580c;
         }
 
         .tombol-unduh,
         .tombol-hapus {
           display: inline-block;
-          border-radius: 7px;
-          padding: 8px 10px;
           margin-right: 6px;
+          padding: 8px 10px;
+          border-radius: 7px;
           color: white !important;
           font-size: 12px;
           font-weight: 800;
@@ -626,8 +665,8 @@ export default function ArsipDigitalPage() {
           }
 
           .header-daftar {
-            align-items: flex-start;
             flex-direction: column;
+            align-items: stretch;
           }
 
           .tombol-pdf {
@@ -642,10 +681,6 @@ export default function ArsipDigitalPage() {
           .filter-arsip input,
           .filter-arsip select {
             width: 100%;
-          }
-
-          .tabel-wrapper {
-            margin-top: 14px;
           }
         }
       `}</style>
@@ -673,6 +708,7 @@ function StatBox({
       }}
     >
       <div style={{ fontSize: "30px", fontWeight: 800 }}>{nilai}</div>
+
       <div style={{ marginTop: "5px", fontSize: "13px", fontWeight: 700 }}>
         {judul}
       </div>
