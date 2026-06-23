@@ -4,7 +4,6 @@ import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Tesseract from "tesseract.js";
 
-
 type FormSurat = {
   no_agenda: string;
   nomor_surat: string;
@@ -38,6 +37,7 @@ export default function SuratMasukPage() {
 
     if (error) {
       console.error(error.message);
+      alert("Gagal memuat data surat: " + error.message);
       return;
     }
 
@@ -48,180 +48,161 @@ export default function SuratMasukPage() {
     loadSurat();
   }, []);
 
- const ambilDataDariTeks = (teks: string) => {
-  const bersihkan = (nilai: string) =>
-    nilai
-      .replace(/\s+/g, " ")
-      .replace(/[|]/g, "")
-      .trim();
+  const ambilDataDariTeks = (teks: string) => {
+    const bersihkan = (nilai: string) =>
+      nilai.replace(/\s+/g, " ").replace(/[|]/g, "").trim();
 
-  const baris = teks
-    .split("\n")
-    .map((item) => bersihkan(item))
-    .filter(Boolean);
+    const baris = teks
+      .split("\n")
+      .map((item) => bersihkan(item))
+      .filter(Boolean);
 
-  // Ambil nomor surat dari baris yang mengandung kata Nomor / Nomor Surat
-  const barisNomor = baris.find((item) =>
-    /^(nomor|nomor surat|no\.?|no surat)\b/i.test(item)
-  );
-
-  let nomorSuratBersih = "";
-
-  if (barisNomor) {
-    nomorSuratBersih = barisNomor
-      .replace(/^(nomor|nomor surat|no\.?|no surat)\s*[:.]?\s*/i, "")
-      // buang tanggal jika ikut terbaca setelah nomor
-      .replace(
-        /\b\d{1,2}\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i,
-        ""
-      )
-      .replace(/\b(?:tanggal|tgl\.?)\s+\d{1,2}\s+(?:januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b.*$/i, "")
-.replace(/\b\d{1,2}\s+(?:januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i, "")
-.replace(/\b(?:tanggal|tgl\.?)\s+\d{1,2}\s+(?:januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b.*$/i, "")
-.replace(/\b\d{1,2}\s+(?:januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i, "")
-.replace(/\bjakarta\b.*$/i, "")
-      .trim();
-  }
-
-  // Cadangan bila format OCR tidak rapi
-  if (!nomorSuratBersih) {
-    const nomorMatch = teks.match(
-      /(?:Nomor\s*Surat|Nomor|No\.?)\s*[:.]?\s*([A-Z0-9][A-Z0-9./\- ]{4,})/i
+    const barisNomor = baris.find((item) =>
+      /^(nomor|nomor surat|no\.?|no surat)\b/i.test(item)
     );
 
-    nomorSuratBersih = nomorMatch
-      ? nomorMatch[1]
-          .replace(
-            /\b\d{1,2}\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i,
-            ""
-          )
-          .replace(/\bjakarta\b.*$/i, "")
-          .trim()
+    let nomorSuratBersih = "";
+
+    if (barisNomor) {
+      nomorSuratBersih = barisNomor
+        .replace(/^(nomor|nomor surat|no\.?|no surat)\s*[:.]?\s*/i, "")
+        .replace(
+          /\b\d{1,2}\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i,
+          ""
+        )
+        .replace(/\bjakarta\b.*$/i, "")
+        .trim();
+    }
+
+    if (!nomorSuratBersih) {
+      const nomorMatch = teks.match(
+        /(?:Nomor\s*Surat|Nomor|No\.?)\s*[:.]?\s*([A-Z0-9][A-Z0-9./\- ]{4,})/i
+      );
+
+      nomorSuratBersih = nomorMatch
+        ? nomorMatch[1]
+            .replace(
+              /\b\d{1,2}\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+\d{4}\b.*$/i,
+              ""
+            )
+            .replace(/\bjakarta\b.*$/i, "")
+            .trim()
+        : "";
+    }
+
+    const perihalMatch =
+      teks.match(/(?:Perihal|Hal)\s*[:.]?\s*([^\n]+)/i) ||
+      teks.match(/(?:Perihal|Hal)\s*\n\s*([^\n]+)/i);
+
+    const tanggalMatch = teks.match(
+      /(?:Jakarta|Jakarta Barat|DKI Jakarta)?\s*,?\s*(\d{1,2}\s+(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4})/i
+    );
+
+    const asalSurat =
+      baris.find(
+        (item) =>
+          item.toLowerCase().includes("kantor wilayah") ||
+          item.toLowerCase().includes("direktorat") ||
+          item.toLowerCase().includes("kementerian") ||
+          item.toLowerCase().includes("balai") ||
+          item.toLowerCase().includes("lapas") ||
+          item.toLowerCase().includes("rutan")
+      ) || "";
+
+    const bulan: Record<string, string> = {
+      Januari: "01",
+      Februari: "02",
+      Maret: "03",
+      April: "04",
+      Mei: "05",
+      Juni: "06",
+      Juli: "07",
+      Agustus: "08",
+      September: "09",
+      Oktober: "10",
+      November: "11",
+      Desember: "12",
+    };
+
+    const tanggalFormat = tanggalMatch
+      ? (() => {
+          const bagian = tanggalMatch[1].split(" ");
+          return `${bagian[2]}-${bulan[bagian[1]]}-${bagian[0].padStart(2, "0")}`;
+        })()
       : "";
-  }
 
-  const perihalMatch =
-    teks.match(/(?:Perihal|Hal)\s*[:.]?\s*([^\n]+)/i) ||
-    teks.match(/(?:Perihal|Hal)\s*\n\s*([^\n]+)/i);
-
-  const tanggalMatch = teks.match(
-    /(?:Jakarta|Jakarta Barat|DKI Jakarta)?\s*,?\s*(\d{1,2}\s+(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4})/i
-  );
-
-  const asalSurat =
-    baris.find(
-      (item) =>
-        item.toLowerCase().includes("kantor wilayah") ||
-        item.toLowerCase().includes("direktorat") ||
-        item.toLowerCase().includes("kementerian") ||
-        item.toLowerCase().includes("balai") ||
-        item.toLowerCase().includes("lapas") ||
-        item.toLowerCase().includes("rutan")
-    ) || "";
-
-  const bulan: Record<string, string> = {
-    Januari: "01",
-    Februari: "02",
-    Maret: "03",
-    April: "04",
-    Mei: "05",
-    Juni: "06",
-    Juli: "07",
-    Agustus: "08",
-    September: "09",
-    Oktober: "10",
-    November: "11",
-    Desember: "12",
+    setForm((lama) => ({
+      ...lama,
+      no_agenda: lama.no_agenda || `SM-${Date.now().toString().slice(-6)}`,
+      nomor_surat: nomorSuratBersih || lama.nomor_surat,
+      tanggal_surat: tanggalFormat || lama.tanggal_surat,
+      asal_surat: asalSurat || lama.asal_surat,
+      perihal: perihalMatch ? bersihkan(perihalMatch[1]) : lama.perihal,
+    }));
   };
 
-  const tanggalFormat = tanggalMatch
-    ? (() => {
-        const bagian = tanggalMatch[1].split(" ");
-        return `${bagian[2]}-${bulan[bagian[1]]}-${bagian[0].padStart(2, "0")}`;
-      })()
-    : "";
-
-  setForm((lama) => ({
-    ...lama,
-    no_agenda: lama.no_agenda || `SM-${Date.now().toString().slice(-6)}`,
-    nomor_surat: nomorSuratBersih || lama.nomor_surat,
-    tanggal_surat: tanggalFormat || lama.tanggal_surat,
-    asal_surat: asalSurat || lama.asal_surat,
-    perihal: perihalMatch ? bersihkan(perihalMatch[1]) : lama.perihal,
-  }));
-};
- const bacaFileOtomatis = async (file: File) => {
-  try {
-    
-    // PDF.js hanya dipanggil saat pengguna memilih file PDF di browser
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"; 
+  const bacaFileOtomatis = async (file: File) => {
+    try {
       setSedangMembaca(true);
 
       let sumberGambar: string | HTMLCanvasElement;
 
       if (file.type === "application/pdf") {
- const dataPdf = new Uint8Array(await file.arrayBuffer());
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-const pdf = await pdfjsLib.getDocument({
-  data: dataPdf,
-}).promise;
+        const dataPdf = new Uint8Array(await file.arrayBuffer());
 
-const halaman = await pdf.getPage(1);
+        const pdf = await pdfjsLib.getDocument({
+          data: dataPdf,
+        }).promise;
 
-const viewport = halaman.getViewport({
-  scale: 2,
-});
+        const halaman = await pdf.getPage(1);
 
-const canvas = document.createElement("canvas");
-const context = canvas.getContext("2d");
+        const viewport = halaman.getViewport({ scale: 2 });
 
-if (!context) {
-  throw new Error("Canvas tidak dapat dibuat");
-}
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
-canvas.width = viewport.width;
-canvas.height = viewport.height;
+        if (!context) {
+          throw new Error("Canvas tidak dapat dibuat");
+        }
 
-const tugasRender = halaman.render({
-  canvasContext: context,
-  viewport: viewport,
-} as any);
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-await tugasRender.promise;
+        await halaman.render({
+          canvasContext: context,
+          viewport: viewport,
+        } as any).promise;
 
-sumberGambar = canvas;       
+        sumberGambar = canvas;
       } else {
         sumberGambar = URL.createObjectURL(file);
       }
 
       const hasil = await Tesseract.recognize(sumberGambar, "ind");
 
-    ambilDataDariTeks(hasil.data.text);
+      ambilDataDariTeks(hasil.data.text);
 
-// Jika perihal belum terbaca dari isi PDF/gambar,
-// gunakan nama file sebagai perihal sementara
-setForm((lama) => ({
-  ...lama,
-  perihal:
-    lama.perihal ||
-    file.name
-      .replace(/\.(pdf|jpg|jpeg|png)$/i, "")
-      .replace(/[_-]/g, " "),
-}));
+      setForm((lama) => ({
+        ...lama,
+        perihal:
+          lama.perihal ||
+          file.name
+            .replace(/\.(pdf|jpg|jpeg|png)$/i, "")
+            .replace(/[_-]/g, " "),
+      }));
 
       if (typeof sumberGambar === "string") {
         URL.revokeObjectURL(sumberGambar);
       }
 
-      alert(
-        "Pembacaan selesai. Periksa kembali data surat sebelum disimpan."
-      );
+      alert("Pembacaan selesai. Periksa kembali data surat sebelum disimpan.");
     } catch (error) {
       console.error(error);
       alert(
-        "PDF berhasil dipilih, tetapi pembacaan otomatis gagal. Isi data surat secara manual lalu simpan."
+        "File berhasil dipilih, tetapi pembacaan otomatis gagal. Isi data surat secara manual lalu simpan."
       );
     } finally {
       setSedangMembaca(false);
@@ -357,261 +338,402 @@ setForm((lama) => ({
   });
 
   return (
-    <div style={{ padding: "32px", background: "#f5f7fb", minHeight: "100vh" }}>
-      <h1 style={{ margin: "0 0 26px", fontSize: "26px" }}>Surat Masuk</h1>
-
-      <div
-        style={{
-          background: "white",
-          padding: "24px",
-          borderRadius: "14px",
-          boxShadow: "0 4px 18px rgba(15, 23, 42, 0.08)",
-        }}
-      >
-        <h2 style={{ color: "#123b94", fontSize: "18px", marginTop: 0 }}>
-          Upload & Baca Surat Otomatis
-        </h2>
-
-        <div
-          onClick={() => inputFileRef.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragAktif(true);
-          }}
-          onDragLeave={() => setDragAktif(false)}
-          onDrop={handleDrop}
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: "24px",
+        background: "#f5f7fb",
+      }}
+    >
+      <div style={{ maxWidth: "1150px", margin: "0 auto" }}>
+        <h1
           style={{
-            border: `2px dashed ${dragAktif ? "#2563eb" : "#94a3b8"}`,
-            borderRadius: "12px",
-            padding: "32px",
-            textAlign: "center",
-            cursor: "pointer",
-            background: dragAktif ? "#eff6ff" : "#f8fafc",
-            marginBottom: "26px",
+            margin: "0 0 24px",
+            color: "#0f172a",
+            fontSize: "28px",
+            fontWeight: "800",
           }}
         >
-          <div style={{ fontSize: "28px" }}>📄</div>
-          <b>Tarik dan lepas file surat di sini</b>
-          <div style={{ marginTop: "8px", color: "#64748b" }}>
-            atau klik untuk mencari file JPG, JPEG, PNG, atau PDF
-          </div>
+          Surat Masuk
+        </h1>
 
-          {fileSurat && (
-            <div style={{ marginTop: "14px", color: "#047857", fontWeight: "bold" }}>
-              File dipilih: {fileSurat.name}
+        <section style={cardStyle}>
+          <h2 style={judulStyle}>Upload & Baca Surat Otomatis</h2>
+
+          <div
+            onClick={() => inputFileRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragAktif(true);
+            }}
+            onDragLeave={() => setDragAktif(false)}
+            onDrop={handleDrop}
+            style={{
+              border: `2px dashed ${dragAktif ? "#2563eb" : "#94a3b8"}`,
+              borderRadius: "12px",
+              padding: "28px 18px",
+              textAlign: "center",
+              cursor: "pointer",
+              background: dragAktif ? "#eff6ff" : "#f8fafc",
+              marginBottom: "28px",
+            }}
+          >
+            <div style={{ fontSize: "32px", marginBottom: "8px" }}>📄</div>
+
+            <div
+              style={{
+                color: "#0f172a",
+                fontSize: "17px",
+                fontWeight: "800",
+              }}
+            >
+              Tarik dan lepas file surat di sini
             </div>
-          )}
 
-          {sedangMembaca && (
-            <div style={{ marginTop: "14px", color: "#2563eb", fontWeight: "bold" }}>
-              Sedang membaca surat otomatis...
+            <div
+              style={{
+                marginTop: "7px",
+                color: "#64748b",
+                fontSize: "14px",
+              }}
+            >
+              atau klik untuk mencari file JPG, JPEG, PNG, atau PDF
             </div>
-          )}
 
-          <input
-            ref={inputFileRef}
-            type="file"
-            accept=".jpg,.jpeg,.png,.pdf"
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-        </div>
-
-        <h2 style={{ color: "#123b94", fontSize: "18px" }}>Data Surat Masuk</h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: "14px",
-          }}
-        >
-          <div>
-            <b>No Agenda</b>
-            <input
-              value={form.no_agenda}
-              onChange={(e) => setForm({ ...form, no_agenda: e.target.value })}
-              placeholder="Contoh: SM-001"
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <b>Nomor Surat</b>
-            <input
-              value={form.nomor_surat}
-              onChange={(e) => setForm({ ...form, nomor_surat: e.target.value })}
-              placeholder="Nomor surat"
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <b>Tanggal Surat</b>
-            <input
-              type="date"
-              value={form.tanggal_surat}
-              onChange={(e) => setForm({ ...form, tanggal_surat: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <b>Asal Surat</b>
-            <input
-              value={form.asal_surat}
-              onChange={(e) => setForm({ ...form, asal_surat: e.target.value })}
-              placeholder="Asal surat"
-              style={inputStyle}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginTop: "14px" }}>
-          <b>Perihal Surat</b>
-          <textarea
-            value={form.perihal}
-            onChange={(e) => setForm({ ...form, perihal: e.target.value })}
-            placeholder="Perihal surat"
-            rows={4}
-            style={{ ...inputStyle, resize: "vertical" }}
-          />
-        </div>
-
-        <button onClick={simpanSurat} style={buttonBiru}>
-          💾 Simpan Surat Masuk
-        </button>
-      </div>
-
-      <div
-        style={{
-          marginTop: "24px",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "16px",
-        }}
-      >
-        <input
-          value={cari}
-          onChange={(e) => setCari(e.target.value)}
-          placeholder="🔎 Cari nomor surat, asal surat, perihal, tanggal, atau no agenda..."
-          style={{ ...inputStyle, maxWidth: "560px", margin: 0 }}
-        />
-
-        <button onClick={loadSurat} style={buttonPutih}>
-          🔄 Perbarui Data
-        </button>
-      </div>
-
-      <div style={{ overflowX: "auto", marginTop: "16px" }}>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "12px",
-            overflow: "hidden",
-          }}
-        >
-          <thead style={{ background: "#243f96", color: "white" }}>
-            <tr>
-              <th style={thStyle}>No Agenda</th>
-              <th style={thStyle}>Tanggal</th>
-              <th style={thStyle}>Nomor Surat</th>
-              <th style={thStyle}>Asal Surat</th>
-              <th style={thStyle}>Perihal</th>
-              <th style={thStyle}>File</th>
-              <th style={thStyle}>Aksi</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {daftarTampil.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "28px" }}>
-                  Belum ada data surat masuk.
-                </td>
-              </tr>
-            ) : (
-              daftarTampil.map((item) => (
-                <tr key={item.id}>
-                  <td style={tdStyle}>{item.no_agenda}</td>
-                  <td style={tdStyle}>{item.tanggal_surat || "-"}</td>
-                  <td style={tdStyle}>{item.nomor_surat}</td>
-                  <td style={tdStyle}>{item.asal_surat}</td>
-                  <td style={tdStyle}>{item.perihal}</td>
-                  <td style={tdStyle}>
-                    {item.file_url ? (
-                      <a href={item.file_url} target="_blank">
-                        Lihat File
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td style={tdStyle}>
-                    <button
-                      onClick={() => hapusSurat(item)}
-                      style={{
-                        background: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      🗑 Hapus
-                    </button>
-                  </td>
-                </tr>
-              ))
+            {fileSurat && (
+              <div
+                style={{
+                  marginTop: "14px",
+                  color: "#047857",
+                  fontSize: "14px",
+                  fontWeight: "800",
+                  wordBreak: "break-word",
+                }}
+              >
+                File dipilih: {fileSurat.name}
+              </div>
             )}
-          </tbody>
-        </table>
+
+            {sedangMembaca && (
+              <div
+                style={{
+                  marginTop: "14px",
+                  color: "#2563eb",
+                  fontSize: "14px",
+                  fontWeight: "800",
+                }}
+              >
+                Sedang membaca surat otomatis...
+              </div>
+            )}
+
+            <input
+              ref={inputFileRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+          </div>
+
+          <h2 style={judulStyle}>Data Surat Masuk</h2>
+
+          <div className="form-surat-grid">
+            <div>
+              <label style={labelStyle}>No Agenda</label>
+              <input
+                value={form.no_agenda}
+                onChange={(e) =>
+                  setForm({ ...form, no_agenda: e.target.value })
+                }
+                placeholder="Contoh: SM-001"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Nomor Surat</label>
+              <input
+                value={form.nomor_surat}
+                onChange={(e) =>
+                  setForm({ ...form, nomor_surat: e.target.value })
+                }
+                placeholder="Nomor surat"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Tanggal Surat</label>
+              <input
+                type="date"
+                value={form.tanggal_surat}
+                onChange={(e) =>
+                  setForm({ ...form, tanggal_surat: e.target.value })
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Asal Surat</label>
+              <input
+                value={form.asal_surat}
+                onChange={(e) =>
+                  setForm({ ...form, asal_surat: e.target.value })
+                }
+                placeholder="Asal surat"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: "16px" }}>
+            <label style={labelStyle}>Perihal Surat</label>
+            <textarea
+              value={form.perihal}
+              onChange={(e) => setForm({ ...form, perihal: e.target.value })}
+              placeholder="Perihal surat"
+              rows={4}
+              style={{ ...inputStyle, resize: "vertical" }}
+            />
+          </div>
+
+          <button onClick={simpanSurat} style={buttonBiru}>
+            💾 Simpan Surat Masuk
+          </button>
+        </section>
+
+        <section style={{ ...cardStyle, marginTop: "24px", padding: 0 }}>
+          <div className="toolbar-surat">
+            <h2
+              style={{
+                margin: 0,
+                color: "#1e3a8a",
+                fontSize: "21px",
+                fontWeight: "800",
+              }}
+            >
+              Daftar Surat Masuk
+            </h2>
+
+            <div className="toolbar-kanan">
+              <input
+                value={cari}
+                onChange={(e) => setCari(e.target.value)}
+                placeholder="🔎 Cari surat..."
+                style={{ ...inputStyle, margin: 0 }}
+              />
+
+              <button onClick={loadSurat} style={buttonPutih}>
+                🔄 Perbarui
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                minWidth: "930px",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead style={{ background: "#1e3a8a", color: "white" }}>
+                <tr>
+                  <th style={thStyle}>No Agenda</th>
+                  <th style={thStyle}>Tanggal</th>
+                  <th style={thStyle}>Nomor Surat</th>
+                  <th style={thStyle}>Asal Surat</th>
+                  <th style={thStyle}>Perihal</th>
+                  <th style={thStyle}>File</th>
+                  <th style={thStyle}>Aksi</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {daftarTampil.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={emptyStyle}>
+                      Belum ada data surat masuk.
+                    </td>
+                  </tr>
+                ) : (
+                  daftarTampil.map((item) => (
+                    <tr
+                      key={item.id}
+                      style={{ borderBottom: "1px solid #e2e8f0" }}
+                    >
+                      <td style={tdStyle}>{item.no_agenda || "-"}</td>
+                      <td style={tdStyle}>{item.tanggal_surat || "-"}</td>
+                      <td style={tdStyle}>{item.nomor_surat || "-"}</td>
+                      <td style={tdStyle}>{item.asal_surat || "-"}</td>
+                      <td style={tdStyle}>{item.perihal || "-"}</td>
+                      <td style={tdStyle}>
+                        {item.file_url ? (
+                          <a
+                            href={item.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              color: "#2563eb",
+                              fontWeight: "800",
+                              textDecoration: "none",
+                            }}
+                          >
+                            👁 Lihat
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td style={tdStyle}>
+                        <button
+                          onClick={() => hapusSurat(item)}
+                          style={buttonHapus}
+                        >
+                          🗑 Hapus
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
-    </div>
+
+      <style jsx>{`
+        .form-surat-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .toolbar-surat {
+          padding: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 14px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .toolbar-kanan {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: min(100%, 520px);
+        }
+
+        @media (max-width: 768px) {
+          .form-surat-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .toolbar-surat {
+            align-items: stretch;
+            flex-direction: column;
+          }
+
+          .toolbar-kanan {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .toolbar-kanan button {
+            width: 100%;
+          }
+        }
+      `}</style>
+    </main>
   );
 }
+
+const cardStyle = {
+  background: "white",
+  borderRadius: "16px",
+  padding: "24px",
+  boxShadow: "0 8px 20px rgba(15, 23, 42, 0.07)",
+};
+
+const judulStyle = {
+  margin: "0 0 18px",
+  color: "#1e3a8a",
+  fontSize: "21px",
+  fontWeight: "800",
+};
+
+const labelStyle = {
+  display: "block",
+  marginBottom: "8px",
+  color: "#0f172a",
+  fontSize: "14px",
+  fontWeight: "800",
+};
 
 const inputStyle = {
   width: "100%",
   boxSizing: "border-box" as const,
-  marginTop: "8px",
-  padding: "12px",
+  padding: "13px 14px",
   border: "1px solid #cbd5e1",
-  borderRadius: "8px",
+  borderRadius: "10px",
+  outline: "none",
   fontSize: "14px",
 };
 
 const buttonBiru = {
-  marginTop: "18px",
+  marginTop: "20px",
   background: "#2563eb",
   color: "white",
   border: "none",
-  padding: "12px 18px",
-  borderRadius: "8px",
-  fontWeight: "bold",
+  padding: "13px 18px",
+  borderRadius: "9px",
+  fontWeight: "800",
   cursor: "pointer",
 };
 
 const buttonPutih = {
-  background: "white",
-  color: "#1d4ed8",
-  border: "1px solid #cbd5e1",
-  padding: "10px 16px",
-  borderRadius: "8px",
-  fontWeight: "bold",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  padding: "13px 16px",
+  borderRadius: "10px",
+  fontWeight: "800",
   cursor: "pointer",
+  whiteSpace: "nowrap" as const,
+};
+
+const buttonHapus = {
+  background: "#dc2626",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "7px",
+  fontWeight: "700",
+  cursor: "pointer",
+  whiteSpace: "nowrap" as const,
 };
 
 const thStyle = {
-  padding: "14px",
+  padding: "14px 16px",
   textAlign: "left" as const,
+  fontSize: "13px",
+  whiteSpace: "nowrap" as const,
 };
 
 const tdStyle = {
-  padding: "13px",
-  borderBottom: "1px solid #e2e8f0",
+  padding: "14px 16px",
+  color: "#334155",
+  fontSize: "14px",
   verticalAlign: "top" as const,
+};
+
+const emptyStyle = {
+  textAlign: "center" as const,
+  padding: "32px",
+  color: "#64748b",
 };
