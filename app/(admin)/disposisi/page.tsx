@@ -179,7 +179,7 @@ export default function DisposisiPage() {
       `Perihal: ${suratDipilih.perihal || "-"}\n\n` +
       `*Isi Disposisi:*\n${isiOtomatis}`;
 
-    const nomorWhatsApp = "628179888792";
+    const nomorWhatsApp = "6285113680385";
 
     window.open(
       `https://wa.me/${nomorWhatsApp}?text=${encodeURIComponent(pesan)}`,
