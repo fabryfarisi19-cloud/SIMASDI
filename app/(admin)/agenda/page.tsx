@@ -21,6 +21,7 @@ const inputStyle = {
   outline: "none",
   fontSize: "14px",
   boxSizing: "border-box" as const,
+  minHeight: "48px",
 };
 
 export default function AgendaPage() {
@@ -51,14 +52,12 @@ export default function AgendaPage() {
         .order("jam", { ascending: true });
 
       if (error) {
-        console.error(error);
         alert("Gagal memuat agenda: " + error.message);
         return;
       }
 
       setAgendaList((data || []) as Agenda[]);
-    } catch (error) {
-      console.error(error);
+    } catch {
       alert("Terjadi kesalahan saat memuat agenda.");
     } finally {
       setLoading(false);
@@ -95,33 +94,23 @@ export default function AgendaPage() {
         status,
       };
 
-      if (editId) {
-        const { error } = await supabase
-          .from("agenda")
-          .update(dataAgenda)
-          .eq("id", editId);
+      const { error } = editId
+        ? await supabase.from("agenda").update(dataAgenda).eq("id", editId)
+        : await supabase.from("agenda").insert([dataAgenda]);
 
-        if (error) {
-          alert("Gagal mengubah agenda: " + error.message);
-          return;
-        }
-
-        alert("Agenda berhasil diubah.");
-      } else {
-        const { error } = await supabase.from("agenda").insert([dataAgenda]);
-
-        if (error) {
-          alert("Gagal menyimpan agenda: " + error.message);
-          return;
-        }
-
-        alert("Agenda berhasil disimpan.");
+      if (error) {
+        alert(
+          `${editId ? "Gagal mengubah" : "Gagal menyimpan"} agenda: ${
+            error.message
+          }`
+        );
+        return;
       }
 
+      alert(editId ? "Agenda berhasil diubah." : "Agenda berhasil disimpan.");
       resetForm();
       await loadAgenda();
-    } catch (error) {
-      console.error(error);
+    } catch {
       alert("Terjadi kesalahan saat menyimpan agenda.");
     } finally {
       setMenyimpan(false);
@@ -136,33 +125,25 @@ export default function AgendaPage() {
     setLokasi(item.lokasi || "");
     setPenanggungJawab(item.penanggung_jawab || "");
     setStatus(item.status || "Belum Dilaksanakan");
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const hapusAgenda = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus agenda ini?");
-    if (!yakin) return;
+    if (!confirm("Yakin ingin menghapus agenda ini?")) return;
 
-    try {
-      const { error } = await supabase.from("agenda").delete().eq("id", id);
+    const { error } = await supabase.from("agenda").delete().eq("id", id);
 
-      if (error) {
-        alert("Gagal menghapus agenda: " + error.message);
-        return;
-      }
-
-      alert("Agenda berhasil dihapus.");
-      await loadAgenda();
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menghapus agenda.");
+    if (error) {
+      alert("Gagal menghapus agenda: " + error.message);
+      return;
     }
+
+    alert("Agenda berhasil dihapus.");
+    await loadAgenda();
   };
 
   const formatTanggal = (value: string) => {
     if (!value) return "-";
-
     const [tahun, bulan, hari] = value.split("-");
     return `${hari}/${bulan}/${tahun}`;
   };
@@ -189,65 +170,25 @@ export default function AgendaPage() {
   ).length;
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        padding: "32px",
-        background: "#f5f7fb",
-      }}
-    >
-      <div style={{ marginBottom: "24px" }}>
-        <h1
-          style={{
-            margin: 0,
-            color: "#0f172a",
-            fontSize: "29px",
-            fontWeight: "800",
-          }}
-        >
-          Agenda Kegiatan
-        </h1>
-
-        <p style={{ margin: "7px 0 0", color: "#64748b" }}>
-          Kelola jadwal kegiatan Bapas Kelas I Jakarta Barat.
-        </p>
+    <main className="agenda-page">
+      <div className="agenda-header">
+        <h1>Agenda Kegiatan</h1>
+        <p>Kelola jadwal kegiatan Bapas Kelas I Jakarta Barat.</p>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
+      <div className="agenda-stat-grid">
         <StatAgenda judul="Total Agenda" nilai={agendaList.length} warna="#2563eb" />
         <StatAgenda judul="Agenda Hari Ini" nilai={totalHariIni} warna="#dc2626" />
         <StatAgenda judul="Akan Datang" nilai={akanDatang} warna="#f59e0b" />
       </div>
 
-      <section
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          padding: "26px",
-          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
-          marginBottom: "26px",
-        }}
-      >
-        <h2
-          style={{
-            margin: "0 0 20px",
-            color: editId ? "#d97706" : "#1e3a8a",
-            fontSize: "21px",
-            fontWeight: "800",
-          }}
-        >
+      <section className="agenda-card">
+        <h2 className={editId ? "judul-edit" : "judul-tambah"}>
           {editId ? "Edit Agenda Kegiatan" : "Tambah Agenda Kegiatan"}
         </h2>
 
         <form onSubmit={simpanAgenda}>
-          <div style={{ marginBottom: "16px" }}>
+          <div className="form-group">
             <label style={labelStyle}>Judul Kegiatan</label>
             <input
               value={judul}
@@ -257,41 +198,20 @@ export default function AgendaPage() {
             />
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: "16px",
-              marginBottom: "16px",
-            }}
-          >
-            <div>
+          <div className="form-grid-3">
+            <div className="form-group">
               <label style={labelStyle}>Tanggal</label>
-              <input
-                type="date"
-                value={tanggal}
-                onChange={(e) => setTanggal(e.target.value)}
-                style={inputStyle}
-              />
+              <input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} style={inputStyle} />
             </div>
 
-            <div>
+            <div className="form-group">
               <label style={labelStyle}>Jam Kegiatan</label>
-              <input
-                type="time"
-                value={jam}
-                onChange={(e) => setJam(e.target.value)}
-                style={inputStyle}
-              />
+              <input type="time" value={jam} onChange={(e) => setJam(e.target.value)} style={inputStyle} />
             </div>
 
-            <div>
+            <div className="form-group">
               <label style={labelStyle}>Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                style={inputStyle}
-              >
+              <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
                 <option value="Belum Dilaksanakan">Belum Dilaksanakan</option>
                 <option value="Berlangsung">Berlangsung</option>
                 <option value="Selesai">Selesai</option>
@@ -299,15 +219,8 @@ export default function AgendaPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 2fr",
-              gap: "16px",
-              marginBottom: "20px",
-            }}
-          >
-            <div>
+          <div className="form-grid-2">
+            <div className="form-group">
               <label style={labelStyle}>Lokasi</label>
               <input
                 value={lokasi}
@@ -317,7 +230,7 @@ export default function AgendaPage() {
               />
             </div>
 
-            <div>
+            <div className="form-group">
               <label style={labelStyle}>Penanggung Jawab</label>
               <input
                 value={penanggungJawab}
@@ -328,41 +241,13 @@ export default function AgendaPage() {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <button
-              type="submit"
-              disabled={menyimpan}
-              style={{
-                border: "none",
-                borderRadius: "9px",
-                padding: "12px 18px",
-                background: editId ? "#d97706" : "#2563eb",
-                color: "white",
-                fontWeight: "800",
-                cursor: "pointer",
-              }}
-            >
-              {menyimpan
-                ? "Menyimpan..."
-                : editId
-                ? "💾 Update Agenda"
-                : "💾 Simpan Agenda"}
+          <div className="agenda-button-wrap">
+            <button type="submit" disabled={menyimpan} className={editId ? "btn-update" : "btn-simpan"}>
+              {menyimpan ? "Menyimpan..." : editId ? "💾 Update Agenda" : "💾 Simpan Agenda"}
             </button>
 
             {editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  border: "none",
-                  borderRadius: "9px",
-                  padding: "12px 18px",
-                  background: "#64748b",
-                  color: "white",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" onClick={resetForm} className="btn-batal">
                 Batal Edit
               </button>
             )}
@@ -370,132 +255,51 @@ export default function AgendaPage() {
         </form>
       </section>
 
-      <section
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          overflow: "hidden",
-          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
-        }}
-      >
-        <div
-          style={{
-            padding: "20px",
-            borderBottom: "1px solid #e2e8f0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "14px",
-            flexWrap: "wrap",
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              color: "#1e3a8a",
-              fontSize: "21px",
-              fontWeight: "800",
-            }}
-          >
-            Daftar Agenda
-          </h2>
-
+      <section className="agenda-card agenda-list-card">
+        <div className="agenda-list-header">
+          <h2>Daftar Agenda</h2>
           <input
             value={cari}
             onChange={(e) => setCari(e.target.value)}
             placeholder="🔎 Cari kegiatan, lokasi, atau tanggal..."
-            style={{
-              ...inputStyle,
-              width: "330px",
-              maxWidth: "100%",
-            }}
+            className="input-cari-agenda"
           />
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              minWidth: "950px",
-              borderCollapse: "collapse",
-            }}
-          >
+        <div className="table-wrapper">
+          <table className="agenda-table">
             <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                <th style={thStyle}>No</th>
-                <th style={thStyle}>Judul Kegiatan</th>
-                <th style={thStyle}>Tanggal</th>
-                <th style={thStyle}>Jam</th>
-                <th style={thStyle}>Lokasi</th>
-                <th style={thStyle}>Penanggung Jawab</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Aksi</th>
+              <tr>
+                <th>No</th>
+                <th>Judul Kegiatan</th>
+                <th>Tanggal</th>
+                <th>Jam</th>
+                <th>Lokasi</th>
+                <th>Penanggung Jawab</th>
+                <th>Status</th>
+                <th>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={8} style={emptyStyle}>
-                    Memuat agenda...
-                  </td>
-                </tr>
+                <tr><td colSpan={8} className="empty-cell">Memuat agenda...</td></tr>
               ) : agendaTampil.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={emptyStyle}>
-                    Belum ada agenda kegiatan.
-                  </td>
-                </tr>
+                <tr><td colSpan={8} className="empty-cell">Belum ada agenda kegiatan.</td></tr>
               ) : (
                 agendaTampil.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    style={{ borderTop: "1px solid #e2e8f0" }}
-                  >
-                    <td style={tdStyle}>{index + 1}</td>
-                    <td style={{ ...tdStyle, fontWeight: "700" }}>
-                      {item.judul}
-                    </td>
-                    <td style={tdStyle}>{formatTanggal(item.tanggal)}</td>
-                    <td style={tdStyle}>
-                      {item.jam ? `${item.jam} WIB` : "-"}
-                    </td>
-                    <td style={tdStyle}>{item.lokasi || "-"}</td>
-                    <td style={tdStyle}>{item.penanggung_jawab || "-"}</td>
-                    <td style={tdStyle}>
-                      <StatusBadge status={item.status || "Belum Dilaksanakan"} />
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          onClick={() => editAgenda(item)}
-                          style={{
-                            border: "none",
-                            borderRadius: "7px",
-                            padding: "8px 11px",
-                            background: "#d97706",
-                            color: "white",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => hapusAgenda(item.id)}
-                          style={{
-                            border: "none",
-                            borderRadius: "7px",
-                            padding: "8px 11px",
-                            background: "#dc2626",
-                            color: "white",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Hapus
-                        </button>
+                  <tr key={item.id}>
+                    <td>{index + 1}</td>
+                    <td className="judul-cell">{item.judul}</td>
+                    <td>{formatTanggal(item.tanggal)}</td>
+                    <td>{item.jam ? `${item.jam} WIB` : "-"}</td>
+                    <td>{item.lokasi || "-"}</td>
+                    <td>{item.penanggung_jawab || "-"}</td>
+                    <td><StatusBadge status={item.status || "Belum Dilaksanakan"} /></td>
+                    <td>
+                      <div className="aksi-wrap">
+                        <button onClick={() => editAgenda(item)} className="btn-edit">Edit</button>
+                        <button onClick={() => hapusAgenda(item.id)} className="btn-hapus">Hapus</button>
                       </div>
                     </td>
                   </tr>
@@ -505,6 +309,250 @@ export default function AgendaPage() {
           </table>
         </div>
       </section>
+
+      <style jsx>{`
+        .agenda-page {
+          min-height: 100vh;
+          padding: 32px;
+          background: #f5f7fb;
+        }
+
+        .agenda-header {
+          margin-bottom: 24px;
+        }
+
+        .agenda-header h1 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 29px;
+          font-weight: 800;
+        }
+
+        .agenda-header p {
+          margin: 7px 0 0;
+          color: #64748b;
+        }
+
+        .agenda-stat-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .agenda-card {
+          background: white;
+          border-radius: 16px;
+          padding: 26px;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+          margin-bottom: 26px;
+        }
+
+        .agenda-list-card {
+          padding: 0;
+          overflow: hidden;
+        }
+
+        .judul-tambah,
+        .judul-edit {
+          margin: 0 0 20px;
+          font-size: 21px;
+          font-weight: 800;
+        }
+
+        .judul-tambah {
+          color: #1e3a8a;
+        }
+
+        .judul-edit {
+          color: #d97706;
+        }
+
+        .form-group {
+          min-width: 0;
+          margin-bottom: 16px;
+        }
+
+        .form-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .form-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .agenda-button-wrap {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .btn-simpan,
+        .btn-update,
+        .btn-batal,
+        .btn-edit,
+        .btn-hapus {
+          border: none;
+          border-radius: 9px;
+          color: white;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .btn-simpan,
+        .btn-update,
+        .btn-batal {
+          padding: 12px 18px;
+        }
+
+        .btn-simpan {
+          background: #2563eb;
+        }
+
+        .btn-update,
+        .btn-edit {
+          background: #d97706;
+        }
+
+        .btn-batal {
+          background: #64748b;
+        }
+
+        .agenda-list-header {
+          padding: 20px;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+
+        .agenda-list-header h2 {
+          margin: 0;
+          color: #1e3a8a;
+          font-size: 21px;
+          font-weight: 800;
+        }
+
+        .input-cari-agenda {
+          width: 330px;
+          max-width: 100%;
+          padding: 13px 14px;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          font-size: 14px;
+          box-sizing: border-box;
+        }
+
+        .table-wrapper {
+          overflow-x: auto;
+        }
+
+        .agenda-table {
+          width: 100%;
+          min-width: 950px;
+          border-collapse: collapse;
+        }
+
+        .agenda-table th {
+          padding: 14px 16px;
+          text-align: left;
+          color: #0f172a;
+          background: #f8fafc;
+          font-size: 13px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .agenda-table td {
+          padding: 14px 16px;
+          color: #334155;
+          font-size: 14px;
+          vertical-align: top;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        .judul-cell {
+          font-weight: 700;
+        }
+
+        .empty-cell {
+          padding: 32px !important;
+          text-align: center;
+          color: #64748b !important;
+        }
+
+        .aksi-wrap {
+          display: flex;
+          gap: 8px;
+        }
+
+        .btn-edit,
+        .btn-hapus {
+          padding: 8px 11px;
+          border-radius: 7px;
+        }
+
+        .btn-hapus {
+          background: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+          .agenda-page {
+            padding: 22px 18px 40px;
+          }
+
+          .agenda-header h1 {
+            font-size: 27px;
+          }
+
+          .agenda-stat-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+          }
+
+          .agenda-card {
+            padding: 20px;
+            border-radius: 16px;
+          }
+
+          .agenda-list-card {
+            padding: 0;
+          }
+
+          .form-grid-3,
+          .form-grid-2 {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+
+          .agenda-button-wrap {
+            display: grid;
+            grid-template-columns: 1fr;
+          }
+
+          .btn-simpan,
+          .btn-update,
+          .btn-batal {
+            width: 100%;
+            min-height: 52px;
+          }
+
+          .agenda-list-header {
+            align-items: stretch;
+          }
+
+          .input-cari-agenda {
+            width: 100%;
+            max-width: none;
+          }
+        }
+      `}</style>
     </main>
   );
 }
@@ -577,26 +625,4 @@ const labelStyle = {
   color: "#0f172a",
   fontSize: "14px",
   fontWeight: "800",
-};
-
-const thStyle = {
-  padding: "14px 16px",
-  textAlign: "left" as const,
-  color: "#0f172a",
-  fontSize: "13px",
-  fontWeight: "800",
-  whiteSpace: "nowrap" as const,
-};
-
-const tdStyle = {
-  padding: "14px 16px",
-  color: "#334155",
-  fontSize: "14px",
-  verticalAlign: "top" as const,
-};
-
-const emptyStyle = {
-  padding: "32px",
-  textAlign: "center" as const,
-  color: "#64748b",
 };
