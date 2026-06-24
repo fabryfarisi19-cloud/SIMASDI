@@ -1,393 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import {
-  LockKeyhole,
-  User,
-  Eye,
-  EyeOff,
-  ArrowRight,
-} from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
+  const [nip, setNip] = useState("");
   const [password, setPassword] = useState("");
-  const [lihatPassword, setLihatPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pesan, setPesan] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
-    setPesan("");
+    if (!nip.trim() || !password) {
+      alert("NIP dan password wajib diisi.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data, error } = await supabase
         .from("pengguna")
         .select("*")
-        .eq("username", username.trim())
+        .eq("username", nip.trim())
         .eq("password", password)
         .single();
 
       if (error || !data) {
-        setPesan("Username atau password salah.");
+        alert("NIP atau password salah.");
         return;
       }
 
-      localStorage.setItem("login", "true");
-      localStorage.setItem("nama", data.nama || "");
-      localStorage.setItem("username", data.username || "");
-      localStorage.setItem("role", data.role || "Staf");
+      if (data.status === "Nonaktif") {
+        alert("Akun Anda sedang dinonaktifkan. Hubungi Admin SIMASDI.");
+        return;
+      }
+
+      await supabase
+        .from("pengguna")
+        .update({
+          terakhir_login: new Date().toISOString(),
+        })
+        .eq("id", data.id);
 
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
-      setPesan("Terjadi kesalahan saat login.");
+      alert("Terjadi kesalahan saat masuk ke SIMASDI.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = async () => {
-    setPesan("");
-    setLoading(true);
-
-    try {
-      await signIn("google", {
-        callbackUrl: "/dashboard",
-      });
-    } catch (error) {
-      console.error(error);
-      setPesan("Login Google gagal. Periksa konfigurasi Google di Vercel.");
-      setLoading(false);
-    }
-  };
+  }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        background:
-          "linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%)",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "980px",
-          minHeight: "560px",
-          display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
-          background: "#ffffff",
-          borderRadius: "24px",
-          overflow: "hidden",
-          boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
-        }}
-      >
-        <section
-          style={{
-            padding: "56px",
-            color: "white",
-            background:
-              "linear-gradient(160deg, #0f172a 0%, #1e3a8a 65%, #2563eb 100%)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+    <main className="min-h-screen bg-[#061a48] flex items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-6xl min-h-[650px] overflow-hidden rounded-[28px] bg-white shadow-2xl grid grid-cols-1 md:grid-cols-2">
+        {/* PANEL KIRI */}
+        <section className="bg-gradient-to-br from-[#07183f] via-[#0b2e78] to-[#2465e8] p-8 md:p-12 text-white flex flex-col justify-between">
           <div>
-            <div
-              style={{
-                width: "54px",
-                height: "54px",
-                borderRadius: "14px",
-                background: "rgba(255,255,255,0.14)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "28px",
-              }}
-            >
-              <LockKeyhole size={27} />
+            <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl">
+              🔒
             </div>
 
-            <h1
-              style={{
-                fontSize: "36px",
-                lineHeight: 1.15,
-                margin: "0 0 16px",
-                fontWeight: "800",
-              }}
-            >
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide">
               SIMASDI
             </h1>
 
-            <p
-              style={{
-                margin: 0,
-                fontSize: "17px",
-                lineHeight: 1.7,
-                color: "#dbeafe",
-              }}
-            >
+            <p className="mt-5 text-lg md:text-xl leading-relaxed text-blue-100">
               Sistem Informasi Manajemen Arsip Digital
               <br />
               Bapas Kelas I Jakarta Barat
             </p>
           </div>
 
-          <div
-            style={{
-              paddingTop: "28px",
-              borderTop: "1px solid rgba(255,255,255,0.18)",
-              color: "#bfdbfe",
-              fontSize: "13px",
-              lineHeight: 1.6,
-            }}
-          >
-            Administrasi surat lebih cepat, tertib, dan terdokumentasi secara
-            digital.
+          <div className="flex flex-1 items-center justify-center py-8">
+            <Image
+              src="/Maskot Elbar Baru 2026.png"
+              alt="Maskot Elbar Baru 2026"
+              width={280}
+              height={280}
+              className="w-[210px] md:w-[250px] h-auto"
+              priority
+            />
           </div>
+
+          <p className="border-t border-white/20 pt-6 text-xs md:text-sm text-blue-100">
+            Administrasi surat lebih cepat, tertib, dan terdokumentasi secara digital.
+          </p>
         </section>
 
-        <section
-          style={{
-            padding: "56px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ marginBottom: "32px" }}>
-            <h2
-              style={{
-                margin: "0 0 8px",
-                color: "#0f172a",
-                fontSize: "28px",
-                fontWeight: "800",
-              }}
-            >
+        {/* PANEL KANAN */}
+        <section className="bg-white p-8 md:p-14 flex items-center">
+          <div className="w-full max-w-md mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
               Selamat Datang
             </h2>
 
-            <p style={{ margin: 0, color: "#64748b", lineHeight: 1.6 }}>
-              Masuk untuk mengakses dashboard SIMASDI.
+            <p className="mt-3 text-slate-500 text-base md:text-lg">
+              Masuk menggunakan NIP dan password SIMASDI.
             </p>
-          </div>
 
-          <form onSubmit={handleLogin}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#334155",
-                fontSize: "14px",
-                fontWeight: "700",
-              }}
-            >
-              Username
-            </label>
-
-            <div style={{ position: "relative", marginBottom: "20px" }}>
-              <User
-                size={19}
-                style={{
-                  position: "absolute",
-                  left: "15px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#64748b",
-                }}
-              />
+            <form onSubmit={handleLogin} className="mt-9">
+              <label className="block mb-2 font-semibold text-slate-800">
+                NIP
+              </label>
 
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan username"
+                inputMode="numeric"
+                placeholder="Masukkan NIP"
+                value={nip}
+                onChange={(e) => setNip(e.target.value.replace(/\D/g, ""))}
+                className="w-full rounded-xl border border-slate-300 px-4 py-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 required
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 14px 13px 45px",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "10px",
-                  outline: "none",
-                  fontSize: "14px",
-                }}
               />
-            </div>
 
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#334155",
-                fontSize: "14px",
-                fontWeight: "700",
-              }}
-            >
-              Password
-            </label>
-
-            <div style={{ position: "relative", marginBottom: "12px" }}>
-              <LockKeyhole
-                size={19}
-                style={{
-                  position: "absolute",
-                  left: "15px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#64748b",
-                }}
-              />
+              <label className="block mt-5 mb-2 font-semibold text-slate-800">
+                Password
+              </label>
 
               <input
-                type={lihatPassword ? "text" : "password"}
+                type="password"
+                placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan password"
+                className="w-full rounded-xl border border-slate-300 px-4 py-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 required
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 48px 13px 45px",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "10px",
-                  outline: "none",
-                  fontSize: "14px",
-                }}
               />
 
               <button
-                type="button"
-                onClick={() => setLihatPassword(!lihatPassword)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "transparent",
-                  border: "none",
-                  color: "#64748b",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                }}
-                aria-label="Lihat password"
+                type="submit"
+                disabled={loading}
+                className="mt-7 w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {lihatPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                {loading ? "Memeriksa akun..." : "Masuk ke SIMASDI →"}
               </button>
-            </div>
+            </form>
 
-            {pesan && (
-              <div
-                style={{
-                  marginBottom: "18px",
-                  padding: "11px 12px",
-                  borderRadius: "9px",
-                  background: "#fef2f2",
-                  color: "#dc2626",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                }}
-              >
-                {pesan}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                border: "none",
-                borderRadius: "10px",
-                padding: "14px",
-                marginTop: "12px",
-                background: loading ? "#93c5fd" : "#2563eb",
-                color: "white",
-                fontSize: "15px",
-                fontWeight: "700",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? "Memproses..." : "Masuk ke SIMASDI"}
-              {!loading && <ArrowRight size={18} />}
-            </button>
-          </form>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              margin: "28px 0",
-              color: "#94a3b8",
-              fontSize: "12px",
-            }}
-          >
-            <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
-            atau
-            <div style={{ height: "1px", background: "#e2e8f0", flex: 1 }} />
+            <p className="mt-9 text-center text-sm text-slate-400">
+              © 2026 SIMASDI • Bapas Kelas I Jakarta Barat
+            </p>
           </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            style={{
-              width: "100%",
-              border: "1px solid #cbd5e1",
-              borderRadius: "10px",
-              padding: "13px",
-              background: "white",
-              color: "#334155",
-              fontSize: "14px",
-              fontWeight: "700",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-<img
-  src="/google.svg"
-  alt="Google"
-  style={{
-    width: "20px",
-    height: "20px",
-  }}
-/>
-            Login dengan Google
-          </button>
-
-          <p
-            style={{
-              margin: "28px 0 0",
-              textAlign: "center",
-              color: "#94a3b8",
-              fontSize: "12px",
-            }}
-          >
-            © 2026 SIMASDI · Bapas Kelas I Jakarta Barat
-          </p>
         </section>
       </div>
     </main>
