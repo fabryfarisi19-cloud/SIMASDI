@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
+import { Readable } from "stream";
 
 export const runtime = "nodejs";
 
@@ -15,12 +16,22 @@ export async function POST(request) {
       );
     }
 
-    const credentials = JSON.parse(
-      process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-    );
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+    if (!clientEmail || !privateKey || !folderId) {
+      return NextResponse.json(
+        { error: "Konfigurasi Google Drive belum lengkap di Vercel." },
+        { status: 500 }
+      );
+    }
 
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      credentials: {
+        client_email: clientEmail,
+        private_key: privateKey,
+      },
       scopes: ["https://www.googleapis.com/auth/drive"],
     });
 
@@ -34,11 +45,11 @@ export async function POST(request) {
     const hasilUpload = await drive.files.create({
       requestBody: {
         name: `${Date.now()}-${file.name}`,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+        parents: [folderId],
       },
       media: {
         mimeType: file.type || "application/octet-stream",
-        body: buffer,
+        body: Readable.from(buffer),
       },
       fields: "id, webViewLink",
     });
@@ -63,7 +74,7 @@ export async function POST(request) {
 
     return NextResponse.json(
       {
-        error: error.message || "Upload Google Drive gagal.",
+        error: error?.message || "Upload Google Drive gagal.",
       },
       { status: 500 }
     );
