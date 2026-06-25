@@ -1,110 +1,148 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [nip, setNip] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!nip || !password) {
+    const nipBersih = nip.trim();
+
+    if (!nipBersih || !password) {
       alert("NIP dan password wajib diisi.");
       return;
     }
 
-    alert("Login diproses");
-  };
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("pengguna")
+        .select("*")
+        .eq("username", nipBersih)
+        .eq("password", password)
+        .single();
+
+      if (error || !data) {
+        alert("NIP atau password salah.");
+        return;
+      }
+
+      if (data.status === "Nonaktif") {
+        alert("Akun Anda sedang dinonaktifkan. Hubungi Admin SIMASDI.");
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from("pengguna")
+        .update({
+          terakhir_login: new Date().toISOString(),
+        })
+        .eq("id", data.id);
+
+      if (updateError) {
+        console.error("Gagal memperbarui terakhir login:", updateError.message);
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat login.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl grid md:grid-cols-2">
-        
-        {/* BAGIAN KIRI */}
-        <section className="bg-gradient-to-br from-blue-950 via-blue-800 to-sky-600 text-white p-8 md:p-12 flex flex-col justify-between min-h-[330px]">
+    <main className="min-h-screen bg-[#061a48] flex items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-6xl min-h-[650px] overflow-hidden rounded-[28px] bg-white shadow-2xl grid grid-cols-1 md:grid-cols-2">
+        <section className="bg-gradient-to-br from-[#07183f] via-[#0b2e78] to-[#2465e8] p-8 md:p-12 text-white flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-8">
-              <span className="text-3xl">🔐</span>
-              <h1 className="text-3xl font-extrabold tracking-wide">
-                SIMASDI
-              </h1>
-            </div>
 
-            <h2 className="text-xl md:text-2xl font-bold leading-snug">
-              Sistem Informasi Manajemen Arsip Digital
-            </h2>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide">
+              SIMASDI
+            </h1>
 
-            <p className="mt-2 text-blue-100 text-base">
+            <p className="mt-2 text-lg md:text-xl leading-relaxed text-blue-60">
+              Sistem Informasi Manajemen Arsip Digital 
+              <br />
               Bapas Kelas I Jakarta Barat
             </p>
-
-            <div className="mt-8 flex justify-center">
-              <Image
-                src="/maskot-elbar.png"
-                alt="Maskot Elbar Baru 2026"
-                width={220}
-                height={220}
-                className="w-40 md:w-52 h-auto object-contain"
-                priority
-              />
-            </div>
           </div>
 
-          <p className="mt-6 text-sm text-blue-100 leading-relaxed">
+          <div className="flex flex-1 items-center justify-center py-8">
+            <Image
+              src="/maskot-elbar-2026.png"
+              alt="Maskot Elbar"
+              width={280}
+              height={280}
+              className="w-[210px] md:w-[250px] h-auto"
+              priority
+            />
+          </div>
+
+          <p className="border-t border-white/10 pt-5 text-xs md:text-sm text-blue-80">
             Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital.
           </p>
         </section>
 
-        {/* BAGIAN KANAN */}
-        <section className="p-7 md:p-12 flex items-center">
-          <div className="w-full">
-            <div className="mb-8">
-              <h2 className="text-3xl font-extrabold text-slate-800">
-                Selamat Datang
-              </h2>
-              <p className="mt-2 text-slate-500">
-                Masuk menggunakan NIP dan password SIMASDI.
-              </p>
-            </div>
+        <section className="bg-white p-8 md:p-14 flex items-center">
+          <div className="w-full max-w-md mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+              Selamat Datang
+            </h2>
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-slate-700">
-                  NIP
-                </label>
-                <input
-                  type="text"
-                  value={nip}
-                  onChange={(e) => setNip(e.target.value)}
-                  placeholder="Masukkan NIP"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-              </div>
+            <p className="mt-3 text-slate-500 text-base md:text-lg">
+              Masuk menggunakan NIP dan password SIMASDI.
+            </p>
 
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-slate-700">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                />
-              </div>
+            <form onSubmit={handleLogin} className="mt-9">
+              <label className="block mb-2 font-semibold text-slate-800">
+                NIP
+              </label>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Masukkan NIP"
+                value={nip}
+                onChange={(e) => setNip(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                required
+              />
+
+              <label className="block mt-5 mb-2 font-semibold text-slate-800">
+                Password
+              </label>
+
+              <input
+                type="password"
+                placeholder="Masukkan password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                required
+              />
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-blue-800 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-blue-900 active:scale-[0.98]"
+                disabled={loading}
+                className="mt-7 w-full rounded-xl bg-blue-700 py-4 font-bold text-white shadow-lg transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Masuk ke SIMASDI
+                {loading ? "Memeriksa akun..." : "Masuk ke SIMASDI →"}
               </button>
             </form>
 
-            <p className="mt-8 text-center text-sm text-slate-500">
+            <p className="mt-9 text-center text-sm text-slate-400">
               © 2026 SIMASDI • Bapas Kelas I Jakarta Barat
             </p>
           </div>
