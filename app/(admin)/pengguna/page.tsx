@@ -2,163 +2,112 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { UserPlus, Trash2, Users, ShieldCheck } from "lucide-react";
 
 type Pengguna = {
   id: number;
-  nama: string;
-  username: string;
-  password: string;
-  role: string;
+  nama: string | null;
+  username: string | null;
+  password?: string | null;
+  role: string | null;
+  status: string | null;
+  terakhir_login: string | null;
 };
 
 export default function PenggunaPage() {
   const [pengguna, setPengguna] = useState<Pengguna[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [menyimpan, setMenyimpan] = useState(false);
-
-  const [namaLengkap, setNamaLengkap] = useState("");
+  const [nama, setNama] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Staf");
+  const [status, setStatus] = useState("Aktif");
+  const [loading, setLoading] = useState(true);
+  const [menyimpan, setMenyimpan] = useState(false);
+  const [cari, setCari] = useState("");
 
   const loadPengguna = async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const { data, error } = await supabase
-        .from("pengguna")
-        .select("*")
-        .order("id", { ascending: true });
+    const { data, error } = await supabase
+      .from("pengguna")
+      .select("*")
+      .order("id", { ascending: false });
 
-      if (error) {
-        alert("Gagal memuat pengguna: " + error.message);
-        return;
-      }
-
-      setPengguna((data || []) as Pengguna[]);
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat memuat pengguna.");
-    } finally {
+    if (error) {
+      alert("Gagal memuat pengguna: " + error.message);
       setLoading(false);
+      return;
     }
+
+    setPengguna((data || []) as Pengguna[]);
+    setLoading(false);
   };
 
   useEffect(() => {
     loadPengguna();
   }, []);
 
+  const resetForm = () => {
+    setNama("");
+    setUsername("");
+    setPassword("");
+    setRole("Staf");
+    setStatus("Aktif");
+  };
+
   const simpanPengguna = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!namaLengkap.trim() || !username.trim() || !password.trim()) {
-      alert("Nama lengkap, username, dan password wajib diisi.");
+    if (!nama.trim() || !username.trim() || !password.trim()) {
+      alert("Nama, NIP/username, dan password wajib diisi.");
       return;
     }
 
-    setLoading(true);
+    setMenyimpan(true);
 
-    try {
-      const { error } = await supabase.from("pengguna").insert([
-        {
-          nama,
-          username,
-          password,
-          role,
-        },
-      ]);
+    const { error } = await supabase.from("pengguna").insert([
+      {
+        nama: nama.trim(),
+        username: username.trim(),
+        password: password.trim(),
+        role,
+        status,
+      },
+    ]);
 
-      if (error) {
-        if (error.code === "23505") {
-          alert("Username sudah digunakan. Gunakan username lain.");
-        } else {
-          alert(error.message);
-        }
-        return;
-      }
+    setMenyimpan(false);
 
-      alert("Pengguna berhasil ditambahkan.");
-
-      setNama("");
-      setUsername("");
-      setPassword("");
-      setRole("Staf");
-
-      ambilData();
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menyimpan pengguna.");
-    } finally {
-      setLoading(false);
+    if (error) {
+      alert("Gagal menyimpan pengguna: " + error.message);
+      return;
     }
+
+    alert("Pengguna berhasil ditambahkan.");
+    resetForm();
+    loadPengguna();
   };
 
-  const hapusPengguna = async (item: Pengguna) => {
-    if (item.username === "admin") {
-      alert("Akun administrator utama tidak dapat dihapus.");
-      return;
-    }
-
-    const yakin = confirm(`Hapus pengguna ${username}?`);
+  const hapusPengguna = async (id: number, namaPengguna: string | null) => {
+    const yakin = confirm(
+      `Yakin ingin menghapus pengguna ${namaPengguna || "ini"}?`
+    );
 
     if (!yakin) return;
 
-    try {
-      const { error } = await supabase
-        .from("pengguna")
-        .delete()
-        .eq("id", item.id);
-
-      if (error) {
-        alert("Gagal menghapus pengguna: " + error.message);
-        return;
-      }
-
-      alert("Pengguna berhasil dihapus.");
-      await loadPengguna();
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menghapus pengguna.");
-    }
-  };
-
-  const ubahRole = async (id: number, roleSekarang: string) => {
-    const roleBaru = roleSekarang === "Admin" ? "Staf" : "Admin";
-
-    if (!confirm(`Ubah role menjadi ${roleBaru}?`)) return;
-
     const { error } = await supabase
       .from("pengguna")
-      .update({ role: roleBaru })
+      .delete()
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      alert("Gagal menghapus pengguna: " + error.message);
       return;
     }
 
-    alert("Role pengguna berhasil diubah.");
-    ambilData();
+    alert("Pengguna berhasil dihapus.");
+    loadPengguna();
   };
 
-  const ubahStatus = async (id: number, statusSekarang?: string) => {
-    const statusBaru = statusSekarang === "Aktif" ? "Nonaktif" : "Aktif";
-
-    const { error } = await supabase
-      .from("pengguna")
-      .update({ status: statusBaru })
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    ambilData();
-  };
-
-  const formatTanggal = (tanggal?: string | null) => {
+  const formatLogin = (tanggal: string | null) => {
     if (!tanggal) return "Belum pernah login";
 
     return new Date(tanggal).toLocaleString("id-ID", {
@@ -167,40 +116,53 @@ export default function PenggunaPage() {
     });
   };
 
+  const daftarTampil = pengguna.filter((item) => {
+    const teks = `${item.nama || ""} ${item.username || ""} ${
+      item.role || ""
+    } ${item.status || ""}`.toLowerCase();
+
+    return teks.includes(cari.toLowerCase());
+  });
+
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "26px" }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: "32px",
+        background: "#f5f7fb",
+      }}
+    >
+      <div style={{ marginBottom: "24px" }}>
         <h1
           style={{
             margin: 0,
             color: "#0f172a",
-            fontSize: "28px",
+            fontSize: "29px",
             fontWeight: "800",
           }}
         >
           Manajemen Pengguna
         </h1>
 
-        <p style={{ margin: "8px 0 0", color: "#64748b" }}>
-          Tambahkan akun admin atau staf untuk mengakses SIMASDI.
+        <p style={{ margin: "7px 0 0", color: "#64748b" }}>
+          Kelola akun, role, status akses, dan aktivitas login pengguna SIMASDI.
         </p>
       </div>
 
       <section
         style={{
-          background: "#ffffff",
+          background: "white",
           borderRadius: "16px",
           padding: "26px",
-          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
-          border: "1px solid #e2e8f0",
-          marginBottom: "28px",
+          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
+          marginBottom: "26px",
         }}
       >
         <h2
           style={{
-            margin: "0 0 22px",
+            margin: "0 0 20px",
             color: "#1e3a8a",
-            fontSize: "20px",
+            fontSize: "21px",
             fontWeight: "800",
           }}
         >
@@ -208,40 +170,51 @@ export default function PenggunaPage() {
         </h2>
 
         <form onSubmit={simpanPengguna}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Nama Lengkap</label>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: "16px",
+            }}
+          >
+            <div>
+              <label style={labelStyle}>Nama Lengkap</label>
               <input
-                type="text"
+                value={nama}
+                onChange={(e) => setNama(e.target.value)}
                 placeholder="Masukkan nama lengkap"
-                value={namaLengkap}
-                onChange={(e) => setNamaLengkap(e.target.value)}
+                style={inputStyle}
               />
             </div>
 
-            <div className="form-group">
-              <label>Username</label>
+            <div>
+              <label style={labelStyle}>NIP / Username</label>
               <input
-                type="text"
-                placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="Masukkan NIP"
+                style={inputStyle}
               />
             </div>
 
-            <div className="form-group">
-              <label>Password</label>
+            <div>
+              <label style={labelStyle}>Password</label>
               <input
                 type="password"
-                placeholder="Buat password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Buat password"
+                style={inputStyle}
               />
             </div>
 
-            <div className="form-group">
-              <label>Role / Akses</label>
-              <select value={role} onChange={(e) => setRole(e.target.value)}>
+            <div>
+              <label style={labelStyle}>Role / Akses</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                style={inputStyle}
+              >
                 <option value="Staf">Staf</option>
                 <option value="Admin">Admin</option>
                 <option value="Pimpinan">Pimpinan</option>
@@ -249,147 +222,136 @@ export default function PenggunaPage() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
+          <div
             style={{
-              marginTop: "22px",
-              border: "none",
-              borderRadius: "9px",
-              background: loading ? "#93c5fd" : "#2563eb",
-              color: "white",
-              padding: "12px 18px",
-              fontWeight: "700",
               display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: loading ? "not-allowed" : "pointer",
+              alignItems: "end",
+              gap: "16px",
+              marginTop: "16px",
+              flexWrap: "wrap",
             }}
           >
-            <UserPlus size={18} />
-            {loading ? "Menyimpan..." : "Simpan Pengguna"}
-          </button>
+            <div style={{ width: "210px", maxWidth: "100%" }}>
+              <label style={labelStyle}>Status Akun</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="Aktif">Aktif</option>
+                <option value="Nonaktif">Nonaktif</option>
+              </select>
+            </div>
+
+            <button type="submit" disabled={menyimpan} style={buttonBiru}>
+              {menyimpan ? "Menyimpan..." : "👤 Simpan Pengguna"}
+            </button>
+          </div>
         </form>
       </section>
 
       <section
         style={{
-          background: "#ffffff",
+          background: "white",
           borderRadius: "16px",
           overflow: "hidden",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+          boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
         }}
       >
         <div
           style={{
-            padding: "22px 26px",
+            padding: "20px",
             borderBottom: "1px solid #e2e8f0",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: "14px",
+            flexWrap: "wrap",
           }}
         >
           <h2
             style={{
               margin: 0,
               color: "#1e3a8a",
-              fontSize: "20px",
+              fontSize: "21px",
               fontWeight: "800",
             }}
           >
             Daftar Pengguna
           </h2>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              color: "#64748b",
-              fontSize: "14px",
-              fontWeight: "700",
-            }}
-          >
-            <Users size={18} />
-            {dataPengguna.length} Pengguna
-          </div>
+          <input
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari nama, NIP, role, atau status..."
+            style={{ ...inputStyle, width: "330px", maxWidth: "100%" }}
+          />
         </div>
 
-        <div className="tabel-wrapper">
-          <table>
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              minWidth: "900px",
+              borderCollapse: "collapse",
+            }}
+          >
             <thead>
               <tr style={{ background: "#f8fafc" }}>
+                <th style={thStyle}>No</th>
                 <th style={thStyle}>Nama</th>
-                <th style={thStyle}>Username</th>
+                <th style={thStyle}>NIP / Username</th>
                 <th style={thStyle}>Role</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Terakhir Login</th>
+                <th style={thStyle}>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    style={{
-                      padding: "34px",
-                      textAlign: "center",
-                      color: "#64748b",
-                    }}
-                  >
-                    Belum ada pengguna.
+                  <td colSpan={7} style={emptyStyle}>
+                    Memuat pengguna...
+                  </td>
+                </tr>
+              ) : daftarTampil.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={emptyStyle}>
+                    Belum ada data pengguna.
                   </td>
                 </tr>
               ) : (
-                dataPengguna.map((item) => (
-                  <tr key={item.id} style={{ borderTop: "1px solid #e2e8f0" }}>
-                    <td style={tdStyle}>{item.nama}</td>
-                    <td style={tdStyle}>{item.username}</td>
+                daftarTampil.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    style={{ borderTop: "1px solid #e2e8f0" }}
+                  >
+                    <td style={tdStyle}>{index + 1}</td>
+                    <td style={{ ...tdStyle, fontWeight: "700" }}>
+                      {item.nama || "-"}
+                    </td>
+                    <td style={tdStyle}>{item.username || "-"}</td>
+                    <td style={tdStyle}>
+                      <span style={badgeBiru}>{item.role || "Staf"}</span>
+                    </td>
                     <td style={tdStyle}>
                       <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          borderRadius: "999px",
-                          padding: "6px 10px",
-                          fontSize: "12px",
-                          fontWeight: "800",
-                          color:
-                            item.role === "Admin" ? "#1d4ed8" : "#047857",
-                          background:
-                            item.role === "Admin" ? "#dbeafe" : "#d1fae5",
-                        }}
+                        style={
+                          item.status === "Nonaktif"
+                            ? badgeMerah
+                            : badgeHijau
+                        }
                       >
-                        <ShieldCheck size={14} />
-                        {item.role}
+                        {item.status || "Aktif"}
                       </span>
                     </td>
-
-                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                    <td style={tdStyle}>{formatLogin(item.terakhir_login)}</td>
+                    <td style={tdStyle}>
                       <button
-                        onClick={() => hapusPengguna(item.id, item.username)}
-                        disabled={item.username === "admin"}
-                        style={{
-                          border: "none",
-                          borderRadius: "8px",
-                          padding: "9px 12px",
-                          background:
-                            item.username === "admin" ? "#cbd5e1" : "#dc2626",
-                          color: "white",
-                          fontSize: "13px",
-                          fontWeight: "700",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          cursor:
-                            item.username === "admin"
-                              ? "not-allowed"
-                              : "pointer",
-                        }}
+                        onClick={() => hapusPengguna(item.id, item.nama)}
+                        style={buttonHapus}
                       >
-                        <Trash2 size={15} />
                         Hapus
                       </button>
                     </td>
@@ -400,40 +362,96 @@ export default function PenggunaPage() {
           </table>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "13px 14px",
+  border: "1px solid #cbd5e1",
+  borderRadius: "10px",
+  outline: "none",
+  fontSize: "14px",
+  boxSizing: "border-box" as const,
+};
 
 const labelStyle = {
   display: "block",
   marginBottom: "8px",
-  color: "#334155",
-  fontSize: "14px",
-  fontWeight: "700",
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  border: "1px solid #cbd5e1",
-  borderRadius: "9px",
-  padding: "12px 13px",
-  fontSize: "14px",
-  outline: "none",
   color: "#0f172a",
-  background: "#ffffff",
-};
-
-const thStyle = {
-  padding: "15px 18px",
-  textAlign: "left" as const,
-  color: "#334155",
   fontSize: "14px",
   fontWeight: "800",
 };
 
+const buttonBiru = {
+  border: "none",
+  borderRadius: "9px",
+  padding: "12px 18px",
+  background: "#2563eb",
+  color: "white",
+  fontWeight: "800",
+  cursor: "pointer",
+};
+
+const buttonHapus = {
+  border: "none",
+  borderRadius: "7px",
+  padding: "8px 11px",
+  background: "#dc2626",
+  color: "white",
+  fontWeight: "700",
+  cursor: "pointer",
+};
+
+const badgeBiru = {
+  display: "inline-block",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  background: "#dbeafe",
+  color: "#1d4ed8",
+  fontSize: "12px",
+  fontWeight: "800",
+};
+
+const badgeHijau = {
+  display: "inline-block",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  background: "#dcfce7",
+  color: "#15803d",
+  fontSize: "12px",
+  fontWeight: "800",
+};
+
+const badgeMerah = {
+  display: "inline-block",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  background: "#fee2e2",
+  color: "#b91c1c",
+  fontSize: "12px",
+  fontWeight: "800",
+};
+
+const thStyle = {
+  padding: "14px 16px",
+  textAlign: "left" as const,
+  color: "#0f172a",
+  fontSize: "13px",
+  fontWeight: "800",
+  whiteSpace: "nowrap" as const,
+};
+
 const tdStyle = {
-  padding: "15px 18px",
+  padding: "14px 16px",
   color: "#334155",
   fontSize: "14px",
+  verticalAlign: "top" as const,
+};
+
+const emptyStyle = {
+  padding: "32px",
+  textAlign: "center" as const,
+  color: "#64748b",
 };
