@@ -1,133 +1,55 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 
 type Arsip = {
   id: number;
-  nomor_surat: string | null;
-  dokumen: string | null;
-  jenis: string | null;
-  asal_tujuan: string | null;
-  tanggal: string | null;
+  created_at: string;
+  nama_dokumen: string;
+  kategori: string;
   file_url: string | null;
-  sumber: string | null;
+  drive_file_id: string | null;
 };
 
-const formatTanggal = (tanggal: string | null) => {
-  if (!tanggal) return "-";
-
-  const hasil = new Date(tanggal);
-
-  if (Number.isNaN(hasil.getTime())) return "-";
-
-  return hasil.toLocaleDateString("id-ID");
-};
-
-export default function ArsipDigitalPage() {
+export default function ArsipPage() {
   const [arsipList, setArsipList] = useState<Arsip[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [kataKunci, setKataKunci] = useState("");
-  const [filterJenis, setFilterJenis] = useState("Semua Jenis");
-  const [filterTahun, setFilterTahun] = useState("Semua Tahun");
-
   const [file, setFile] = useState<File | null>(null);
-  const [jenisUpload, setJenisUpload] = useState("Arsip Lainnya");
-  const [uploading, setUploading] = useState(false);
+  const [kategori, setKategori] = useState("Dokumen Umum");
+  const [cari, setCari] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [mengupload, setMengupload] = useState(false);
+
+  const loadArsip = async () => {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("arsip_digital")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      alert("Gagal memuat arsip: " + error.message);
+    } else {
+      setArsipList((data || []) as Arsip[]);
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     loadArsip();
   }, []);
 
-  const loadArsip = async () => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("arsip_digital")
-        .select("*")
-        .order("id", { ascending: false });
-
-      if (error) {
-        alert("Gagal memuat arsip: " + error.message);
-        return;
-      }
-
-      setArsipList((data || []) as Arsip[]);
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat memuat arsip.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const daftarTahun = useMemo<string[]>(() => {
-    const tahun: string[] = [];
-
-    arsipList.forEach((item) => {
-      if (!item.tanggal) return;
-
-      const tanggal = new Date(item.tanggal);
-
-      if (Number.isNaN(tanggal.getTime())) return;
-
-      const nilaiTahun = tanggal.getFullYear().toString();
-
-      if (!tahun.includes(nilaiTahun)) {
-        tahun.push(nilaiTahun);
-      }
-    });
-
-    return tahun.sort((a, b) => Number(b) - Number(a));
-  }, [arsipList]);
-
-  const arsipTampil = useMemo(() => {
-    return arsipList.filter((item) => {
-      const teksGabungan = [
-        item.nomor_surat || "",
-        item.dokumen || "",
-        item.jenis || "",
-        item.asal_tujuan || "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      const cocokKataKunci = teksGabungan.includes(
-        kataKunci.trim().toLowerCase()
-      );
-
-      const cocokJenis =
-        filterJenis === "Semua Jenis" || item.jenis === filterJenis;
-
-      let tahunItem = "";
-
-      if (item.tanggal) {
-        const tanggal = new Date(item.tanggal);
-
-        if (!Number.isNaN(tanggal.getTime())) {
-          tahunItem = tanggal.getFullYear().toString();
-        }
-      }
-
-      const cocokTahun =
-        filterTahun === "Semua Tahun" || tahunItem === filterTahun;
-
-      return cocokKataKunci && cocokJenis && cocokTahun;
-    });
-  }, [arsipList, kataKunci, filterJenis, filterTahun]);
-
   const uploadArsip = async () => {
     if (!file) {
-      alert("Pilih file arsip terlebih dahulu.");
+      alert("Pilih file terlebih dahulu.");
       return;
     }
 
     try {
-      setUploading(true);
+      setMengupload(true);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -139,311 +61,173 @@ export default function ArsipDigitalPage() {
 
       const hasil = await response.json();
 
-      if (!response.ok || !hasil.success) {
-        alert(hasil.message || "Gagal upload file.");
-        return;
+      if (!response.ok || !hasil?.url) {
+        throw new Error(hasil?.error || "Upload ke Google Drive gagal.");
       }
 
       const { error } = await supabase.from("arsip_digital").insert([
         {
-          nomor_surat: "-",
-          dokumen: file.name,
-          jenis: jenisUpload,
-          asal_tujuan: "-",
-          tanggal: new Date().toISOString().slice(0, 10),
+          nama_dokumen: file.name,
+          kategori,
           file_url: hasil.url,
-          sumber: "Arsip Lainnya",
+          drive_file_id: hasil.fileId || null,
         },
       ]);
 
       if (error) {
-        alert(
-          "File berhasil diupload, tetapi data arsip gagal disimpan: " +
-            error.message
-        );
-        return;
+        throw new Error(error.message);
       }
 
-      alert("Arsip berhasil diupload.");
-
+      alert("Arsip berhasil diupload dan tersimpan di Google Drive.");
       setFile(null);
-      setJenisUpload("Arsip Lainnya");
+      setKategori("Dokumen Umum");
 
-      const inputFile = document.getElementById(
-        "fileArsip"
-      ) as HTMLInputElement | null;
-
-      if (inputFile) inputFile.value = "";
+      const input = document.getElementById("file-arsip") as HTMLInputElement;
+      if (input) input.value = "";
 
       await loadArsip();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Terjadi kesalahan saat upload arsip.");
+      alert("Gagal upload file: " + (error.message || "Terjadi kesalahan."));
     } finally {
-      setUploading(false);
+      setMengupload(false);
     }
   };
 
   const hapusArsip = async (item: Arsip) => {
-    if (item.sumber !== "Arsip Lainnya") {
-      alert("Arsip Surat Masuk dan Surat Keluar dikelola dari menu asal.");
-      return;
-    }
-
-    const yakin = confirm(`Yakin ingin menghapus "${item.dokumen || "-"}"?`);
-
-    if (!yakin) return;
+    if (!confirm(`Hapus arsip "${item.nama_dokumen}"?`)) return;
 
     try {
+      if (item.drive_file_id) {
+        await fetch("/api/delete-drive", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileId: item.drive_file_id }),
+        });
+      }
+
       const { error } = await supabase
         .from("arsip_digital")
         .delete()
         .eq("id", item.id);
 
-      if (error) {
-        alert("Gagal menghapus arsip: " + error.message);
-        return;
-      }
+      if (error) throw new Error(error.message);
 
       alert("Arsip berhasil dihapus.");
       await loadArsip();
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menghapus arsip.");
+    } catch (error: any) {
+      alert("Gagal menghapus arsip: " + error.message);
     }
   };
 
-  const cetakPDF = () => {
-    const doc = new jsPDF();
+  const daftarTampil = useMemo(() => {
+    const kata = cari.toLowerCase();
 
-    doc.setFontSize(16);
-    doc.text("Laporan Arsip Digital SIMASDI", 14, 16);
-
-    doc.setFontSize(10);
-    doc.text(
-      `Dicetak pada: ${new Date().toLocaleDateString("id-ID")}`,
-      14,
-      23
+    return arsipList.filter((item) =>
+      `${item.nama_dokumen} ${item.kategori}`
+        .toLowerCase()
+        .includes(kata)
     );
-
-    autoTable(doc, {
-      startY: 30,
-      head: [
-        [
-          "No",
-          "Nomor Surat",
-          "Dokumen / Perihal",
-          "Jenis",
-          "Asal / Tujuan",
-          "Tanggal",
-        ],
-      ],
-      body: arsipTampil.map((item, index) => [
-        index + 1,
-        item.nomor_surat || "-",
-        item.dokumen || "-",
-        item.jenis || "-",
-        item.asal_tujuan || "-",
-        formatTanggal(item.tanggal),
-      ]),
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      headStyles: {
-        fillColor: [30, 58, 138],
-      },
-    });
-
-    doc.save(
-      `Laporan-Arsip-SIMASDI-${new Date().toISOString().slice(0, 10)}.pdf`
-    );
-  };
-
-  const jumlahSuratMasuk = arsipList.filter(
-    (item) => item.jenis === "Surat Masuk"
-  ).length;
-
-  const jumlahSuratKeluar = arsipList.filter(
-    (item) => item.jenis === "Surat Keluar"
-  ).length;
-
-  const jumlahArsipLainnya = arsipList.filter(
-    (item) => item.jenis === "Arsip Lainnya"
-  ).length;
+  }, [arsipList, cari]);
 
   return (
-    <main className="halaman-arsip">
-      <div className="judul-halaman">
-        <h1>Arsip Digital</h1>
-        <p>Pusat arsip Surat Masuk, Surat Keluar, dan dokumen lainnya.</p>
-      </div>
+    <main style={{ minHeight: "100vh", padding: "32px", background: "#f5f7fb" }}>
+      <h1 style={{ margin: 0, fontSize: "28px", color: "#0f172a" }}>
+        Arsip Digital
+      </h1>
 
-      <div className="stat-grid">
-        <StatBox judul="Total Arsip" nilai={arsipList.length} warna="#2563eb" />
-        <StatBox judul="Surat Masuk" nilai={jumlahSuratMasuk} warna="#16a34a" />
-        <StatBox
-          judul="Surat Keluar"
-          nilai={jumlahSuratKeluar}
-          warna="#ea580c"
-        />
-        <StatBox
-          judul="Arsip Lainnya"
-          nilai={jumlahArsipLainnya}
-          warna="#64748b"
-        />
-      </div>
+      <p style={{ color: "#64748b", marginTop: "8px" }}>
+        Pusat arsip Surat Masuk, Surat Keluar, dan dokumen lainnya.
+      </p>
 
-      <section className="kartu">
-        <h2>Upload Arsip Lainnya</h2>
-        <p className="keterangan">
-          Surat Masuk dan Surat Keluar sudah otomatis masuk ke halaman ini.
-        </p>
+      <section style={cardStyle}>
+        <h2 style={judulStyle}>Upload Arsip Lainnya</h2>
 
         <input
-          id="fileArsip"
+          id="file-arsip"
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setFile(e.target.files?.[0] || null)
+          }
+          style={inputStyle}
         />
 
-        <div className="upload-actions">
+        <div style={{ display: "flex", gap: "12px", marginTop: "14px", flexWrap: "wrap" }}>
           <select
-            value={jenisUpload}
-            onChange={(e) => setJenisUpload(e.target.value)}
+            value={kategori}
+            onChange={(e) => setKategori(e.target.value)}
+            style={{ ...inputStyle, width: "260px" }}
           >
-            <option value="Arsip Lainnya">Arsip Lainnya</option>
-            <option value="Dokumen Keuangan">Dokumen Keuangan</option>
-            <option value="Dokumen Kepegawaian">Dokumen Kepegawaian</option>
-            <option value="Dokumen Umum">Dokumen Umum</option>
+            <option>Dokumen Umum</option>
+            <option>Surat Masuk</option>
+            <option>Surat Keluar</option>
+            <option>Dokumen Kepegawaian</option>
+            <option>Laporan</option>
           </select>
 
-          <button onClick={uploadArsip} disabled={uploading}>
-            {uploading ? "Mengupload..." : "⬆ Upload Arsip"}
+          <button onClick={uploadArsip} disabled={mengupload} style={buttonBiru}>
+            {mengupload ? "Mengupload..." : "Upload Arsip"}
           </button>
         </div>
       </section>
 
-      <section className="kartu">
-        <div className="header-daftar">
-          <h2>Daftar Arsip</h2>
+      <section style={cardStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <h2 style={judulStyle}>Daftar Arsip</h2>
 
-          <button onClick={cetakPDF} className="tombol-pdf">
-            🖨 Cetak PDF
-          </button>
-        </div>
-
-        <div className="filter-arsip">
           <input
-            type="text"
-            placeholder="Cari nomor, perihal, asal, tujuan..."
-            value={kataKunci}
-            onChange={(e) => setKataKunci(e.target.value)}
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari nama dokumen atau kategori..."
+            style={{ ...inputStyle, width: "340px", margin: 0 }}
           />
-
-          <select
-            value={filterJenis}
-            onChange={(e) => setFilterJenis(e.target.value)}
-          >
-            <option value="Semua Jenis">Semua Jenis</option>
-            <option value="Surat Masuk">Surat Masuk</option>
-            <option value="Surat Keluar">Surat Keluar</option>
-            <option value="Arsip Lainnya">Arsip Lainnya</option>
-            <option value="Dokumen Keuangan">Dokumen Keuangan</option>
-            <option value="Dokumen Kepegawaian">Dokumen Kepegawaian</option>
-            <option value="Dokumen Umum">Dokumen Umum</option>
-          </select>
-
-          <select
-            value={filterTahun}
-            onChange={(e) => setFilterTahun(e.target.value)}
-          >
-            <option value="Semua Tahun">Semua Tahun</option>
-
-            {daftarTahun.map((tahun) => (
-              <option key={tahun} value={tahun}>
-                {tahun}
-              </option>
-            ))}
-          </select>
         </div>
 
-        <div className="tabel-wrapper">
-          <table>
+        <div style={{ overflowX: "auto", marginTop: "18px" }}>
+          <table style={{ width: "100%", minWidth: "850px", borderCollapse: "collapse" }}>
             <thead>
-              <tr>
-                <th>No</th>
-                <th>Nomor Surat</th>
-                <th>Dokumen / Perihal</th>
-                <th>Jenis</th>
-                <th>Asal / Tujuan</th>
-                <th>Tanggal</th>
-                <th>File</th>
-                <th>Aksi</th>
+              <tr style={{ background: "#102a63", color: "white" }}>
+                <th style={thStyle}>No</th>
+                <th style={thStyle}>Nama Dokumen</th>
+                <th style={thStyle}>Kategori</th>
+                <th style={thStyle}>Tanggal Upload</th>
+                <th style={thStyle}>File</th>
+                <th style={thStyle}>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="kosong">
-                    Memuat arsip...
-                  </td>
+                  <td colSpan={6} style={emptyStyle}>Memuat arsip...</td>
                 </tr>
-              ) : arsipTampil.length === 0 ? (
+              ) : daftarTampil.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="kosong">
-                    Arsip tidak ditemukan.
-                  </td>
+                  <td colSpan={6} style={emptyStyle}>Arsip tidak ditemukan.</td>
                 </tr>
               ) : (
-                arsipTampil.map((item, index) => (
-                  <tr key={item.id}>
-                    <td>{index + 1}</td>
-                    <td>{item.nomor_surat || "-"}</td>
-                    <td>{item.dokumen || "-"}</td>
-                    <td>
-                      <span className="badge">{item.jenis || "-"}</span>
+                daftarTampil.map((item, index) => (
+                  <tr key={item.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={tdStyle}>{index + 1}</td>
+                    <td style={{ ...tdStyle, fontWeight: "700" }}>{item.nama_dokumen}</td>
+                    <td style={tdStyle}>{item.kategori}</td>
+                    <td style={tdStyle}>
+                      {new Date(item.created_at).toLocaleDateString("id-ID")}
                     </td>
-                    <td>{item.asal_tujuan || "-"}</td>
-                    <td>{formatTanggal(item.tanggal)}</td>
-                    <td>
+                    <td style={tdStyle}>
                       {item.file_url ? (
-                        <a
-                          href={item.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          👁 Lihat
+                        <a href={item.file_url} target="_blank" rel="noreferrer">
+                          Lihat File
                         </a>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "-"}
                     </td>
-                    <td>
-                      {item.file_url ? (
-                        <a
-                          href={item.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="tombol-unduh"
-                        >
-                          Unduh
-                        </a>
-                      ) : null}
-
-                      {item.sumber === "Arsip Lainnya" ? (
-                        <button
-                          onClick={() => hapusArsip(item)}
-                          className="tombol-hapus"
-                        >
-                          Hapus
-                        </button>
-                      ) : (
-                        <span className="kelola-asal">
-                          Kelola di menu asal
-                        </span>
-                      )}
+                    <td style={tdStyle}>
+                      <button
+                        onClick={() => hapusArsip(item)}
+                        style={buttonHapus}
+                      >
+                        Hapus
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -452,266 +236,67 @@ export default function ArsipDigitalPage() {
           </table>
         </div>
       </section>
-
-      <style jsx>{`
-        .halaman-arsip {
-          min-height: 100vh;
-          padding: 32px;
-          background: #f5f7fb;
-        }
-
-        .judul-halaman {
-          margin-bottom: 22px;
-        }
-
-        .judul-halaman h1 {
-          margin: 0;
-          color: #0f172a;
-          font-size: 29px;
-          font-weight: 800;
-        }
-
-        .judul-halaman p {
-          margin: 7px 0 0;
-          color: #64748b;
-        }
-
-        .stat-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 16px;
-          margin-bottom: 24px;
-        }
-
-        .kartu {
-          background: white;
-          border-radius: 16px;
-          padding: 26px;
-          margin-bottom: 26px;
-          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-        }
-
-        .kartu h2 {
-          margin: 0;
-          color: #0f172a;
-          font-size: 21px;
-          font-weight: 800;
-        }
-
-        .keterangan {
-          margin: 12px 0 16px;
-          color: #64748b;
-        }
-
-        input,
-        select {
-          width: 100%;
-          box-sizing: border-box;
-          padding: 12px;
-          border: 1px solid #cbd5e1;
-          border-radius: 9px;
-          background: white;
-          color: #334155;
-          font-size: 14px;
-        }
-
-        .upload-actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 12px;
-          max-width: 500px;
-        }
-
-        .upload-actions select {
-          flex: 1;
-        }
-
-        button {
-          border: none;
-          border-radius: 9px;
-          padding: 12px 15px;
-          background: #2563eb;
-          color: white;
-          font-weight: 800;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-
-        button:disabled {
-          background: #93c5fd;
-          cursor: not-allowed;
-        }
-
-        .header-daftar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          margin-bottom: 18px;
-        }
-
-        .tombol-pdf {
-          background: #dc2626;
-        }
-
-        .filter-arsip {
-          display: grid;
-          grid-template-columns: minmax(250px, 1fr) 190px 150px;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-
-        .tabel-wrapper {
-          overflow-x: auto;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-        }
-
-        table {
-          width: 100%;
-          min-width: 1100px;
-          border-collapse: collapse;
-        }
-
-        th {
-          padding: 14px 13px;
-          background: #1e3a8a;
-          color: white;
-          font-size: 13px;
-          text-align: left;
-          white-space: nowrap;
-        }
-
-        td {
-          padding: 14px 13px;
-          border-top: 1px solid #e2e8f0;
-          color: #334155;
-          font-size: 14px;
-          vertical-align: top;
-        }
-
-        td a {
-          color: #2563eb;
-          font-weight: 700;
-          text-decoration: none;
-        }
-
-        .badge {
-          display: inline-block;
-          padding: 6px 9px;
-          border-radius: 999px;
-          background: #64748b;
-          color: white;
-          font-size: 11px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .tombol-unduh,
-        .tombol-hapus {
-          display: inline-block;
-          margin-right: 6px;
-          padding: 8px 10px;
-          border-radius: 7px;
-          color: white !important;
-          font-size: 12px;
-          font-weight: 800;
-          text-decoration: none;
-        }
-
-        .tombol-unduh {
-          background: #0f766e;
-        }
-
-        .tombol-hapus {
-          background: #dc2626;
-        }
-
-        .kelola-asal {
-          color: #64748b;
-          font-size: 12px;
-        }
-
-        .kosong {
-          padding: 32px;
-          text-align: center;
-          color: #64748b;
-        }
-
-        @media (max-width: 768px) {
-          .halaman-arsip {
-            padding: 26px 18px;
-          }
-
-          .judul-halaman h1 {
-            font-size: 27px;
-          }
-
-          .stat-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-          }
-
-          .kartu {
-            padding: 22px 18px;
-          }
-
-          .upload-actions {
-            flex-direction: column;
-          }
-
-          .upload-actions button {
-            width: 100%;
-          }
-
-          .header-daftar {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .tombol-pdf {
-            width: 100%;
-          }
-
-          .filter-arsip {
-            grid-template-columns: 1fr;
-            gap: 10px;
-          }
-
-          .filter-arsip input,
-          .filter-arsip select {
-            width: 100%;
-          }
-        }
-      `}</style>
     </main>
   );
 }
 
-function StatBox({
-  judul,
-  nilai,
-  warna,
-}: {
-  judul: string;
-  nilai: number;
-  warna: string;
-}) {
-  return (
-    <div
-      style={{
-        background: warna,
-        color: "white",
-        borderRadius: "14px",
-        padding: "18px",
-        boxShadow: "0 8px 16px rgba(15, 23, 42, 0.12)",
-      }}
-    >
-      <div style={{ fontSize: "30px", fontWeight: 800 }}>{nilai}</div>
+const cardStyle = {
+  background: "white",
+  borderRadius: "16px",
+  padding: "24px",
+  marginTop: "24px",
+  boxShadow: "0 6px 18px rgba(15, 23, 42, 0.07)",
+};
 
-      <div style={{ marginTop: "5px", fontSize: "13px", fontWeight: 700 }}>
-        {judul}
-      </div>
-    </div>
-  );
-}
+const judulStyle = {
+  margin: "0 0 16px",
+  color: "#102a63",
+  fontSize: "20px",
+  fontWeight: "800",
+};
+
+const inputStyle = {
+  padding: "12px",
+  border: "1px solid #cbd5e1",
+  borderRadius: "8px",
+  fontSize: "14px",
+  boxSizing: "border-box" as const,
+};
+
+const buttonBiru = {
+  border: "none",
+  borderRadius: "8px",
+  padding: "12px 18px",
+  background: "#2563eb",
+  color: "white",
+  fontWeight: "800",
+  cursor: "pointer",
+};
+
+const buttonHapus = {
+  border: "none",
+  borderRadius: "7px",
+  padding: "8px 12px",
+  background: "#dc2626",
+  color: "white",
+  fontWeight: "700",
+  cursor: "pointer",
+};
+
+const thStyle = {
+  padding: "14px",
+  textAlign: "left" as const,
+  fontSize: "13px",
+};
+
+const tdStyle = {
+  padding: "14px",
+  color: "#334155",
+  fontSize: "14px",
+};
+
+const emptyStyle = {
+  padding: "30px",
+  textAlign: "center" as const,
+  color: "#64748b",
+};
