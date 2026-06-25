@@ -289,12 +289,33 @@ export default function SuratMasukPage() {
       },
     ]);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+if (error) {
+  alert(error.message);
+  return;
+}
 
-    alert("Surat masuk berhasil disimpan.");
+// Otomatis buat arsip digital dari surat masuk
+const { error: arsipError } = await supabase.from("arsip_digital").insert([
+  {
+    nomor_arsip: `ARSIP-SM-${Date.now().toString().slice(-6)}`,
+    jenis_arsip: "Surat Masuk",
+    nomor_surat: form.nomor_surat,
+    tanggal_surat: form.tanggal_surat || null,
+    asal_surat: form.asal_surat,
+    perihal: form.perihal,
+    file_url: fileUrl,
+    tanggal: new Date().toISOString(),
+  },
+]);
+
+if (arsipError) {
+  console.error("Gagal membuat arsip otomatis:", arsipError.message);
+  alert(
+    "Surat masuk berhasil disimpan, tetapi arsip digital belum berhasil dibuat."
+  );
+} else {
+  alert("Surat masuk berhasil disimpan dan otomatis masuk Arsip Digital.");
+}
 
     setForm({
       no_agenda: "",
