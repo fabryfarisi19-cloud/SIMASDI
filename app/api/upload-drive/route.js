@@ -1,3 +1,5 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { Readable } from "stream";
@@ -6,6 +8,18 @@ export const runtime = "nodejs";
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.accessToken) {
+      return NextResponse.json(
+        {
+          error:
+            "Silakan login Google terlebih dahulu dengan akun backupumum.bapasjakbar@gmail.com.",
+        },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -16,28 +30,14 @@ export async function POST(request) {
       );
     }
 
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-
-    if (!clientEmail || !privateKey || !folderId) {
-      return NextResponse.json(
-        { error: "Konfigurasi Google Drive belum lengkap di Vercel." },
-        { status: 500 }
-      );
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey,
-      },
-      scopes: ["https://www.googleapis.com/auth/drive"],
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({
+      access_token: session.accessToken,
     });
 
     const drive = google.drive({
       version: "v3",
-      auth,
+      auth: oauth2Client,
     });
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -45,7 +45,7 @@ export async function POST(request) {
     const hasilUpload = await drive.files.create({
       requestBody: {
         name: `${Date.now()}-${file.name}`,
-        parents: [folderId],
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
       },
       media: {
         mimeType: file.type || "application/octet-stream",
