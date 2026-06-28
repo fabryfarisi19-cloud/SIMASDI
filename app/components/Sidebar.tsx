@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,7 +41,18 @@ export default function Sidebar() {
     <>
       {/* Header khusus HP */}
       <header className="header-mobile">
-        <b>SIMASDI</b>
+       <div className="sidebar-brand">
+  <Image
+    src="/logosimasdi.png"
+    alt="SIMASDI"
+    width={50}
+    height={50}
+  />
+
+  <h2 style={{ color: "white", fontSize: 18 }}>
+    SIMASDI
+  </h2>
+</div>
 
         <button
           onClick={() => setBukaMenu(true)}
@@ -61,16 +73,26 @@ export default function Sidebar() {
 
       <aside className={`sidebar ${bukaMenu ? "buka" : ""}`}>
         <div className="sidebar-judul">
-          <b>SIMASDI</b>
+  <div className="sidebar-brand">
+    <Image
+      src="/logo-simasdi.png"
+      alt="SIMASDI"
+      width={200}
+      height={200}
+      priority
+    />
 
-          <button
-            onClick={() => setBukaMenu(false)}
-            className="tombol-tutup"
-            aria-label="Tutup menu"
-          >
-            <X size={26} />
-          </button>
-        </div>
+   
+  </div>
+
+  <button
+    onClick={() => setBukaMenu(false)}
+    className="tombol-tutup"
+    aria-label="Tutup menu"
+  >
+    <X size={26} />
+  </button>
+</div>
 
         <nav className="sidebar-menu">
           {menu.map((item) => {
@@ -187,7 +209,31 @@ export default function Sidebar() {
         .overlay-mobile {
           display: none;
         }
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+.sidebar-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-text h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.sidebar-text p {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #cbd5e1;
+  line-height: 1.3;
+}
         @media (max-width: 768px) {
           .header-mobile {
             height: 62px;

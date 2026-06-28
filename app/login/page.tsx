@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div>
 <div className="mb-6 flex justify-center md:justify-start">
   <Image
-    src="/logo simasdi.png"
+    src="/logo-simasdi.png"
     alt="SIMASDI"
     width={500}
     height={500}
