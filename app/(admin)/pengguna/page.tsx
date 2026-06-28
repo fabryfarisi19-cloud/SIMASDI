@@ -24,6 +24,18 @@ export default function PenggunaPage() {
   const [menyimpan, setMenyimpan] = useState(false);
   const [cari, setCari] = useState("");
 
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth < 768);
+
+  check();
+
+  window.addEventListener("resize", check);
+
+  return () => window.removeEventListener("resize", check);
+}, []);
+
   const loadPengguna = async () => {
     setLoading(true);
 
@@ -173,7 +185,9 @@ export default function PenggunaPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+gridTemplateColumns: isMobile
+  ? "1fr"
+  : "repeat(4, minmax(0,1fr))",
               gap: "16px",
             }}
           >
@@ -224,14 +238,15 @@ export default function PenggunaPage() {
 
           <div
             style={{
-              display: "flex",
-              alignItems: "end",
+  display: "flex",
+flexDirection: isMobile ? "column" : "row",
+alignItems: isMobile ? "stretch" : "end",
               gap: "16px",
               marginTop: "16px",
               flexWrap: "wrap",
             }}
           >
-            <div style={{ width: "210px", maxWidth: "100%" }}>
+            <div style={{ width: isMobile ? "100%" : "210px", maxWidth: "100%" }}>
               <label style={labelStyle}>Status Akun</label>
               <select
                 value={status}
@@ -243,7 +258,14 @@ export default function PenggunaPage() {
               </select>
             </div>
 
-            <button type="submit" disabled={menyimpan} style={buttonBiru}>
+<button
+  type="submit"
+  disabled={menyimpan}
+  style={{
+    ...buttonBiru,
+    width: isMobile ? "100%" : "auto",
+  }}
+>
               {menyimpan ? "Menyimpan..." : "👤 Simpan Pengguna"}
             </button>
           </div>
@@ -284,7 +306,10 @@ export default function PenggunaPage() {
             value={cari}
             onChange={(e) => setCari(e.target.value)}
             placeholder="Cari nama, NIP, role, atau status..."
-            style={{ ...inputStyle, width: "330px", maxWidth: "100%" }}
+           style={{
+  ...inputStyle,
+  width: isMobile ? "100%" : "330px",
+}}
           />
         </div>
 

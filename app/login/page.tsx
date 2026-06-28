@@ -68,16 +68,16 @@ export default function LoginPage() {
       <div className="w-full max-w-6xl min-h-[650px] overflow-hidden rounded-[28px] bg-white shadow-2xl grid grid-cols-1 md:grid-cols-2">
         <section className="bg-gradient-to-br from-[#07183f] via-[#0b2e78] to-[#2465e8] p-8 md:p-12 text-white flex flex-col justify-between">
           <div>
-
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide">
-              SIMASDI
-            </h1>
-
-            <p className="mt-2 text-lg md:text-xl leading-relaxed text-blue-60">
-              Sistem Informasi Manajemen Arsip Digital 
-              <br />
-              Bapas Kelas I Jakarta Barat
-            </p>
+<div className="mb-6 flex justify-center md:justify-start">
+  <Image
+    src="/logo simasdi.png"
+    alt="SIMASDI"
+    width={500}
+    height={500}
+    priority
+  />
+</div>
+          
           </div>
 
           <div className="flex flex-1 items-center justify-center py-8">
@@ -86,14 +86,14 @@ export default function LoginPage() {
               alt="Maskot Elbar"
               width={280}
               height={280}
-              className="w-[210px] md:w-[250px] h-auto"
-              priority
-            />
+               priority
+  className="drop-shadow-2xl"
+/>
           </div>
 
-          <p className="border-t border-white/10 pt-5 text-xs md:text-sm text-blue-80">
-            Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital.
-          </p>
+         <p className="border-t border-white/10 pt-5 text-center text-[13px] text-blue-100 whitespace-nowrap">
+  Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital.
+</p>
         </section>
 
         <section className="bg-white p-8 md:p-14 flex items-center">
