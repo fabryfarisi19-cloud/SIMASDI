@@ -41,27 +41,25 @@ export default function Sidebar() {
     <>
       {/* Header khusus HP */}
       <header className="header-mobile">
-       <div className="sidebar-brand">
-  <Image
-    src="/logosimasdi.png"
-    alt="SIMASDI"
-    width={50}
-    height={50}
-  />
+  <div className="header-brand">
+    <Image
+      src="/logosimasdi.png"
+      alt="SIMASDI"
+      width={50}
+      height={50}
+      priority
+    />
 
-  <h2 style={{ color: "white", fontSize: 18 }}>
-    SIMASDI
-  </h2>
-</div>
+    <span>SIMASDI</span>
+  </div>
 
-        <button
-          onClick={() => setBukaMenu(true)}
-          className="tombol-hamburger"
-          aria-label="Buka menu"
-        >
-          <Menu size={28} />
-        </button>
-      </header>
+  <button
+    onClick={() => setBukaMenu(true)}
+    className="tombol-hamburger"
+  >
+    <Menu size={28} />
+  </button>
+</header>
 
       {/* Latar gelap ketika menu terbuka */}
       {bukaMenu && (
@@ -75,10 +73,10 @@ export default function Sidebar() {
         <div className="sidebar-judul">
   <div className="sidebar-brand">
     <Image
-      src="/logo-simasdi.png"
+      src="/logosimasdi.png"
       alt="SIMASDI"
-      width={200}
-      height={200}
+      width={250}
+      height={250}
       priority
     />
 
@@ -234,10 +232,21 @@ export default function Sidebar() {
   color: #cbd5e1;
   line-height: 1.3;
 }
+  .header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-brand span {
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+}
         @media (max-width: 768px) {
           .header-mobile {
             height: 62px;
-            background: #1e293b;
+           background: linear-gradient(180deg, #061A48 0%, #0B2E78 100%);
             color: white;
             padding: 0 16px;
             display: flex;

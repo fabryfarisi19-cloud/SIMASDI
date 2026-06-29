@@ -3,7 +3,7 @@ import Providers from "./providers";
 
 export const metadata = {
   title: "SIMASDI",
-  description: "Sistem Manajemen Surat dan Disposisi",
+  description: "Sistem Informasi Manajemen Surat dan Disposisi",
 };
 
 export default function RootLayout({

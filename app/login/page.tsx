@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div>
 <div className="mb-6 flex justify-center md:justify-start">
   <Image
-    src="/logo-simasdi.png"
+    src="/logosimasdi.png"
     alt="SIMASDI"
     width={500}
     height={500}
@@ -91,7 +91,7 @@ export default function LoginPage() {
 />
           </div>
 
-         <p className="border-t border-white/10 pt-5 text-center text-[13px] text-blue-100 whitespace-nowrap">
+         <p className="border-t border-white/6 pt-5 text-center text-[10px] text-blue-100 whitespace-nowrap">
   Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital.
 </p>
         </section>
