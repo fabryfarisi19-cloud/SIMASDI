@@ -41,23 +41,21 @@ export default function Sidebar() {
     <>
       {/* Header khusus HP */}
       <header className="header-mobile">
-  <div className="header-brand">
-    <Image
-      src="/logosimasdi.png"
-      alt="SIMASDI"
-      width={50}
-      height={50}
-      priority
-    />
-
-    <span>SIMASDI</span>
-  </div>
+  <Image
+    src="/logo-simasdi.png"
+    alt="SIMASDI"
+    width={54}
+    height={54}
+    priority
+    className="object-contain"
+  />
 
   <button
     onClick={() => setBukaMenu(true)}
     className="tombol-hamburger"
+    aria-label="Buka Menu"
   >
-    <Menu size={28} />
+    <Menu size={30} />
   </button>
 </header>
 
@@ -73,7 +71,7 @@ export default function Sidebar() {
         <div className="sidebar-judul">
   <div className="sidebar-brand">
     <Image
-      src="/logosimasdi.png"
+      src="/logosimasdi1.png"
       alt="SIMASDI"
       width={250}
       height={250}
@@ -121,9 +119,14 @@ export default function Sidebar() {
       </aside>
 
       <style jsx global>{`
-        .header-mobile {
-          display: none;
-        }
+        .header-mobile{
+  height:70px;
+  background:#0f2c73;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+}
 
         .sidebar {
           width: 258px;
