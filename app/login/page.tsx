@@ -92,11 +92,18 @@ export default function LoginPage() {
           </div>
 
    <div className="border-t border-white/10 pt-5 px-6">
-  <p className="text-center text-blue-100 text-[13px] md:text-sm leading-6">
-    Administrasi surat lebih cepat, tertib, aman,
-    <br className="md:hidden" />
-    dan terdokumentasi secara digital.
-  </p>
+  <p
+  className="
+    border-t border-white/10
+    pt-5
+    text-[10px] sm:text-xs md:text-sm
+    text-blue-100
+    text-center
+    whitespace-nowrap
+  "
+>
+  Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital
+</p>
 </div>
         </section>
 

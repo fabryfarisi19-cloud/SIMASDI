@@ -42,7 +42,7 @@ export default function Sidebar() {
       {/* Header khusus HP */}
       <header className="header-mobile">
   <Image
-    src="/logo-simasdi.png"
+    src="/logosimasdi2.png"
     alt="SIMASDI"
     width={54}
     height={54}

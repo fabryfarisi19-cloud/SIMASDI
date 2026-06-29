@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { UploadCloud, FileText, Trash2 } from "lucide-react";
 
 type Arsip = {
   id: number;
@@ -19,7 +20,7 @@ export default function ArsipPage() {
   const [cari, setCari] = useState("");
   const [loading, setLoading] = useState(true);
   const [mengupload, setMengupload] = useState(false);
-
+const [dragAktif, setDragAktif] = useState(false);
   const loadArsip = async () => {
     setLoading(true);
 
@@ -143,20 +144,225 @@ export default function ArsipPage() {
       <section style={cardStyle}>
         <h2 style={judulStyle}>Upload Arsip Lainnya</h2>
 
-        <input
-          id="file-arsip"
-          type="file"
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setFile(e.target.files?.[0] || null)
-          }
-          style={inputStyle}
-        />
+  <div style={{ marginBottom: "16px" }}>
+ 
 
-        <div style={{ display: "flex", gap: "12px", marginTop: "14px", flexWrap: "wrap" }}>
+ <div
+ onDragOver={(e) => {
+  e.preventDefault();
+  setDragAktif(true);
+}}
+  onDragLeave={() => {
+  setDragAktif(false);
+}}
+ onDrop={(e) => {
+  e.preventDefault();
+
+  setDragAktif(false);
+
+  if (e.dataTransfer.files.length > 0) {
+    setFile(e.dataTransfer.files[0]);
+  }
+}}
+ style={{
+  border: dragAktif
+    ? "2px dashed #2563eb"
+    : "2px dashed #94a3b8",
+
+  background: dragAktif
+    ? "#eff6ff"
+    : "#ffffff",
+
+  borderRadius: "16px",
+  padding: "30px",
+  minHeight: "250px",
+  textAlign: "center",
+
+  transition: "all .25s ease",
+
+  transform: dragAktif
+    ? "scale(1.01)"
+    : "scale(1)",
+}}
+>
+
+<div
+  style={{
+    marginBottom: "20px",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
+  <UploadCloud
+    size={80}
+    color="#2563eb"
+    strokeWidth={1.8}
+  />
+</div>
+  
+   <h3
+    style={{
+      margin: 0,
+      color: "#0f172a",
+    }}
+  >
+   {dragAktif
+  ? "Lepaskan file di sini"
+  : "Drag & Drop File"}
+  </h3>
+
+   <p
+    style={{
+      color: "#64748b",
+      marginTop: "10px",
+      marginBottom: "20px",
+    }}
+  >
+    Seret file ke sini atau pilih dari komputer
+  </p>
+
+  <input
+    id="file-arsip"
+    type="file"
+    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+      setFile(e.target.files?.[0] || null)
+    }
+    style={{ display: "none" }}
+  />
+
+  <label
+    htmlFor="file-arsip"
+    style={{
+      display: "inline-block",
+      padding: "12px 24px",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: "10px",
+      fontWeight: 700,
+      cursor: "pointer",
+    }}
+  >
+    📂 Pilih File
+  </label>
+
+{!file && (
+  <p
+    style={{
+      marginTop: "15px",
+      color: "#64748b",
+      fontSize: "15px",
+    }}
+  >
+    Belum ada file dipilih
+  </p>
+)}
+  <small style={{ color: "#94a3b8" }}>
+    Format: PDF, Word, Excel, JPG, PNG
+  </small>
+  {file && (
+ <div
+  style={{
+    marginTop: "24px",
+    background: "#ffffff",
+    border: "1px solid #dbeafe",
+    borderRadius: "14px",
+    padding: "18px 20px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 4px 12px rgba(37,99,235,.08)",
+  }}
+>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    flex: 1,
+  }}
+>
+  <FileText
+    size={32}
+    color="#2563eb"
+    strokeWidth={1.8}
+  />
+
+  <div>
+    <div
+      style={{
+        fontWeight: 700,
+        color: "#0f172a",
+        fontSize: "15px",
+      }}
+    >
+      {file.name}
+    </div>
+
+    <div
+      style={{
+        color: "#64748b",
+        fontSize: "13px",
+        marginTop: "3px",
+      }}
+    >
+     <div
+  style={{
+    marginTop: "4px",
+    color: "#64748b",
+    fontSize: "13px",
+  }}
+>
+  PDF • {(file.size / 1024 / 1024).toFixed(2)} MB • Siap diupload
+</div>
+    </div>
+  </div>
+</div>
+
+    <button
+      type="button"
+      onClick={() => setFile(null)}
+      style={{
+        background: "#ef4444",
+        color: "white",
+        border: "none",
+        borderRadius: "8px",
+        padding: "8px 14px",
+        cursor: "pointer",
+        fontWeight: 700,
+      }}
+    >
+      Hapus
+    </button>
+  </div>
+)}
+</div>
+
+<div
+  style={{
+    display: "flex",
+    gap: "15px",
+    flexWrap: "wrap",
+    alignItems: "center",
+  }}
+></div>
+
+
+</div>
+
+        <div style={{ display:"flex",
+justifyContent:"center",
+alignItems:"center",
+gap:"15px",
+flexWrap:"wrap",
+marginTop:"20px", }}>
           <select
             value={kategori}
             onChange={(e) => setKategori(e.target.value)}
-            style={{ ...inputStyle, width: "260px" }}
+style={{
+  ...inputStyle,
+  width: "280px",
+  height: "52px",
+}}
           >
             <option>Dokumen Umum</option>
             <option>Surat Masuk</option>
@@ -165,9 +371,20 @@ export default function ArsipPage() {
             <option>Laporan</option>
           </select>
 
-          <button onClick={uploadArsip} disabled={mengupload} style={buttonBiru}>
-            {mengupload ? "Mengupload..." : "Upload Arsip"}
-          </button>
+          <button
+  onClick={uploadArsip}
+  disabled={mengupload}
+  style={buttonBiru}
+>
+  {mengupload ? (
+    <>⏳ Mengupload...</>
+  ) : (
+    <>
+      <UploadCloud size={18} />
+      Upload Arsip
+    </>
+  )}
+</button>
         </div>
       </section>
 
@@ -179,14 +396,19 @@ export default function ArsipPage() {
             value={cari}
             onChange={(e) => setCari(e.target.value)}
             placeholder="Cari nama dokumen atau kategori..."
-            style={{ ...inputStyle, width: "340px", margin: 0 }}
+style={{
+  ...inputStyle,
+  width: "340px",
+  height: "46px",
+  borderRadius: "12px",
+}}
           />
         </div>
 
         <div style={{ overflowX: "auto", marginTop: "18px" }}>
           <table style={{ width: "100%", minWidth: "850px", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#102a63", color: "white" }}>
+              <tr style={{ background:"#0B2E78", color: "white" }}>
                 <th style={thStyle}>No</th>
                 <th style={thStyle}>Nama Dokumen</th>
                 <th style={thStyle}>Kategori</th>
@@ -207,27 +429,72 @@ export default function ArsipPage() {
                 </tr>
               ) : (
                 daftarTampil.map((item, index) => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                    <td style={tdStyle}>{index + 1}</td>
-                    <td style={{ ...tdStyle, fontWeight: "700" }}>{item.nama_dokumen}</td>
+               <tr
+  key={item.id}
+  style={{
+    background:
+      index % 2 === 0
+        ? "#ffffff"
+        : "#f8fafc",
+    borderBottom:"1px solid #e5e7eb",
+  }}
+>
+
+                   <td
+  style={{
+    ...tdStyle,
+    fontWeight:700,
+    color:"#2563eb",
+  }}
+>
+  {index+1}
+</td>
+<td
+  style={{
+    ...tdStyle,
+    fontWeight:700,
+  }}
+>
+  📄 {item.nama_dokumen}
+</td>
                     <td style={tdStyle}>{item.kategori}</td>
                     <td style={tdStyle}>
                       {new Date(item.created_at).toLocaleDateString("id-ID")}
                     </td>
                     <td style={tdStyle}>
                       {item.file_url ? (
-                        <a href={item.file_url} target="_blank" rel="noreferrer">
-                          Lihat File
-                        </a>
+<a
+  href={item.file_url ?? "#"}
+  target="_blank"
+  rel="noreferrer"
+  style={{
+    background: "#2563eb",
+    color: "white",
+    padding: "8px 14px",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: 700,
+    display: "inline-block",
+  }}
+>
+  📄 Lihat
+</a>
+
                       ) : "-"}
                     </td>
                     <td style={tdStyle}>
-                      <button
-                        onClick={() => hapusArsip(item)}
-                        style={buttonHapus}
-                      >
-                        Hapus
-                      </button>
+
+<button
+  onClick={() => hapusArsip(item)}
+  style={{
+    ...buttonHapus,
+    background: "#dc2626",
+    padding: "8px 14px",
+  }}
+>
+  🗑 Hapus
+</button>
+
                     </td>
                   </tr>
                 ))
@@ -265,12 +532,21 @@ const inputStyle = {
 
 const buttonBiru = {
   border: "none",
-  borderRadius: "8px",
-  padding: "12px 18px",
+  borderRadius: "10px",
+  padding: "14px 30px",
   background: "#2563eb",
   color: "white",
-  fontWeight: "800",
+  fontWeight: 700,
+  fontSize: "16px",
   cursor: "pointer",
+  boxShadow: "0 6px 18px rgba(37,99,235,.25)",
+
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+
+  minWidth: "170px",
 };
 
 const buttonHapus = {
