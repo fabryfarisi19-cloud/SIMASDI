@@ -295,19 +295,16 @@ if (error) {
 }
 
 // Otomatis buat arsip digital dari surat masuk
-const { error: arsipError } = await supabase.from("arsip_digital").insert([
-  {
-    nomor_arsip: `ARSIP-SM-${Date.now().toString().slice(-6)}`,
-    jenis_arsip: "Surat Masuk",
-    nomor_surat: form.nomor_surat,
-    tanggal_surat: form.tanggal_surat || null,
-    asal_surat: form.asal_surat,
-    perihal: form.perihal,
-    file_url: fileUrl,
-    tanggal: new Date().toISOString(),
-  },
-]);
-
+const { error: arsipError } = await supabase
+  .from("arsip_digital")
+  .insert([
+    {
+      nama_dokumen: `${form.nomor_surat} - ${form.perihal}`,
+      kategori: "Surat Masuk",
+      file_url: fileUrl,
+      drive_file_id: null,
+    },
+  ]);
 if (arsipError) {
   console.error("Gagal membuat arsip otomatis:", arsipError.message);
   alert(

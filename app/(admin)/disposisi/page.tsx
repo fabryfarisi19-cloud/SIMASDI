@@ -79,7 +79,63 @@ export default function DisposisiPage() {
   };
 
   const suratDipilih = suratList.find((item) => item.id === Number(suratId));
+  useEffect(() => {
+  if (!suratDipilih || !tujuan) return;
 
+  if (isiDisposisi.trim() !== "") return;
+
+  let instruksi = "";
+
+  switch (tujuan) {
+    case "Kepala Bapas":
+      instruksi = "Mohon arahan dan petunjuk.";
+      break;
+
+    case "Kaur Umum":
+      instruksi = "Mohon ditindaklanjuti sesuai tugas dan fungsi.";
+      break;
+
+    case "Kasi Bimbingan Klien Dewasa":
+      instruksi = "Mohon dipelajari dan segera ditindaklanjuti.";
+      break;
+
+    case "Kasi Bimbingan Klien Anak":
+      instruksi = "Mohon dipelajari dan segera ditindaklanjuti.";
+      break;
+
+    case "PK Pertama":
+      instruksi = "Mohon diproses sesuai ketentuan yang berlaku.";
+      break;
+
+    case "PK Muda":
+      instruksi = "Mohon diproses sesuai ketentuan yang berlaku.";
+      break;
+
+    case "PK Madya":
+      instruksi = "Mohon diproses sesuai ketentuan yang berlaku.";
+      break;
+
+    case "Staf Tata Usaha":
+      instruksi = "Mohon diproses administrasinya.";
+      break;
+
+    default:
+      instruksi = "Mohon ditindaklanjuti.";
+  }
+
+  setIsiDisposisi(`Kepada Yth.
+${tujuan}
+
+${instruksi}
+
+Nomor Surat : ${suratDipilih.nomor_surat || "-"}
+
+Asal Surat : ${suratDipilih.asal_surat || "-"}
+
+Perihal : ${suratDipilih.perihal || "-"}
+
+Terima kasih.`);
+}, [suratDipilih, tujuan]);
   const simpanDisposisi = async () => {
     if (!suratDipilih) {
       alert("Pilih surat terlebih dahulu.");
