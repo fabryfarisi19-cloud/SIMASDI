@@ -44,8 +44,8 @@ export default function Sidebar() {
   <Image
     src="/logosimasdi2.png"
     alt="SIMASDI"
-    width={54}
-    height={54}
+    width={100}
+    height={100}
     priority
     className="object-contain"
   />
