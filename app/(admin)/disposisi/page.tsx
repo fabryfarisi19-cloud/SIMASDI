@@ -37,6 +37,7 @@ export default function DisposisiPage() {
   const [isiDisposisi, setIsiDisposisi] = useState("");
   const [loading, setLoading] = useState(true);
   const [menyimpan, setMenyimpan] = useState(false);
+  const [lihatData, setLihatData] = useState<Disposisi | null>(null);
 
   useEffect(() => {
     loadData();
@@ -218,6 +219,28 @@ ${isiDisposisi}`;
     );
   };
 
+  const ubahStatus = async (id: number) => {
+  try {
+    const { error } = await supabase
+      .from("disposisi")
+      .update({
+        status: "Selesai",
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert("Gagal mengubah status: " + error.message);
+      return;
+    }
+
+    alert("Status berhasil diubah menjadi Selesai.");
+
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan.");
+  }
+};
   const hapusDisposisi = async (id: number) => {
     const yakin = confirm("Yakin ingin menghapus disposisi ini?");
     if (!yakin) return;
@@ -372,14 +395,56 @@ ${isiDisposisi}`;
                         {item.status || "Menunggu"}
                       </span>
                     </td>
-                    <td>
-                      <button
-                        onClick={() => hapusDisposisi(item.id)}
-                        className="tombol-hapus"
-                      >
-                        Hapus
-                      </button>
-                    </td>
+                
+<td>
+  <div
+    style={{
+      display: "flex",
+      gap: "8px",
+      flexWrap: "wrap",
+    }}
+  >
+<button
+  onClick={() => setLihatData(item)}
+  style={{
+    border: "none",
+    borderRadius: "7px",
+    padding: "8px 11px",
+    background: "#2563eb",
+    color: "white",
+    fontWeight: 700,
+    cursor: "pointer",
+  }}
+>
+  👁 Lihat
+</button>     
+    {item.status !== "Selesai" && (
+      <button
+        onClick={() => ubahStatus(item.id)}
+        style={{
+          border: "none",
+          borderRadius: "7px",
+          padding: "8px 11px",
+          background: "#16a34a",
+          color: "white",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        ✓ Selesai
+      </button>
+    )}
+
+    <button
+      onClick={() => hapusDisposisi(item.id)}
+      className="tombol-hapus"
+    >
+      Hapus
+    </button>
+
+  </div>
+</td>
+
                   </tr>
                 ))
               )}
@@ -387,7 +452,55 @@ ${isiDisposisi}`;
           </table>
         </div>
       </section>
+ {lihatData && (
+  <div className="modal-overlay">
+    <div className="modal-box">
 
+      <h2>Detail Disposisi</h2>
+
+      <p><strong>Nomor Surat</strong></p>
+      <p>{lihatData.nomor_surat}</p>
+
+      <p><strong>Tujuan</strong></p>
+      <p>{lihatData.tujuan}</p>
+
+      <p><strong>Status</strong></p>
+      <p>{lihatData.status}</p>
+
+      <p><strong>Isi Disposisi</strong></p>
+
+      <textarea
+        readOnly
+        value={lihatData.isi_disposisi || ""}
+        style={{
+          width:"100%",
+          minHeight:"220px",
+          padding:"12px",
+          border:"1px solid #ddd",
+          borderRadius:"10px"
+        }}
+      />
+
+<button
+  onClick={() => setLihatData(null)}
+  style={{
+    marginTop: "20px",
+    width: "100%",
+    padding: "12px",
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    fontWeight: 700,
+    cursor: "pointer",
+  }}
+>
+  Tutup
+</button>
+    </div>
+  </div>
+)}        
+      
       <style jsx>{`
         .halaman-disposisi {
           min-height: 100vh;
@@ -559,7 +672,27 @@ ${isiDisposisi}`;
           font-weight: 700;
           cursor: pointer;
         }
+ .modal-overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+padding:20px;
+}
 
+.modal-box{
+  background:#fff;
+  width:100%;
+  max-width:650px;
+  max-height:85vh;
+  overflow:auto;
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.2);
+}
         @media (max-width: 768px) {
           .halaman-disposisi {
             padding: 26px 18px;
@@ -590,6 +723,7 @@ ${isiDisposisi}`;
             align-items: flex-start;
             flex-direction: column;
           }
+           
         }
       `}</style>
     </main>

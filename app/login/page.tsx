@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { signIn } from "next-auth/react";
 
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [nip, setNip] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -102,7 +104,7 @@ export default function LoginPage() {
     whitespace-nowrap
   "
 >
-  Administrasi surat lebih cepat, tertib, aman, dan terdokumentasi secara digital
+  Administrasi surat lebih cepat, tertib, aman, dan tersimpan secara digital
 </p>
 </div>
         </section>
@@ -155,15 +157,24 @@ export default function LoginPage() {
                 Password
               </label>
 
-              <input
-                type="password"
-                placeholder="Masukkan password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                required
-              />
+              <div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Masukkan password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 px-4 py-4 pr-12 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+    required
+  />
 
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-700"
+  >
+    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+  </button>
+</div>
               <button
                 type="submit"
                 disabled={loading}
