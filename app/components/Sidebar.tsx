@@ -26,7 +26,7 @@ const menu = [
   { nama: "Arsip Digital", href: "/arsip", icon: Archive },
 
   // Tambahkan ini
-  { nama: "SIANTAR", href: "/siantar", icon: Ticket },
+  { nama: "SIAP", href: "/siantar", icon: Ticket },
 
   { nama: "Pengguna", href: "/pengguna", icon: Users },
   { nama: "Agenda Kegiatan", href: "/agenda", icon: CalendarDays },
