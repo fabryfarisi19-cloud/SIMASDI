@@ -104,7 +104,7 @@ export default function LoginPage() {
     whitespace-nowrap
   "
 >
-  Administrasi surat lebih cepat, tertib, aman, dan tersimpan secara digital
+  Administrasi surat lebih cepat dan tersimpan secara digital
 </p>
 </div>
         </section>
