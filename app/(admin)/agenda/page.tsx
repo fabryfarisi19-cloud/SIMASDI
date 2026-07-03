@@ -93,21 +93,33 @@ export default function AgendaPage() {
         penanggung_jawab: penanggungJawab.trim() || null,
         status,
       };
+console.log("Edit ID =", editId);
+console.log("Data Agenda =", dataAgenda);
+let error = null;
 
-      const { error } = editId
-        ? await supabase.from("agenda").update(dataAgenda).eq("id", editId)
-        : await supabase.from("agenda").insert([dataAgenda]);
+if (editId) {
+  const { data, error: err } = await supabase
+    .from("agenda")
+    .update(dataAgenda)
+    .eq("id", editId)
+    .select("*")
 
-      if (error) {
-        alert(
-          `${editId ? "Gagal mengubah" : "Gagal menyimpan"} agenda: ${
-            error.message
-          }`
-        );
-        return;
-      }
+  console.log("HASIL UPDATE =", data);
+  console.log("ERROR UPDATE =", err);
 
-      alert(editId ? "Agenda berhasil diubah." : "Agenda berhasil disimpan.");
+  error = err;
+} else {
+  const { error: err } = await supabase
+    .from("agenda")
+    .insert([dataAgenda]);
+
+  error = err;
+}
+
+if (error) {
+  alert(error.message);
+  return;
+}
       resetForm();
       await loadAgenda();
     } catch {
@@ -118,6 +130,7 @@ export default function AgendaPage() {
   };
 
   const editAgenda = (item: Agenda) => {
+ console.log("Edit Agenda:", item);   
     setEditId(item.id);
     setJudul(item.judul || "");
     setTanggal(item.tanggal || "");

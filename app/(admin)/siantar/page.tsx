@@ -29,14 +29,16 @@ export default function SiantarDashboard() {
   }
 
   return (
-    <main className="space-y-6">
-      <h1 className="text-3xl font-bold text-slate-800">SIANTAR</h1>
+   <main className="p-4 md:p-8 space-y-6">
+    <h1 className="text-3xl md:text-4xl font-bold text-slate-800">
+  SIAP
+</h1>
 
-      <p className="text-slate-500">
-        Sistem Informasi Antrian Terintegrasi
+     <p className="text-slate-500 text-sm md:text-base">
+        Sistem Informasi Antrean Pelayanan
       </p>
 
-      <div className="grid md:grid-cols-4 gap-5">
+     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatisticsCard
           title="Total Hari Ini"
           value={dashboard.total}
@@ -65,11 +67,11 @@ export default function SiantarDashboard() {
           icon={<BarChart3 />}
         />
       </div>
-
-      <div className="grid md:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
         <Link
           href="/siantar/kiosk"
-          className="rounded-2xl bg-white shadow p-8 hover:shadow-xl"
+          
+        className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
         >
           <h2 className="text-xl font-bold">🎫 Kiosk</h2>
           <p>Ambil Nomor Antrian</p>
@@ -95,7 +97,6 @@ export default function SiantarDashboard() {
           <h2 className="text-xl font-bold">👨‍💼 Panel Petugas</h2>
           <p>Pemanggilan Antrian</p>
         </Link>
-
         <Link
           href="/siantar/laporan"
           className="rounded-2xl bg-white shadow p-8 hover:shadow-xl"

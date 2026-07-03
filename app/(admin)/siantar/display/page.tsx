@@ -75,7 +75,7 @@ const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
         <div className="col-span-2 flex flex-col justify-center items-center">
 
           <h1 className="text-5xl font-bold">
-            SIANTAR
+            SIAP
           </h1>
 
           <p className="text-3xl mt-10">

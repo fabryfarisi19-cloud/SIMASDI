@@ -44,23 +44,28 @@ export default function Sidebar() {
   return (
     <>
       {/* Header khusus HP */}
-      <header className="header-mobile">
-  <Image
-    src="/logosimasdi2.png"
-    alt="SIMASDI"
-    width={200}
-    height={200}
-    priority
-    className="object-contain"
-  />
+    <header className="header-mobile">
+
+  <div className="header-brand">
+
+    <Image
+      src="/logosimasdi2.png"
+      alt="SIMASDI"
+      width={120}
+      height={36}
+    />
+
+    <span>SIAP</span>
+
+  </div>
 
   <button
     onClick={() => setBukaMenu(true)}
     className="tombol-hamburger"
-    aria-label="Buka Menu"
   >
-    <Menu size={30} />
+    <Menu size={26}/>
   </button>
+
 </header>
 
       {/* Latar gelap ketika menu terbuka */}

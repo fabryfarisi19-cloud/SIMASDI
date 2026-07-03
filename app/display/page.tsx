@@ -116,10 +116,10 @@ async function loadData() {
   return (
     <main className="min-h-screen bg-blue-900 text-white">
 
-      <div className="grid grid-cols-3 h-screen">
+<div className="grid grid-cols-1 lg:grid-cols-3 min-h-screen">
 
         {/* Panel Nomor */}
-        <div className="col-span-2 flex flex-col justify-center items-center">
+     <div className="lg:col-span-2 flex flex-col justify-center items-center">
 
  <div className="w-full flex items-center justify-between px-10 mb-10">
 
@@ -214,7 +214,7 @@ async function loadData() {
         </div>
 
         {/* Panel Video */}
-        <div className="bg-black flex items-center justify-center">
+     <div className="hidden lg:flex bg-black items-center justify-center">
 
           <video
             src="/videobapas.mp4"
@@ -230,6 +230,12 @@ async function loadData() {
       </div>
 <div className="bg-yellow-400 overflow-hidden py-4">
   <div className="animate-marquee whitespace-nowrap text-black text-5xl font-extrabold">
+    {runningText}
+    {"     •     "}
+    {runningText}
+    {"     •     "}
+    {runningText}
+    {"     •     "}
     {runningText}
   </div>
 </div>

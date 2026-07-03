@@ -161,7 +161,7 @@ const timer = setInterval(() => {
 
       </div>
 
-      <div className="bg-yellow-400 text-black text-3xl py-4 px-8 font-bold overflow-hidden whitespace-nowrap">
+      <div className="bg-yellow-400 text-black text-3xl py-4 px-8 font-bold overflow-hidden whitespaceS-nowrap">
         Selamat Datang di Balai Pemasyarakatan Kelas I Jakarta Barat • Harap menunggu hingga nomor Anda dipanggil.
       </div>
 

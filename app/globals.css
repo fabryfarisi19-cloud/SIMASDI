@@ -16,10 +16,13 @@ body {
   color: #0f172a;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Running Text */
 @keyframes marquee {
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }
@@ -27,22 +30,12 @@ body {
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 20s linear infinite;
-}
-@keyframes marquee {
-  from {
-    transform: translateX(100%);
-  }
-
-  to {
-    transform: translateX(-100%);
-  }
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: marquee 30s linear infinite;
 }
 
-.animate-marquee {
-  display: inline-block;
-  animation: marquee 20s linear infinite;
-}
+/* Animasi Nomor Dipanggil */
 @keyframes zoomPulse {
   0% {
     transform: scale(0.8);
