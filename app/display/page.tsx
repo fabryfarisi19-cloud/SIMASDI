@@ -121,23 +121,24 @@ async function loadData() {
         {/* Panel Nomor */}
      <div className="lg:col-span-2 flex flex-col justify-center items-center">
 
- <div className="w-full flex items-center justify-between px-10 mb-10">
+<div className="w-full flex items-center justify-between px-4 md:px-10 py-4">
 
   <div className="flex items-center gap-4">
 
-    <Image
-      src="/logoimipas.png"
-      alt="Logo Kemenimipas"
-      width={80}
-      height={80}
-    />
+   <Image
+  src="/logoimipas.png"
+  alt="Logo Kemenimipas"
+  width={60}
+  height={60}
+  className="md:w-20 md:h-20"
+/>
 
     <div>
-      <h1 className="text-5xl font-bold">
+  <h1 className="text-3xl md:text-5xl font-bold">
         SIAP
       </h1>
 
-      <p className="text-xl">
+     <p className="text-sm md:text-xl leading-tight">
         Balai Pemasyarakatan Kelas I Jakarta Barat
       </p>
     </div>
@@ -146,13 +147,13 @@ async function loadData() {
 
   <div className="flex items-center gap-4">
 
-    <Image
-      src="/maskot-elbar-2026.png"
-      alt="maskot elbar"
-      width={110}
-      height={110}
-    />
-
+   <Image
+  src="/maskot-elbar-2026.png"
+  alt="Maskot"
+  width={110}
+  height={110}
+  className="hidden lg:block"
+/>
    <div className="text-right">
 
   <div className="text-4xl font-bold">
