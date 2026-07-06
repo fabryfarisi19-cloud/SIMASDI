@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, CloudSun, MoonStar } from "lucide-react";
+import Image from "next/image";
+import {
+  Sun,
+  CloudSun,
+  MoonStar,
+} from "lucide-react";
 
 export default function DashboardHeader() {
   const [nama, setNama] = useState("Pengguna");
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -13,9 +19,15 @@ export default function DashboardHeader() {
       const u = JSON.parse(user);
       setNama(u.nama || "Pengguna");
     }
+
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
-  const jam = new Date().getHours();
+  const jam = now.getHours();
 
   let salam = "Selamat Malam";
   let Icon = MoonStar;
@@ -31,62 +43,64 @@ export default function DashboardHeader() {
     Icon = CloudSun;
   }
 
-  const tanggal = new Date().toLocaleDateString("id-ID", {
+  const tanggal = now.toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 
+  const waktu = now.toLocaleTimeString("id-ID");
+
   return (
-    <div
-      style={{
-        background:
-          "linear-gradient(135deg,#0B2E78,#1D4ED8,#2563EB)",
-        borderRadius: 20,
-        padding: 24,
-        color: "#fff",
-        marginBottom: 24,
-        boxShadow: "0 10px 25px rgba(0,0,0,.15)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          color: "#dbeafe",
-          fontWeight: 700,
-        }}
-      >
-        <Icon size={22} />
-        {salam}
-      </div>
+    <div className="bg-white rounded-3xl shadow-lg p-6 flex justify-between items-center mb-8">
 
-      <h1
-        style={{
-          marginTop: 14,
-          fontSize: 28,
-          fontWeight: 800,
-        }}
-      >
-        {nama}
-      </h1>
+      <div className="flex items-center gap-5">
 
-      <p
-        style={{
-          marginTop: 8,
-          color: "#dbeafe",
-        }}
-      >
-        {tanggal}
-      </p>
+        <Image
+          src="/logoimipas.png"
+          alt="logo"
+          width={90}
+          height={90}
+          className="rounded-xl"
+        />
 
-      <div
-       
-      >
+        <div>
+
+          <h1 className="text-2xl font-bold text-blue-900">
+            Dashboard 
+          </h1>
+
+          <p className="text-md text-slate-900">
+            Balai Pemasyarakatan Kelas I Jakarta Barat
+          </p>
+
+          <div className="flex items-center gap-2 mt-3 text-blue-700">
+
+            <Icon size={20} />
+
+            <span className="font-semibold">
+              {salam}, {nama}
+            </span>
+
+          </div>
+
+        </div>
 
       </div>
+
+      <div className="text-right">
+
+        <h2 className="text-4xl font-bold">
+          {waktu}
+        </h2>
+
+        <p className="text-slate-500 mt-2">
+          {tanggal}
+        </p>
+
+      </div>
+
     </div>
   );
 }

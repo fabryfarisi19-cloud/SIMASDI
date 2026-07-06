@@ -1,25 +1,34 @@
+import { ReactNode } from "react";
+
 type Props = {
   title: string;
   value: number | string;
-  icon?: React.ReactNode;
   color?: string;
+  icon?: ReactNode;
 };
 
 export default function StatisticsCard({
   title,
   value,
+  color = "bg-blue-600",
   icon,
-  color = "bg-blue-700",
 }: Props) {
   return (
-    <div className={`${color} rounded-2xl p-6 shadow-lg text-white`}>
-      <div className="flex justify-between items-center">
+    <div
+      className={`${color} rounded-2xl shadow-lg p-6 text-white hover:scale-105 transition-all duration-300`}
+    >
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm opacity-90">{title}</p>
-          <h2 className="text-4xl font-bold mt-2">{value}</h2>
+          <p className="text-sm opacity-90">
+            {title}
+          </p>
+
+          <h2 className="text-5xl font-bold mt-2">
+            {value}
+          </h2>
         </div>
 
-        <div className="text-5xl">
+        <div className="text-5xl opacity-30">
           {icon}
         </div>
       </div>
