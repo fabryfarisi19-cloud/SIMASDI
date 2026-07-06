@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-
+import AntrianDisplay from "@/app/components/AntrianDisplay";
 type Antrian = {
   id?: number;
   nomor: string;
@@ -16,6 +16,7 @@ type WaitingQueue = {
 export default function DisplayTV() {
   const [dipanggil, setDipanggil] = useState<Antrian | null>(null);
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
+const [runningText, setRunningText] = useState("");
   useEffect(() => {
     loadData();
 
@@ -64,6 +65,15 @@ const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
     .limit(5);
 
   setMenunggu(waiting || []);
+  const { data: setting } = await supabase
+  .from("setting_siantar")
+  .select("running_text")
+  .eq("id", 1)
+  .single();
+
+if (setting) {
+  setRunningText(setting.running_text ?? "");
+}
 }
 
   return (
@@ -71,45 +81,32 @@ const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 
       <div className="grid grid-cols-3 h-screen">
 
-        {/* Panel Nomor */}
-        <div className="col-span-2 flex flex-col justify-center items-center">
+       {/* Panel Nomor */}
+<div className="col-span-2 p-8 flex flex-col">
 
-          <h1 className="text-5xl font-bold">
-            SIAP
-          </h1>
+  <AntrianDisplay
+    nomor={dipanggil?.nomor ?? "---"}
+    loket={dipanggil?.loket ?? "-"}
+  />
 
-          <p className="text-3xl mt-10">
-            NOMOR YANG DIPANGGIL
-          </p>
+  <div className="mt-10 text-center">
+    <h2 className="text-3xl font-bold mb-4">
+      Antrean Berikutnya
+    </h2>
 
-          <div className="text-[140px] font-black mt-8">
-            {dipanggil?.nomor ?? "---"}
-          </div>
-
-          <div className="text-5xl">
-       <div className="text-5xl">
-  LOKET {dipanggil?.loket ?? "-"}
-</div>
-
-<div className="mt-16 text-center">
-  <h2 className="text-3xl font-bold mb-4">
-    Antrean Berikutnya
-  </h2>
-
-  <div className="flex gap-4 justify-center flex-wrap">
-    {menunggu.map((item) => (
-      <div
-        key={item.nomor}
-        className="bg-white text-blue-900 rounded-xl px-6 py-4 text-4xl font-bold shadow"
-      >
-        {item.nomor}
-      </div>
-    ))}
-  </div>
-</div>
-          </div>
-
+    <div className="flex gap-4 justify-center flex-wrap">
+      {menunggu.map((item) => (
+        <div
+          key={item.nomor}
+          className="bg-white text-blue-900 rounded-xl px-6 py-4 text-4xl font-bold shadow"
+        >
+          {item.nomor}
         </div>
+      ))}
+    </div>
+  </div>
+
+</div>
 
         {/* Panel Video */}
         <div className="bg-black flex items-center justify-center">
@@ -127,10 +124,15 @@ const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 
       </div>
 
-      <div className="bg-yellow-400 text-black text-3xl py-4 px-8 font-bold overflow-hidden whitespace-nowrap">
-        Selamat Datang di Balai Pemasyarakatan Kelas I Jakarta Barat • Harap menunggu hingga nomor Anda dipanggil.
-      </div>
+   <div className="bg-yellow-400 overflow-hidden">
+  <div className="py-4">
+  <div className="running-text text-black text-3xl font-bold">
+  {runningText}
+</div>
+  </div>
+</div>
 
     </main>
+
   );
 }

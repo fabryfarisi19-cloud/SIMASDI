@@ -9,10 +9,12 @@ import {
 } from "lucide-react";
 
 export default function DashboardHeader() {
-  const [nama, setNama] = useState("Pengguna");
-  const [now, setNow] = useState(new Date());
+ const [nama, setNama] = useState("Pengguna");
+const [now, setNow] = useState(new Date());
+const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+ setMounted(true);   
     const user = localStorage.getItem("user");
 
     if (user) {
@@ -68,7 +70,7 @@ export default function DashboardHeader() {
         <div>
 
           <h1 className="text-2xl font-bold text-blue-900">
-            Dashboard 
+            SIMASDI
           </h1>
 
           <p className="text-md text-slate-900">
@@ -91,13 +93,13 @@ export default function DashboardHeader() {
 
       <div className="text-right">
 
-        <h2 className="text-4xl font-bold">
-          {waktu}
-        </h2>
+      <h2 className="text-4xl font-bold">
+  {mounted ? waktu : "--:--:--"}
+</h2>
 
-        <p className="text-slate-500 mt-2">
-          {tanggal}
-        </p>
+<p className="text-slate-500 mt-2">
+  {mounted ? tanggal : ""}
+</p>
 
       </div>
 
