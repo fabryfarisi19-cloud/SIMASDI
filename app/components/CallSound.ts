@@ -1,13 +1,18 @@
-export function panggilSuara(nomor: string, loket: number) {
-  speechSynthesis.cancel();
 
-  const suara = new SpeechSynthesisUtterance(
-    `Nomor antrean ${nomor}, silakan menuju loket ${loket}`
-  );
+export async function panggilSuara(nomor: string, loket: number) {
+  console.log("1. MASUK FUNGSI");
 
-  suara.lang = "id-ID";
-  suara.rate = 0.9;
-  suara.pitch = 1;
+  const audio = new Audio("/sound/call-to-attention.mp3");
 
-  speechSynthesis.speak(suara);
+  audio.oncanplay = () => console.log("2. AUDIO SIAP");
+  audio.onplay = () => console.log("3. AUDIO PLAY");
+  audio.onended = () => console.log("4. AUDIO SELESAI");
+  audio.onerror = (e) => console.error("5. AUDIO ERROR", e);
+
+  try {
+    await audio.play();
+    console.log("6. PLAY BERHASIL");
+  } catch (e) {
+    console.error("7. PLAY GAGAL", e);
+  }
 }

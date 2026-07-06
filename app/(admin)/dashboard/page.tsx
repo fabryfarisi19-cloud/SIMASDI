@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import DashboardHeader from "@/app/components/DashboardHeader";
 type SuratMasuk = {
   id: number;
   nomor_surat: string | null;
@@ -281,25 +281,12 @@ export default function DashboardPage() {
       `}</style>
 
       <main className="dashboard-main">
-        <div className="dashboard-header">
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                color: "#0f172a",
-                fontSize: "28px",
-                fontWeight: "800",
-              }}
-            >
-              Dashboard SIMASDI
-            </h1>
+  <DashboardHeader />      
+       <div className="dashboard-header">
 
-            <p style={{ margin: "7px 0 0", color: "#64748b" }}>
-              Ringkasan administrasi surat dan agenda kegiatan.
-            </p>
-          </div>
+  <div />
 
-          <div className="dashboard-buttons">
+  <div className="dashboard-buttons">
             <button onClick={loadDashboard} style={buttonBiruStyle}>
               ↻ Perbarui Data
             </button>

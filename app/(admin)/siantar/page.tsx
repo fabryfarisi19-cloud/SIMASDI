@@ -73,15 +73,17 @@ export default function SiantarDashboard() {
           
         className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
         >
-          <h2 className="text-xl font-bold">🎫 Kiosk</h2>
-          <p>Ambil Nomor Antrian</p>
+         <h2 className="text-lg md:text-xl font-bold">🎫 Kiosk</h2>
+         <p className="mt-2 text-sm text-slate-500">
+  Ambil Nomor Antrian
+</p>
         </Link>
 
       <Link
   href="/display"
-  className="rounded-2xl bg-white shadow p-8 hover:shadow-xl transition"
+  className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
 >
-  <h2 className="text-xl font-bold">
+ <h2 className="text-lg md:text-xl font-bold">
     📺 Display TV
   </h2>
 
@@ -92,25 +94,31 @@ export default function SiantarDashboard() {
 
         <Link
           href="/siantar/petugas"
-          className="rounded-2xl bg-white shadow p-8 hover:shadow-xl"
+        className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
         >
-          <h2 className="text-xl font-bold">👨‍💼 Panel Petugas</h2>
-          <p>Pemanggilan Antrian</p>
+         <h2 className="text-lg md:text-xl font-bold">👨‍💼 Panel Petugas</h2>
+         <p className="mt-2 text-sm text-slate-500">
+  Pemanggilan Antrian
+</p>
         </Link>
         <Link
           href="/siantar/laporan"
-          className="rounded-2xl bg-white shadow p-8 hover:shadow-xl"
+         className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
         >
-          <h2 className="text-xl font-bold">📊 Laporan</h2>
-          <p>Statistik Pelayanan</p>
+         <h2 className="text-lg md:text-xl font-bold">📊 Laporan</h2>
+         <p className="mt-2 text-sm text-slate-500">
+  Statistik Pelayanan
+</p>
         </Link>
 
         <Link
           href="/siantar/setting"
-          className="rounded-2xl bg-white shadow p-8 hover:shadow-xl"
+         className="rounded-2xl bg-white shadow p-6 hover:shadow-xl transition"
         >
-          <h2 className="text-xl font-bold">⚙ Pengaturan</h2>
-          <p>Video, Running Text, Loket</p>
+          <h2 className="text-lg md:text-xl font-bold">⚙ Pengaturan</h2>
+        <p className="mt-2 text-sm text-slate-500">
+  Video, Running Text, Loket
+</p>
         </Link>
       </div>
     </main>

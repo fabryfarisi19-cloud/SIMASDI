@@ -60,9 +60,11 @@ export async function ambilNomor(
     kode,
     layanan,
     status: "MENUNGGU",
-  });
+  })
+  .select();
 
-console.log("HASIL INSERT:", result);
+console.log("DATA INSERT:", result.data);
+console.log("ERROR INSERT:", result.error);
 
 if (result.error) {
   throw result.error;
@@ -78,11 +80,19 @@ export async function panggilBerikutnya(loket: number) {
     .select("*")
     .eq("status", "MENUNGGU")
     .order("id", { ascending: true })
-    .limit(1)
-    .single();
+    .limit(1);
 
-  if (error || !data) return null;
-  
+  console.log("DATA MENUNGGU:", data);
+  console.log("ERROR:", error);
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  const antrian = data[0];
+
   const { error: updateError } = await supabase
     .from("antrian")
     .update({
@@ -90,15 +100,15 @@ export async function panggilBerikutnya(loket: number) {
       loket,
       called_at: new Date().toISOString(),
     })
-    .eq("id", data.id);
+    .eq("id", antrian.id);
 
   if (updateError) throw updateError;
 
- return {
-  id: data.id,
-  nomor: data.nomor,
-  loket,
-};
+  return {
+    id: antrian.id,
+    nomor: antrian.nomor,
+    loket,
+  };
 }
 export async function panggilUlang(id: number) {
   const { error } = await supabase

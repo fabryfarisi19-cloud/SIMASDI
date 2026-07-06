@@ -55,3 +55,20 @@ body {
 .animate-call {
   animation: zoomPulse .6s ease;
 }
+@keyframes blinkCall {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .2;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-blink {
+  animation: blinkCall .5s infinite;
+}

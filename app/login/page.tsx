@@ -55,7 +55,15 @@ export default function LoginPage() {
       if (updateError) {
         console.error("Gagal memperbarui terakhir login:", updateError.message);
       }
-
+localStorage.setItem(
+  "user",
+  JSON.stringify({
+    id: data.id,
+    nama: data.nama,
+    jabatan: data.role, // ambil dari kolom role
+    username: data.username,
+  })
+);
       router.push("/dashboard");
     } catch (error) {
       console.error(error);

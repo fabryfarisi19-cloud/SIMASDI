@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -34,12 +34,26 @@ const menu = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [bukaMenu, setBukaMenu] = useState(false);
+  const [bukaMenu, setBukaMenu] = useState(false); 
+const [nama, setNama] = useState("Pengguna");
+const [jabatan, setJabatan] = useState("");
 
-  const logout = () => {
-    localStorage.removeItem("login");
-    router.push("/login");
-  };
+useEffect(() => {
+  const user = localStorage.getItem("user");
+ console.log("USER =", user);
+  if (user) {
+    const u = JSON.parse(user);
+
+    setNama(u.nama || "Pengguna");
+    setJabatan(u.jabatan || "");
+  }
+}, []);
+
+const logout = () => {
+  localStorage.removeItem("login");
+  localStorage.removeItem("user");
+  router.push("/login");
+};
 
   return (
     <>
@@ -51,11 +65,9 @@ export default function Sidebar() {
     <Image
       src="/logosimasdi2.png"
       alt="SIMASDI"
-      width={120}
-      height={36}
+      width={155}
+      height={45}
     />
-
-    <span>SIAP</span>
 
   </div>
 
@@ -78,17 +90,29 @@ export default function Sidebar() {
 
       <aside className={`sidebar ${bukaMenu ? "buka" : ""}`}>
         <div className="sidebar-judul">
-  <div className="sidebar-brand">
-    <Image
-      src="/logosimasdi1.png"
-      alt="SIMASDI"
-      width={250}
-      height={250}
-      priority
-    />
+ <div className="sidebar-brand">
 
-   
+<Image
+  src="/logosimasdi1.png"
+  alt="SIMASDI"
+  width={200}
+  height={200}
+  priority
+  className="sidebar-logo"
+/>
+  <div className="sidebar-user">
+
+    <h3>{nama}</h3>
+
+    <p>{jabatan}</p>
+
+    <span>
+      🟢 Online
+    </span>
+
   </div>
+
+</div>
 
   <button
     onClick={() => setBukaMenu(false)}
@@ -125,6 +149,11 @@ export default function Sidebar() {
           <LogOut size={19} />
           Logout
         </button>
+ <div className="versi-app">
+  SIMASDI v1.0.0
+  <br />
+  Bapas Kelas I Jakarta Barat
+</div>
       </aside>
 
       <style jsx global>{`
@@ -136,7 +165,13 @@ export default function Sidebar() {
   justify-content:space-between;
   padding:0 18px;
 }
-
+.versi-app{
+  margin-top:18px;
+  text-align:center;
+  color:#94A3B8;
+  font-size:11px;
+  line-height:1.6;
+}
         .sidebar {
           width: 258px;
           min-height: 100vh;
@@ -219,12 +254,57 @@ export default function Sidebar() {
         .overlay-mobile {
           display: none;
         }
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.sidebar-brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  margin-bottom:8px;
 }
 
+.sidebar-logo{
+  width:200px;
+  height:auto;
+  margin-bottom:8px;
+}
+
+.sidebar-user{
+  width:100%;
+  text-align:center;
+  margin-top:10px;
+}
+
+.sidebar-user h3{
+  margin:0;
+  font-size:15px;
+  font-weight:800;
+  color:#fff;
+  line-height:1.3;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.sidebar-user p{
+  margin-top:6px;
+  font-size:13px;
+  color:#CBD5E1;
+  text-transform:capitalize;
+}
+
+.sidebar-user span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:10px;
+  padding:6px 14px;
+  background:#14532D;
+  color:#86EFAC;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
 .sidebar-text {
   display: flex;
   flex-direction: column;
@@ -250,11 +330,6 @@ export default function Sidebar() {
   gap: 10px;
 }
 
-.header-brand span {
-  color: white;
-  font-size: 22px;
-  font-weight: 700;
-}
         @media (max-width: 768px) {
           .header-mobile {
             height: 62px;

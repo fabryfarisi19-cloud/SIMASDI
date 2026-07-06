@@ -19,6 +19,7 @@ export default function DisplayTV() {
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 const [runningText, setRunningText] = useState("");
 const [jam, setJam] = useState("");
+const [blink, setBlink] = useState(false);
  useEffect(() => {
   loadData();
 
@@ -96,9 +97,16 @@ async function loadData() {
     .limit(1)
     .single();
 
-  if (data) {
-    setDipanggil(data);
-  } else {
+ if (data) {
+  setDipanggil(data);
+
+  setBlink(true);
+
+  setTimeout(() => {
+    setBlink(false);
+  }, 3000);
+}
+ else {
     setDipanggil(null);
   }
 
@@ -177,9 +185,17 @@ async function loadData() {
             NOMOR YANG DIPANGGIL
           </p>
 
-        <div
+       <div
   key={dipanggil?.nomor}
-  className="text-[140px] font-black mt-8 animate-call"
+ className={`
+  mt-8
+  text-[150px]
+  font-black
+  transition-all
+  duration-300
+  animate-call
+  ${blink ? "animate-blink text-yellow-300 scale-110" : "text-white"}
+`}
 >
   {dipanggil?.nomor ?? "---"}
 </div>

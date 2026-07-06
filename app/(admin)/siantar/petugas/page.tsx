@@ -6,7 +6,7 @@ import {
   panggilUlang,
   selesai,
 } from "@/lib/siantar";
-import { panggilSuara } from "@/app/components/CallSound";
+import { panggilVoice } from "@/app/components/VoiceEngine";
 
 export default function PanelPetugas() {
   const [loket, setLoket] = useState(1);
@@ -28,9 +28,13 @@ export default function PanelPetugas() {
 
     setAntrianAktif(hasil);
 
-    panggilSuara(hasil.nomor, hasil.loket);
+console.log("SEBELUM PANGGIL SUARA");
 
-    alert(`Memanggil ${hasil.nomor} ke Loket ${hasil.loket}`);
+await panggilVoice(hasil.nomor, hasil.loket);
+
+console.log("SESUDAH PANGGIL SUARA");
+
+alert(`Memanggil ${hasil.nomor} ke Loket ${hasil.loket}`);
   } catch (err) {
     console.error(err);
     alert("Terjadi kesalahan.");
@@ -57,11 +61,10 @@ async function ulangiPanggilan() {
   try {
     await panggilUlang(antrianAktif.id!);
 
-    panggilSuara(
-      antrianAktif.nomor!,
-      loket
-    );
-
+  await panggilVoice(
+  antrianAktif.nomor!,
+  loket
+);
     alert(`Memanggil ulang ${antrianAktif.nomor}`);
   } catch (err: any) {
     console.error(err);
@@ -95,6 +98,7 @@ async function ulangiPanggilan() {
         >
           🔊 Panggil Berikutnya
         </button>
+     
 {antrianAktif && (
   <>
     <button
