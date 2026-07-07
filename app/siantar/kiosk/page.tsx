@@ -30,7 +30,7 @@ const nomor = await ambilNomor(kode, layanan);
       <div className="max-w-5xl w-full">
 
         <h1 className="text-5xl font-bold text-center text-blue-800">
-          SIANTAR
+          SIAP
         </h1>
 
         <p className="text-center text-xl text-slate-600 mt-3">

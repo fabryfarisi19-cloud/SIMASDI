@@ -11,7 +11,7 @@ export default function SiantarLayout({
 
       <SidebarSIAP />
 
-      <main className="ml-72 min-h-screen p-8">
+    <main className="md:ml-72 min-h-screen p-4 md:p-8">
         {children}
       </main>
 
