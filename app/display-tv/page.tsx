@@ -149,7 +149,7 @@ const timer = setInterval(() => {
         <div className="bg-black flex items-center justify-center">
 
           <video
-            src="/videobapas.mp4"
+            src="/video-5s.mp4"
             autoPlay
             muted
             loop

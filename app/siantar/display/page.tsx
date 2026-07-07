@@ -17,9 +17,18 @@ export default function DisplayTV() {
   const [dipanggil, setDipanggil] = useState<Antrian | null>(null);
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 const [runningText, setRunningText] = useState("");
-  useEffect(() => {
+const [jam, setJam] = useState("");
+  
+useEffect(() => {
     loadData();
-
+setJam(
+  new Date().toLocaleTimeString("id-ID")
+);
+const timer = setInterval(() => {
+  setJam(
+    new Date().toLocaleTimeString("id-ID")
+  );
+}, 1000);
     const channel = supabase
       .channel("display-tv")
       .on(
@@ -79,15 +88,58 @@ if (setting) {
   return (
     <main className="min-h-screen bg-blue-900 text-white">
 
-      <div className="grid grid-cols-3 h-screen">
+   <div className="grid grid-cols-2 min-h-[calc(100vh-72px)]">
 
        {/* Panel Nomor */}
-<div className="col-span-2 p-8 flex flex-col">
+<div className="p-8 flex flex-col h-full">
 
-  <AntrianDisplay
-    nomor={dipanggil?.nomor ?? "---"}
-    loket={dipanggil?.loket ?? "-"}
-  />
+  {/* Header */}
+ <div className="flex items-center justify-between mb-10 px-4">
+
+    <div className="flex items-center gap-5">
+
+      <img
+        src="/logoimipas.png"
+        className="w-20 h-20"
+      />
+
+      <div>
+      <h1 className="text-4xl font-black leading-tight">
+          SIAP
+        </h1>
+
+        <p className="text-2xl text-blue-100">
+          Sistem Informasi Antrean Pelayanan
+        </p>
+      </div>
+
+    </div>
+
+    <div className="text-right">
+
+ <div className="text-4xl font-bold">
+  {jam}
+</div>
+
+      <div className="text-xl">
+        {new Date().toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      </div>
+
+    </div>
+
+  </div>
+
+  <div className="flex-1">
+    <AntrianDisplay
+      nomor={dipanggil?.nomor ?? "---"}
+      loket={dipanggil?.loket ?? "-"}
+    />
+  </div>
 
   <div className="mt-10 text-center">
     <h2 className="text-3xl font-bold mb-4">
@@ -112,7 +164,7 @@ if (setting) {
         <div className="bg-black flex items-center justify-center">
 
           <video
-            src="/videobapas.mp4"
+            src="/video-5s.mp4"
             autoPlay
             muted
             loop
@@ -131,7 +183,23 @@ if (setting) {
 </div>
   </div>
 </div>
+<style jsx>{`
+  .running-text {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+  }
 
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+`}</style>
     </main>
 
   );

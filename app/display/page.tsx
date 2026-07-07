@@ -124,7 +124,7 @@ async function loadData() {
   return (
     <main className="min-h-screen bg-blue-900 text-white">
 
-<div className="grid grid-cols-1 lg:grid-cols-3 min-h-screen">
+<div className="grid grid-cols-2 lg:grid-cols-3 min-h-screen">
 
         {/* Panel Nomor */}
      <div className="lg:col-span-2 flex flex-col justify-center items-center">
@@ -231,10 +231,10 @@ async function loadData() {
         </div>
 
         {/* Panel Video */}
-     <div className="hidden lg:flex bg-black items-center justify-center">
+     <div className="flex bg-black items-center justify-center">
 
           <video
-            src="/videobapas.mp4"
+            src="/video-5s.mp4"
             autoPlay
             muted
             loop
