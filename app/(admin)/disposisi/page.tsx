@@ -186,6 +186,45 @@ Terima kasih.`);
   };
 
   const kirimWhatsApp = () => {
+ let nomorWA = "";
+
+switch (tujuan) {
+  case "Kepala Bapas":
+    nomorWA = "6281234567890";
+    break;
+
+  case "Kaur Umum":
+    nomorWA = "628179888792";
+    break;
+
+  case "Kasi Bimbingan Klien Dewasa":
+    nomorWA = "6281234567891";
+    break;
+
+  case "Kasi Bimbingan Klien Anak":
+    nomorWA = "6281234567892";
+    break;
+
+  case "PK Pertama":
+    nomorWA = "6281234567893";
+    break;
+
+  case "PK Muda":
+    nomorWA = "6281234567894";
+    break;
+
+  case "PK Madya":
+    nomorWA = "6281234567895";
+    break;
+
+  case "Staf Tata Usaha":
+    nomorWA = "6281234567896";
+    break;
+
+  default:
+    alert("Nomor WhatsApp tujuan belum diatur.");
+    return;
+}   
     if (!suratDipilih) {
       alert("Pilih surat terlebih dahulu.");
       return;
@@ -214,9 +253,9 @@ Isi Disposisi:
 ${isiDisposisi}`;
 
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(pesan)}`,
-      "_blank"
-    );
+  `https://wa.me/${nomorWA}?text=${encodeURIComponent(pesan)}`,
+  "_blank"
+);
   };
 
   const ubahStatus = async (id: number) => {

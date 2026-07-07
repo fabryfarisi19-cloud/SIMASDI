@@ -54,8 +54,9 @@ const [mounted, setMounted] = useState(false);
 
   const waktu = now.toLocaleTimeString("id-ID");
 
-  return (
-    <div className="bg-white rounded-3xl shadow-lg p-6 flex justify-between items-center mb-8">
+ return (
+  <>
+    <div className="welcome-card bg-white rounded-3xl shadow-lg p-6 flex justify-between items-center mb-8">
 
       <div className="flex items-center gap-5">
 
@@ -81,7 +82,7 @@ const [mounted, setMounted] = useState(false);
 
             <Icon size={20} />
 
-            <span className="font-semibold">
+           <span className="welcome-name font-semibold">
               {salam}, {nama}
             </span>
 
@@ -93,16 +94,46 @@ const [mounted, setMounted] = useState(false);
 
       <div className="text-right">
 
-      <h2 className="text-4xl font-bold">
+      <h2 className="welcome-time text-4xl font-bold">
   {mounted ? waktu : "--:--:--"}
 </h2>
 
 <p className="text-slate-500 mt-2">
   {mounted ? tanggal : ""}
 </p>
+</div>
+          </div>
 
-      </div>
+    <style jsx>{`
+      @media (max-width: 768px) {
+        .welcome-card {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 20px;
+          padding: 22px;
+        }
 
-    </div>
+        .welcome-card img {
+          width: 90px;
+          height: 90px;
+        }
+
+        .welcome-name {
+          display: block;
+          font-size: 18px;
+          margin-top: 6px;
+        }
+
+        .welcome-time {
+          font-size: 32px;
+        }
+
+        .welcome-card .text-right {
+          text-align: center;
+        }
+      }
+    `}</style>
+  </>
   );
 }
