@@ -72,7 +72,7 @@ async function ulangiPanggilan() {
   }
 }
   return (
-    <main className="min-h-screen bg-slate-100 p-10">
+<main className="min-h-screen bg-slate-100 pt-24 md:pt-28 px-6 md:px-10 pb-10">
       <h1 className="text-4xl font-bold mb-8">
         Panel Petugas
       </h1>

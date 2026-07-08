@@ -19,7 +19,15 @@ export default function DisplayTV() {
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 const [runningText, setRunningText] = useState("");
 const [jam, setJam] = useState("");
+const [tanggal, setTanggal] = useState("");
 const [blink, setBlink] = useState(false);
+const [lastCalled, setLastCalled] = useState("");
+const [statistik, setStatistik] = useState({
+  total: 0,
+  menunggu: 0,
+  dipanggil: 0,
+  selesai: 0,
+});
  useEffect(() => {
   loadData();
 
@@ -30,6 +38,14 @@ const [blink, setBlink] = useState(false);
       second: "2-digit",
     })
   );
+  setTanggal(
+  new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+);
 
   const timer = setInterval(() => {
     setJam(
@@ -39,6 +55,15 @@ const [blink, setBlink] = useState(false);
         second: "2-digit",
       })
     );
+setTanggal(
+  new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+);
+
   }, 1000);
 
  const channel = supabase
@@ -100,11 +125,16 @@ async function loadData() {
  if (data) {
   setDipanggil(data);
 
-  setBlink(true);
+  if (lastCalled !== data.nomor) {
+    setLastCalled(data.nomor);
 
-  setTimeout(() => {
-    setBlink(false);
-  }, 3000);
+    setBlink(true);
+
+    setTimeout(() => {
+      setBlink(false);
+    }, 3000);
+
+  }
 }
  else {
     setDipanggil(null);
@@ -119,130 +149,244 @@ async function loadData() {
     .limit(5);
 
   setMenunggu(waiting || []);
+  const [total, menungguCount, dipanggilCount, selesaiCount] =
+  await Promise.all([
+    supabase
+      .from("antrian")
+      .select("*", { count: "exact", head: true }),
+
+    supabase
+      .from("antrian")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "MENUNGGU"),
+
+    supabase
+      .from("antrian")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "DIPANGGIL"),
+
+    supabase
+      .from("antrian")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "SELESAI"),
+  ]);
+
+setStatistik({
+  total: total.count ?? 0,
+  menunggu: menungguCount.count ?? 0,
+  dipanggil: dipanggilCount.count ?? 0,
+  selesai: selesaiCount.count ?? 0,
+});
 }
 
   return (
     <main className="min-h-screen bg-blue-900 text-white">
 
-<div className="grid grid-cols-2 lg:grid-cols-3 min-h-screen">
+<div className="grid grid-cols-12 min-h-screen">
 
         {/* Panel Nomor */}
-     <div className="lg:col-span-2 flex flex-col justify-center items-center">
+<div className="col-span-7 flex flex-col bg-[#14398B]">
 
-<div className="w-full flex items-center justify-between px-4 md:px-10 py-4">
+<div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 rounded-b-[30px] px-10 py-6 shadow-xl border-b border-white/20">
 
-  <div className="flex items-center gap-4">
+  <div className="flex items-center justify-between">
 
-   <Image
-  src="/logoimipas.png"
-  alt="Logo Kemenimipas"
-  width={60}
-  height={60}
-  className="md:w-20 md:h-20"
-/>
+    {/* Kiri */}
+    <div className="flex items-center gap-6">
 
-    <div>
-  <h1 className="text-3xl md:text-5xl font-bold">
-        SIAP
-      </h1>
+      <Image
+        src="/logoimipas.png"
+        alt="Logo"
+        width={72}
+        height={72}
+      />
 
-     <p className="text-sm md:text-xl leading-tight">
-        Balai Pemasyarakatan Kelas I Jakarta Barat
-      </p>
+      <div>
+
+        <h1 className="text-5xl font-black tracking-wide text-white">
+          SIAP
+        </h1>
+
+        <p className="text-2xl text-blue-100">
+          Sistem Informasi Antrean Pelayanan
+        </p>
+
+      </div>
+
+    </div>
+
+    {/* Kanan */}
+    <div className="text-right">
+
+      <div className="text-5xl font-black text-white">
+        {jam}
+      </div>
+
+     <div className="mt-2 text-xl text-blue-100">
+  {tanggal}
+</div>
+
     </div>
 
   </div>
 
-  <div className="flex items-center gap-4">
+</div>   
+        
+<div className="relative flex justify-center px-8 pt-40">
+<Image
+  src="/logoimipas.png"
+  alt="Watermark"
+  width={450}
+  height={450}
+className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+/>  
+<div className="bg-white rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.18)] w-full max-w-8xl py-60 px-12">
 
-   <Image
-  src="/maskot-elbar-2026.png"
-  alt="Maskot"
-  width={110}
-  height={110}
-  className="hidden lg:block"
-/>
-   <div className="text-right">
+    <div className="text-center">
 
-  <div className="text-4xl font-bold">
-    {jam}
-  </div>
+      <p className="text-3xl tracking-[8px] text-slate-500 font-semibold">
+        NOMOR ANTREAN
+      </p>
 
-<div className="text-sm mt-1">
-  {new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}
-</div>
-</div>
-
-</div>
-
-</div>       
-          <p className="text-3xl mt-10">
-            NOMOR YANG DIPANGGIL
-          </p>
-
-       <div
+     <div
   key={dipanggil?.nomor}
- className={`
-  mt-8
-  text-[150px]
-  font-black
-  transition-all
-  duration-300
-  animate-call
-  ${blink ? "animate-blink text-yellow-300 scale-110" : "text-white"}
-`}
->
-  {dipanggil?.nomor ?? "---"}
-</div>
+  className={`
+    mt-6
+    text-[150px]
+          font-black
+          text-blue-700
+          transition-all
+          duration-500
+          ${blink ? "scale-110 text-yellow-500" : ""}
+        `}
+      >
+        {dipanggil?.nomor ?? "---"}
+      </div>
 
-          <div className="text-5xl">
-<div className="mt-6 text-center">
-  <div className="text-2xl text-gray-200">
-    SILAKAN MENUJU
+    <div className="mt-6 text-2xl text-slate-600">
+        Silakan menuju
+      </div>
+
+    <div className="text-6xl font-black text-blue-700 mt-2">
+        Loket {dipanggil?.loket ?? "-"}
+      </div>
+
+    </div>
+
   </div>
 
-  <div className="text-6xl font-bold text-yellow-300 mt-2">
-    LOKET {dipanggil?.loket ?? "-"}
-  </div>
 </div>
-<div className="mt-16 text-center">
+<div className="pb-6 text-center">
   <h2 className="text-3xl font-bold mb-4">
     Antrean Berikutnya
   </h2>
 
-  <div className="flex gap-4 justify-center flex-wrap">
-    {menunggu.map((item) => (
+<div className="mt-2 flex justify-center gap-4 flex-wrap">
+
+  {menunggu.length === 0 ? (
+
+    <div className="text-xl text-blue-100">
+      Tidak ada antrean menunggu
+    </div>
+
+  ) : (
+
+    menunggu.map((item) => (
       <div
         key={item.nomor}
-        className="bg-white text-blue-900 rounded-xl px-6 py-4 text-4xl font-bold shadow"
+        className="w-32 h-24 rounded-2xl bg-white shadow-xl flex items-center justify-center"
       >
-        {item.nomor}
+        <span className="text-4xl font-black text-blue-700">
+          {item.nomor}
+        </span>
       </div>
-    ))}
-  </div>
+    ))
+
+  )}
+
 </div>
-          </div>
+</div>
 
-        </div>
+</div>
 
-        {/* Panel Video */}
-     <div className="flex bg-black items-center justify-center">
+{/* Panel Video */}
+<div className="col-span-5 flex flex-col bg-[#0B1F4D] border-l-2 border-white/40">
 
-          <video
-            src="/video-5s.mp4"
-            autoPlay
-            muted
-            loop
-            controls={false}
-            className="w-full h-full object-cover"
-          />
+  {/* Header */}
+<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-4 border-b border-white/20">
+    <h2 className="text-3xl font-bold text-white">
+      VIDEO INFORMASI
+    </h2>
 
-        </div>
+    <p className="text-blue-200 mt-1">
+      Balai Pemasyarakatan Kelas I Jakarta Barat
+    </p>
+  </div>
+
+  {/* Video */}
+ {/* Video */}
+<div className="flex-1 overflow-hidden">
+  <video
+    src="/video-5s.mp4"
+    autoPlay
+    muted
+    loop
+    playsInline
+    controls={false}
+    className="w-full h-full object-cover"
+  />
+</div>
+
+{/* Statistik */}
+<div className="bg-blue-950 p-6 border-t border-blue-700">
+
+  <h3 className="text-2xl font-bold text-center mb-5">
+    Statistik Hari Ini
+  </h3>
+
+  <div className="grid grid-cols-2 gap-4">
+
+    <div className="bg-blue-800 rounded-2xl p-4 text-center">
+      <div className="text-4xl font-black">
+        {statistik.total}
+      </div>
+      <div className="text-blue-200">
+        Total
+      </div>
+    </div>
+
+    <div className="bg-yellow-500 rounded-2xl p-4 text-center">
+      <div className="text-4xl font-black text-black">
+        {statistik.menunggu}
+      </div>
+      <div className="text-black">
+        Menunggu
+      </div>
+    </div>
+
+    <div className="bg-green-600 rounded-2xl p-4 text-center">
+      <div className="text-4xl font-black">
+        {statistik.selesai}
+      </div>
+      <div>
+        Selesai
+      </div>
+    </div>
+
+    <div className="bg-red-600 rounded-2xl p-4 text-center">
+      <div className="text-4xl font-black">
+        {statistik.dipanggil}
+      </div>
+      <div>
+        Dipanggil
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</div>
 
       </div>
 <div className="bg-yellow-400 overflow-hidden py-4">

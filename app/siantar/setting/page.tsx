@@ -61,7 +61,7 @@ export default function SettingSiantar() {
   }
 
   return (
-    <main className="p-8">
+  <main className="min-h-screen bg-slate-100 pt-24 md:pt-28 px-6 md:px-8 pb-8">
       <h1 className="text-4xl font-bold text-slate-800">
         Pengaturan SIAP
       </h1>

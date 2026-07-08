@@ -32,7 +32,7 @@ body {
   display: inline-block;
   white-space: nowrap;
   padding-left: 100%;
-  animation: marquee 30s linear infinite;
+  animation: marquee 60s linear infinite;
 }
 
 /* Animasi Nomor Dipanggil */
@@ -85,5 +85,46 @@ body {
 .running-text {
   display: inline-block;
   white-space: nowrap;
-  animation: marquee 20s linear infinite;
+  animation: marquee 15s linear infinite;
+}
+@keyframes nomorDipanggil {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-call {
+  animation: nomorDipanggil .6s ease;
+}
+
+.animate-blink {
+  animation: blink 0.7s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+    text-shadow: 0 0 10px #fde047;
+  }
+
+  50% {
+    opacity: .6;
+    text-shadow: 0 0 35px #fde047;
+  }
+
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 10px #fde047;
+  }
 }

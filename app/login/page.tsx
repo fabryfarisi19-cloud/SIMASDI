@@ -64,7 +64,26 @@ localStorage.setItem(
     username: data.username,
   })
 );
-      router.push("/dashboard");
+   switch (data.role) {
+  case "Admin":
+    router.push("/dashboard");
+    break;
+
+  case "Petugas":
+    router.push("/siantar/petugas");
+    break;
+
+  case "Kiosk":
+    router.push("/siantar/kiosk");
+    break;
+
+  case "Display":
+    router.push("/display");
+    break;
+
+  default:
+    router.push("/dashboard");
+}
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan saat login.");

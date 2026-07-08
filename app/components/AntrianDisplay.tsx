@@ -9,29 +9,29 @@ export default function AntrianDisplay({
   nomor,
   loket,
 }: Props) {
-return (
-  <div className="bg-white rounded-[40px] shadow-2xl h-full flex flex-col justify-center items-center px-8 py-12">
+  return (
+    <div className="flex-1 bg-white rounded-[40px] shadow-2xl flex flex-col justify-center items-center px-10 py-12">
 
-    <p className="text-4xl font-bold tracking-[8px] uppercase text-slate-500">
-      Nomor Antrean
-    </p>
-
-    <h1 className="text-[180px] font-black text-blue-700 leading-none mt-10">
-      {nomor}
-    </h1>
-
-    <div className="mt-12 bg-gradient-to-r from-blue-700 to-blue-500 rounded-3xl px-12 py-8 shadow-xl">
-
-      <p className="text-3xl text-center text-white">
-        Silakan menuju
+      <p className="text-5xl font-bold tracking-[10px] uppercase text-slate-500">
+        NOMOR ANTREAN
       </p>
 
-      <h2 className="text-7xl font-black text-center text-white mt-3">
-        Loket {loket}
-      </h2>
+      <h1 className="mt-10 text-[200px] leading-none font-black text-blue-700">
+        {nomor}
+      </h1>
+
+      <div className="mt-10 bg-gradient-to-r from-blue-700 to-blue-500 rounded-3xl shadow-xl px-14 py-8">
+
+        <p className="text-3xl text-center text-white">
+          Silakan menuju
+        </p>
+
+        <h2 className="mt-3 text-7xl font-black text-center text-white">
+          Loket {loket}
+        </h2>
+
+      </div>
 
     </div>
-
-  </div>
-);
+  );
 }
