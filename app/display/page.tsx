@@ -102,6 +102,7 @@ setTanggal(
 }, []);
 
 async function loadData() {
+const hariIni = new Date().toISOString().split("T")[0];  
   // Ambil setting SIANTAR
   const { data: setting } = await supabase
     .from("setting_siantar")
@@ -118,6 +119,7 @@ async function loadData() {
     .from("antrian")
     .select("id, nomor, loket")
     .eq("status", "DIPANGGIL")
+    .eq("tanggal", hariIni)
     .order("called_at", { ascending: false })
     .limit(1)
     .single();
@@ -145,6 +147,7 @@ async function loadData() {
     .from("antrian")
     .select("nomor")
     .eq("status", "MENUNGGU")
+    .eq("tanggal", hariIni)
     .order("id")
     .limit(5);
 
@@ -313,8 +316,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 <div className="col-span-5 flex flex-col bg-[#0B1F4D] border-l-2 border-white/40">
 
   {/* Header */}
-<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-4 border-b border-white/20">
-    <h2 className="text-3xl font-bold text-white">
+<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-4 border-b border-white/30">
+    <h2 className="text-xl font-bold text-white">
       VIDEO INFORMASI
     </h2>
 
@@ -333,17 +336,17 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
     loop
     playsInline
     controls={false}
-   className="w-[100%] h-[100%] object-contain rounded-3xl shadow-2xl"
+   className="w-[150%] h-[150%] object-contain rounded-5xl shadow-2xl"
   />
 </div>
 {/* Statistik */}
-<div className="bg-blue-950 p-6 border-t border-blue-700">
+<div className="bg-blue-950 px-5 py-4 border-t border-blue-700 -mt-6">
 
-  <h3 className="text-2xl font-bold text-center mb-5">
+  <h3 className="text-xl font-bold text-center mb-3">
     Statistik Hari Ini
   </h3>
 
-  <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-2 gap-3">
 
     <div className="bg-blue-500 rounded-2xl p-2 text-center">
       <div className="text-2xl font-black">

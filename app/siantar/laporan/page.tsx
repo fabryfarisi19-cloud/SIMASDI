@@ -31,25 +31,30 @@ const [tanggalAkhir, setTanggalAkhir] = useState("");
   }, []);
 
   async function loadData() {
+ const hariIni = new Date().toISOString().split("T")[0];   
     const [total, menunggu, dipanggil, selesai] =
       await Promise.all([
         supabase
           .from("antrian")
-          .select("*", { count: "exact", head: true }),
+          .select("*", { count: "exact", head: true })
+          .eq("tanggal", hariIni),
 
         supabase
           .from("antrian")
           .select("*", { count: "exact", head: true })
+          .eq("tanggal", hariIni)
           .eq("status", "MENUNGGU"),
 
         supabase
           .from("antrian")
           .select("*", { count: "exact", head: true })
+          .eq("tanggal", hariIni)
           .eq("status", "DIPANGGIL"),
 
         supabase
           .from("antrian")
           .select("*", { count: "exact", head: true })
+          .eq("tanggal", hariIni)
           .eq("status", "SELESAI"),
       ]);
 
@@ -62,6 +67,7 @@ const [tanggalAkhir, setTanggalAkhir] = useState("");
   const { data: history, error } = await supabase
   .from("antrian")
   .select("*")
+  .eq("tanggal", hariIni)
   .order("created_at", { ascending: false })
   .limit(20);
 

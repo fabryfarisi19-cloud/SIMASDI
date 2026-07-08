@@ -2,22 +2,29 @@ import { supabase } from "./supabase";
 
 
 export async function getDashboard() {
+const hariIni = new Date().toISOString().split("T")[0];  
   const [total, menunggu, dipanggil, selesai] = await Promise.all([
-    supabase.from("antrian").select("*", { count: "exact", head: true }),
+   supabase
+  .from("antrian")
+  .select("*", { count: "exact", head: true })
+  .eq("tanggal", hariIni),
 
     supabase
       .from("antrian")
       .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni)
       .eq("status", "MENUNGGU"),
 
     supabase
       .from("antrian")
       .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni)
       .eq("status", "DIPANGGIL"),
 
     supabase
       .from("antrian")
       .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni)
       .eq("status", "SELESAI"),
   ]);
 
@@ -39,7 +46,7 @@ export async function ambilNomor(
     .from("antrian")
     .select("nomor")
     .eq("kode", kode)
-    .gte("created_at", `${hariIni}T00:00:00`)
+    .eq("tanggal", hariIni)
     .order("id", { ascending: false })
     .limit(1);
 
@@ -53,12 +60,13 @@ export async function ambilNomor(
 
   const nomor = `${kode}${String(urut).padStart(3, "0")}`;
 
- const result = await supabase
+const result = await supabase
   .from("antrian")
   .insert({
     nomor,
     kode,
     layanan,
+    tanggal: hariIni,
     status: "MENUNGGU",
   })
   .select();
@@ -70,15 +78,15 @@ if (result.error) {
   throw result.error;
 }
 
-
-
   return nomor;
 }
 export async function panggilBerikutnya(loket: number) {
+const hariIni = new Date().toISOString().split("T")[0];  
   const { data, error } = await supabase
     .from("antrian")
     .select("*")
     .eq("status", "MENUNGGU")
+    .eq("tanggal", hariIni)
     .order("id", { ascending: true })
     .limit(1);
 
