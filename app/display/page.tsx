@@ -232,7 +232,7 @@ setStatistik({
 
 </div>   
         
-<div className="relative flex justify-center px-8 pt-40">
+<div className="relative flex justify-center px-8 pt-20">
 <Image
   src="/logoimipas.png"
   alt="Watermark"
@@ -240,7 +240,7 @@ setStatistik({
   height={450}
 className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
 />  
-<div className="bg-white rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.18)] w-full max-w-8xl py-60 px-12">
+<div className="bg-white rounded-[36px] shadow-[0_20px_60px_rgba(0,0,0,0.18)] w-[88%] max-w-3xl py-6 px-8">
 
     <div className="text-center">
 
@@ -325,18 +325,17 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 
 
  {/* Video */}
-<div className="flex-1 overflow-hidden">
+<div className="flex-1 flex items-center justify-center p-6">
   <video
-    src="/video-5s.mp4"
+    src="/videoimipas.mp4"
     autoPlay
     muted
     loop
     playsInline
     controls={false}
-    className="w-full h-full object-cover"
+   className="w-[100%] h-[100%] object-contain rounded-3xl shadow-2xl"
   />
 </div>
-
 {/* Statistik */}
 <div className="bg-blue-950 p-6 border-t border-blue-700">
 
