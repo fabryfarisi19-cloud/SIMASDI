@@ -128,3 +128,13 @@ body {
     text-shadow: 0 0 10px #fde047;
   }
 }
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+}

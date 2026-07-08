@@ -180,9 +180,9 @@ setStatistik({
 }
 
   return (
-    <main className="min-h-screen bg-blue-900 text-white">
+   <main className="h-screen overflow-hidden bg-blue-900 text-white">
 
-<div className="grid grid-cols-12 min-h-screen">
+<div className="grid grid-cols-12 h-[calc(100vh-80px)]">
 
         {/* Panel Nomor */}
 <div className="col-span-7 flex flex-col bg-[#14398B]">
@@ -323,7 +323,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
     </p>
   </div>
 
-  {/* Video */}
+
  {/* Video */}
 <div className="flex-1 overflow-hidden">
   <video
