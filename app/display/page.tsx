@@ -182,7 +182,7 @@ setStatistik({
   return (
    <main className="h-screen overflow-hidden bg-blue-900 text-white">
 
-<div className="grid grid-cols-12 h-[calc(100vh-80px)]">
+<div className="grid grid-cols-12 h-[calc(100vh-60px)]">
 
         {/* Panel Nomor */}
 <div className="col-span-7 flex flex-col bg-[#14398B]">
@@ -345,8 +345,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 
   <div className="grid grid-cols-2 gap-4">
 
-    <div className="bg-blue-800 rounded-2xl p-4 text-center">
-      <div className="text-4xl font-black">
+    <div className="bg-blue-500 rounded-2xl p-2 text-center">
+      <div className="text-2xl font-black">
         {statistik.total}
       </div>
       <div className="text-blue-200">
@@ -354,8 +354,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
       </div>
     </div>
 
-    <div className="bg-yellow-500 rounded-2xl p-4 text-center">
-      <div className="text-4xl font-black text-black">
+    <div className="bg-yellow-500 rounded-2xl p-2 text-center">
+      <div className="text-2xl font-black text-black">
         {statistik.menunggu}
       </div>
       <div className="text-black">
@@ -363,8 +363,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
       </div>
     </div>
 
-    <div className="bg-green-600 rounded-2xl p-4 text-center">
-      <div className="text-4xl font-black">
+    <div className="bg-green-500 rounded-2xl p-2 text-center">
+      <div className="text-2xl font-black">
         {statistik.selesai}
       </div>
       <div>
@@ -372,8 +372,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
       </div>
     </div>
 
-    <div className="bg-red-600 rounded-2xl p-4 text-center">
-      <div className="text-4xl font-black">
+    <div className="bg-red-500 rounded-2xl p-2 text-center">
+      <div className="text-2xl font-black">
         {statistik.dipanggil}
       </div>
       <div>
