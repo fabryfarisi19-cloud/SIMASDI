@@ -327,7 +327,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
  {/* Video */}
 <div className="flex-1 flex items-center justify-center p-6">
   <video
-    src="/videoimipas.mp4"
+    src="/videoapel.mp4"
     autoPlay
     muted
     loop
@@ -388,14 +388,12 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 </div>
 
       </div>
-<div className="bg-yellow-400 overflow-hidden py-4">
-  <div className="animate-marquee whitespace-nowrap text-black text-5xl font-extrabold">
+<div className="h-16 bg-yellow-400 overflow-hidden flex items-center">
+  <div className="animate-marquee whitespace-nowrap text-black text-3xl font-bold">
     {runningText}
-    {"     •     "}
+    {" • "}
     {runningText}
-    {"     •     "}
-    {runningText}
-    {"     •     "}
+    {" • "}
     {runningText}
   </div>
 </div>

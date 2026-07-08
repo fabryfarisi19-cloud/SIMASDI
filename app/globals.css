@@ -30,28 +30,18 @@ body {
 
 .animate-marquee {
   display: inline-block;
-  white-space: nowrap;
-  padding-left: 100%;
-  animation: marquee 60s linear infinite;
+  animation: marquee 65s linear infinite;
 }
 
-/* Animasi Nomor Dipanggil */
-@keyframes zoomPulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-
-  40% {
-    transform: scale(1.15);
+@keyframes marquee {
+  from {
+    transform: translateX(100%);
   }
 
   100% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateX(-100%);
   }
 }
-
 .animate-call {
   animation: zoomPulse .6s ease;
 }
