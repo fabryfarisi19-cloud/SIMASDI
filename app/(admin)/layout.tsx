@@ -1,22 +1,22 @@
 import Sidebar from "@/app/components/Sidebar";
 import Footer from "@/app/components/footer";
+import AuthGuard from "@/app/components/AuthGuard";
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <Sidebar />
+   <AuthGuard>
+  <Sidebar />
 
-    <main className="isi-admin">
-  <div style={{ flex: 1 }}>
-    {children}
-  </div>
+  <main className="isi-admin">
+    <div style={{ flex: 1 }}>
+      {children}
+    </div>
 
-  <Footer />
-</main>
-
+    <Footer />
+  </main>
       <style>{`
       .isi-admin {
   margin-left: 258px;
@@ -31,6 +31,6 @@ export default function AdminLayout({
           }
         }
       `}</style>
-    </>
+  </AuthGuard>
   );
 }

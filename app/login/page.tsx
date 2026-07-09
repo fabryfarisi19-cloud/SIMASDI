@@ -66,6 +66,7 @@ localStorage.setItem(
 );
    switch (data.role) {
   case "Admin":
+   case "Kaur umum":  
     router.push("/dashboard");
     break;
 

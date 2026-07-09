@@ -198,7 +198,7 @@ setStatistik({
   return (
    <main className="h-screen overflow-hidden bg-blue-900 text-white">
 
-<div className="grid grid-cols-12 h-[calc(100vh-60px)]">
+<div className="grid grid-cols-12 h-[calc(100vh-64px)]">
 
         {/* Panel Nomor */}
 <div className="col-span-7 flex flex-col bg-[#14398B]">
@@ -353,7 +353,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
   />
 </div>
 {/* Statistik */}
-<div className="bg-blue-950 px-5 py-4 border-t border-blue-700 -mt-6">
+<div className="bg-blue-950 px-5 py-4 border-t border-blue-700 -mt-12">
 
   <h3 className="text-xl font-bold text-center mb-3">
     Statistik Hari Ini
@@ -404,7 +404,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 </div>
 
       </div>
-<div className="h-16 bg-yellow-400 overflow-hidden flex items-center">
+<div className="h-16 bg-yellow-400 overflow-hidden flex items-center relative z-50">
   <div className="animate-marquee whitespace-nowrap text-black text-3xl font-bold">
     {runningText}
     {" • "}
