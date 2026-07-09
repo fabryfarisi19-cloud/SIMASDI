@@ -1,8 +1,12 @@
 import { supabase } from "./supabase";
+function getHariIni() {
+  const now = new Date();
 
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 
 export async function getDashboard() {
-const hariIni = new Date().toISOString().split("T")[0];  
+const hariIni = getHariIni(); 
   const [total, menunggu, dipanggil, selesai] = await Promise.all([
    supabase
   .from("antrian")
@@ -81,7 +85,16 @@ if (result.error) {
   return nomor;
 }
 export async function panggilBerikutnya(loket: number) {
-const hariIni = new Date().toISOString().split("T")[0];  
+  const hariIni = getHariIni(); 
+  await supabase
+  .from("antrian")
+  .update({
+    status: "SELESAI",
+    finished_at: new Date().toISOString(),
+  })
+  .eq("status", "DIPANGGIL")
+  .eq("loket", loket)
+  .eq("tanggal", hariIni);
   const { data, error } = await supabase
     .from("antrian")
     .select("*")
@@ -133,6 +146,7 @@ export async function selesai(id: number) {
     .from("antrian")
     .update({
       status: "SELESAI",
+      finished_at: new Date().toISOString(),
     })
     .eq("id", id);
 

@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+function getHariIni() {
+  const now = new Date();
 
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 type Antrian = {
   id?: number;
   nomor: string;
@@ -102,7 +106,7 @@ setTanggal(
 }, []);
 
 async function loadData() {
-const hariIni = new Date().toISOString().split("T")[0];  
+const hariIni = getHariIni();
   // Ambil setting SIANTAR
   const { data: setting } = await supabase
     .from("setting_siantar")
@@ -118,11 +122,11 @@ const hariIni = new Date().toISOString().split("T")[0];
   const { data } = await supabase
     .from("antrian")
     .select("id, nomor, loket")
-    .eq("status", "DIPANGGIL")
     .eq("tanggal", hariIni)
+    .not("called_at", "is", null)
     .order("called_at", { ascending: false })
     .limit(1)
-    .single();
+   .maybeSingle();
 
  if (data) {
   setDipanggil(data);
@@ -154,26 +158,35 @@ const hariIni = new Date().toISOString().split("T")[0];
   setMenunggu(waiting || []);
   const [total, menungguCount, dipanggilCount, selesaiCount] =
   await Promise.all([
-    supabase
-      .from("antrian")
-      .select("*", { count: "exact", head: true }),
+   supabase
+  .from("antrian")
+  .select("*", { count: "exact", head: true })
+  .eq("tanggal", hariIni),
+
+ supabase
+  .from("antrian")
+  .select("*", { count: "exact", head: true })
+  .eq("tanggal", hariIni)
+  .eq("status", "MENUNGGU"),
+
+ supabase
+  .from("antrian")
+  .select("*", { count: "exact", head: true })
+  .eq("tanggal", hariIni)
+  .eq("status", "DIPANGGIL"),
 
     supabase
       .from("antrian")
       .select("*", { count: "exact", head: true })
-      .eq("status", "MENUNGGU"),
-
-    supabase
-      .from("antrian")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "DIPANGGIL"),
-
-    supabase
-      .from("antrian")
-      .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni)
       .eq("status", "SELESAI"),
   ]);
-
+console.log({
+  total: total.count,
+  menunggu: menungguCount.count,
+  dipanggil: dipanggilCount.count,
+  selesai: selesaiCount.count,
+});
 setStatistik({
   total: total.count ?? 0,
   menunggu: menungguCount.count ?? 0,
