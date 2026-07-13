@@ -201,9 +201,9 @@ setStatistik({
 <div className="grid grid-cols-12 h-[calc(100vh-64px)]">
 
         {/* Panel Nomor */}
-<div className="col-span-7 flex flex-col bg-[#14398B]">
+<div className="col-span-6 flex flex-col bg-[#14398B]">
 
-<div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 rounded-b-[30px] px-10 py-6 shadow-xl border-b border-white/20">
+<div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 rounded-b-[40px] px-10 py-5 shadow-xl border-b border-white/20">
 
   <div className="flex items-center justify-between">
 
@@ -234,7 +234,7 @@ setStatistik({
     {/* Kanan */}
     <div className="text-right">
 
-      <div className="text-5xl font-black text-white">
+      <div className="text-4xl font-black text-white">
         {jam}
       </div>
 
@@ -252,8 +252,8 @@ setStatistik({
 <Image
   src="/logoimipas.png"
   alt="Watermark"
-  width={450}
-  height={450}
+  width={150}
+  height={150}
 className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
 />  
 <div className="bg-white rounded-[36px] shadow-[0_20px_60px_rgba(0,0,0,0.18)] w-[88%] max-w-3xl py-6 px-8">
@@ -326,7 +326,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 </div>
 
 {/* Panel Video */}
-<div className="col-span-5 flex flex-col bg-[#0B1F4D] border-l-2 border-white/40">
+<div className="col-span-6 flex flex-col bg-[#0B1F4D] border-l-2 border-white/20">
 
   {/* Header */}
 <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-4 border-b border-white/30">
@@ -341,19 +341,19 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 
 
  {/* Video */}
-<div className="flex-1 flex items-center justify-center p-6">
+<div className="h-[805px] overflow-hidden px-2 pb-2 pt-2">
   <video
-    src="/videoapel.mp4"
+    src="/videoinformasi.mp4"
     autoPlay
     muted
     loop
     playsInline
     controls={false}
-   className="w-[150%] h-[150%] object-contain rounded-5xl shadow-2xl"
+   className="w-full h-full object-contain rounded-3xl bg-black"
   />
 </div>
 {/* Statistik */}
-<div className="bg-blue-950 px-5 py-4 border-t border-blue-700 -mt-12">
+<div className="bg-blue-950 px-4 py-3 border-t border-blue-700 -mt-16">
 
   <h3 className="text-xl font-bold text-center mb-3">
     Statistik Hari Ini

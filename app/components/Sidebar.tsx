@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
+import { Boxes } from "lucide-react";
 
 const menu = [
   { nama: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -24,13 +25,19 @@ const menu = [
   { nama: "Surat Keluar", href: "/surat-keluar", icon: Send },
   { nama: "Disposisi", href: "/disposisi", icon: FileText },
   { nama: "Arsip Digital", href: "/arsip", icon: Archive },
-
+{
+  nama: "SIMSTOK BMN",
+  href: "/simstok/dashboard",
+  icon: Boxes,
+},
   // Tambahkan ini
   { nama: "SIAP", href: "/siantar", icon: Ticket },
 
   { nama: "Pengguna", href: "/pengguna", icon: Users },
   { nama: "Agenda Kegiatan", href: "/agenda", icon: CalendarDays },
+
 ];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();

@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [jumlahSuratKeluar, setJumlahSuratKeluar] = useState(0);
   const [jumlahArsip, setJumlahArsip] = useState(0);
   const [jumlahAgendaHariIni, setJumlahAgendaHariIni] = useState(0);
+  const [jumlahAntrian, setJumlahAntrian] = useState(0);
   const [agendaHariIniList, setAgendaHariIniList] = useState<Agenda[]>([]);
   const [agendaBesokList, setAgendaBesokList] = useState<Agenda[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      const [masukRes, keluarRes, disposisiRes, arsipRes, agendaRes] =
+      const [masukRes, keluarRes, disposisiRes, arsipRes, agendaRes, antrianRes] =
         await Promise.all([
           supabase
             .from("surat_masuk")
@@ -72,12 +73,14 @@ export default function DashboardPage() {
             .select("*")
             .order("tanggal", { ascending: true })
             .order("jam", { ascending: true }),
+          supabase.from("antrian").select("id"),
         ]);
 
       const dataMasuk = masukRes.data || [];
       const dataKeluar = keluarRes.data || [];
       const dataDisposisi = disposisiRes.data || [];
       const dataArsip = arsipRes.data || [];
+      const dataAntrian = antrianRes.data || [];
       const semuaAgenda = (agendaRes.data || []) as Agenda[];
 
       const sekarang = new Date();
@@ -104,6 +107,7 @@ export default function DashboardPage() {
       setJumlahArsip(dataArsip.length);
       setDisposisiMenunggu(disposisiBelumSelesai.slice(0, 5));
       setJumlahAgendaHariIni(agendaHariIni.length);
+      setJumlahAntrian(dataAntrian.length);
       setAgendaHariIniList(agendaHariIni);
       setAgendaBesokList(agendaBesok);
     } catch (error) {
@@ -203,12 +207,12 @@ export default function DashboardPage() {
           flex-wrap: wrap;
         }
 
-        .stat-grid {
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 16px;
-          margin-bottom: 26px;
-        }
+      .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 26px;
+}
 
         .agenda-grid {
           display: grid;
@@ -303,6 +307,9 @@ export default function DashboardPage() {
           <StatCard judul="Disposisi Menunggu" nilai={disposisiMenunggu.length} keterangan="Perlu ditindaklanjuti" warna="#f59e0b" />
           <StatCard judul="Arsip Digital" nilai={jumlahArsip} keterangan="Dokumen tersimpan" warna="#16a34a" />
           <StatCard judul="Agenda Hari Ini" nilai={jumlahAgendaHariIni} keterangan="Kegiatan hari ini" warna="#dc2626" />
+          <StatCard judul="Antrian" nilai={jumlahAntrian} keterangan="Jumlah antrian" warna="#2563eb" />
+  
+
         </div>
 
         <div className="agenda-grid">
@@ -464,6 +471,7 @@ function StatCard({
   nilai,
   keterangan,
   warna,
+  
 }: {
   judul: string;
   nilai: number;
@@ -481,6 +489,7 @@ function StatCard({
         boxShadow: "0 6px 16px rgba(15, 23, 42, 0.07)",
       }}
     >
+  
       <div className="stat-card-title" style={{ color: "#334155", fontSize: "14px", fontWeight: "700" }}>
         {judul}
       </div>
