@@ -26,61 +26,62 @@ export default function DashboardSIMSTOK() {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+    {/* Statistik */}
+<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
 
-        <Card
-          title="TOTAL BMN"
-          value="1.256"
-          subtitle="Unit Barang"
-          color="blue"
-          icon={<Boxes size={36} />}
-        />
+  <Card
+    title="TOTAL BMN"
+    value="1.256"
+    subtitle="Unit Barang"
+    color="blue"
+    icon={<Boxes size={36} />}
+  />
 
-        <Card
-          title="BARANG BAIK"
-          value="1.180"
-          subtitle="93,95%"
-          color="green"
-          icon={<CheckCircle2 size={36} />}
-        />
+  <Card
+    title="BARANG BAIK"
+    value="1.180"
+    subtitle="93,95%"
+    color="green"
+    icon={<CheckCircle2 size={36} />}
+  />
 
-        <Card
-          title="RUSAK RINGAN"
-          value="54"
-          subtitle="4,30%"
-          color="yellow"
-          icon={<AlertTriangle size={36} />}
-        />
+  <Card
+    title="RUSAK RINGAN"
+    value="54"
+    subtitle="4,30%"
+    color="yellow"
+    icon={<AlertTriangle size={36} />}
+  />
 
-        <Card
-          title="RUSAK BERAT"
-          value="22"
-          subtitle="1,75%"
-          color="red"
-          icon={<XCircle size={36} />}
-        />
+  <Card
+    title="RUSAK BERAT"
+    value="22"
+    subtitle="1,75%"
+    color="red"
+    icon={<XCircle size={36} />}
+  />
 
-        <Card
-          title="NILAI BMN"
-          value="Rp 8,25 M"
-          subtitle="Total Nilai"
-          color="purple"
-          icon={<Wallet size={36} />}
-        />
+  <Card
+    title="NILAI BMN"
+    value="Rp 8,25 M"
+    subtitle="Total Nilai"
+    color="purple"
+    icon={<Wallet size={36} />}
+  />
+
+</div>
+
+{/* Grafik */}
 <div className="grid lg:grid-cols-2 gap-6 mt-8">
-
   <ChartBMN />
-
   <ChartRuangan />
-
 </div>
 
+{/* Tabel */}
 <div className="mt-8">
-
   <TableBMN />
-
 </div>
-      </div>
+      
 
     </main>
   );
@@ -103,7 +104,7 @@ function Card({
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-lg p-6 flex justify-between items-center">
+   <div className="bg-white rounded-3xl shadow-lg p-6 h-40 flex justify-between items-center">
 
       <div>
 

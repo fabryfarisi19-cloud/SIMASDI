@@ -1,9 +1,31 @@
 "use client";
 
 import { Save, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function TambahBMN() {
+ const [kodeBarang, setKodeBarang] = useState("");
+const [namaBarang, setNamaBarang] = useState("");   
+async function simpanBarang() {
+  const { error } = await supabase
+    .from("barang")
+    .insert({
+      kode_barang: kodeBarang,
+      nama_barang: namaBarang,
+    });
+
+if (error) {
+  console.log(error);
+  alert(error.message);
+  return;
+}
+  alert("Barang berhasil disimpan.");
+
+  setKodeBarang("");
+  setNamaBarang("");
+}
   return (
     <main>
 
@@ -34,8 +56,30 @@ export default function TambahBMN() {
 
         <div className="grid md:grid-cols-2 gap-6">
 
-          <Input label="Kode Barang" />
-          <Input label="Nama Barang" />
+         <div>
+  <label className="font-semibold">
+    Kode Barang
+  </label>
+
+  <input
+    type="text"
+    value={kodeBarang}
+    onChange={(e) => setKodeBarang(e.target.value)}
+    className="w-full border rounded-xl p-3 mt-2"
+  />
+</div>
+       <div>
+  <label className="font-semibold">
+    Nama Barang
+  </label>
+
+  <input
+    type="text"
+    value={namaBarang}
+    onChange={(e) => setNamaBarang(e.target.value)}
+    className="w-full border rounded-xl p-3 mt-2"
+  />
+</div>
          <div>
   <label className="font-semibold">
     Kategori
@@ -74,13 +118,14 @@ export default function TambahBMN() {
 
         <div className="mt-8">
 
-          <button className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-xl flex items-center gap-2">
-
-            <Save size={20} />
-
-            Simpan Barang
-
-          </button>
+       <button
+  type="button"
+  onClick={simpanBarang}
+  className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-xl flex items-center gap-2"
+>
+  <Save size={20} />
+  Simpan Barang
+</button>
 
         </div>
 
@@ -97,6 +142,7 @@ function Input({
   label: string;
   type?: string;
 }) {
+    
   return (
     <div>
 

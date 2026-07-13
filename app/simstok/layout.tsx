@@ -2,19 +2,18 @@ import type { ReactNode } from "react";
 import SidebarSIMSTOK from "@/app/components/SidebarSIMSTOK";
 
 export default function SIMSTOKLayout({
+
   children,
 }: {
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+  <div className="flex">
+  <SidebarSIMSTOK />
 
-      <SidebarSIMSTOK />
-
-      <main className="flex-1 ml-72 p-8">
-        {children}
-      </main>
-
-    </div>
+  <main className="flex-1 ml-[270px] p-8 bg-slate-100 min-h-screen">
+    {children}
+  </main>
+</div>
   );
 }

@@ -1,8 +1,28 @@
 "use client";
 
 import { Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 export default function DataBMNPage() {
+    const [barang, setBarang] = useState<any[]>([]);
+    useEffect(() => {
+  getBarang();
+}, []);
+
+async function getBarang() {
+  const { data, error } = await supabase
+    .from("barang")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setBarang(data || []);
+}
   return (
     <main>
 
