@@ -171,23 +171,15 @@ const logout = () => {
 
       <style jsx global>{`
 .header-mobile{
-  display:none;
-
-  height:62px;
-
-  background:linear-gradient(180deg,#061A48,#0B2E78);
-
-  align-items:center;
-
-  justify-content:space-between;
-
-  padding:0 16px;
-
-  box-shadow:0 2px 10px rgba(0,0,0,.2);
-
-  z-index:10000;
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:9990;
 }
-
+  .header-mobile.hidden{
+  display:none !important;
+}
 .versi-app{
   margin-top:12px;
   padding-top:12px;
@@ -357,7 +349,7 @@ background:#B91C1C;
   border-radius:50%;
   background:rgba(255,255,255,.12);
   color:white;
-  z-index:10001;
+  z-index:10;
   align-items:center;
   justify-content:center;
 }
@@ -450,7 +442,7 @@ background:#B91C1C;
   left:0;
   right:0;
 
-  z-index:10000;
+  z-index:9990;
 }
 
           .sidebar {

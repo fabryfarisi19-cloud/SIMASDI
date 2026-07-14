@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Boxes,
@@ -16,6 +17,7 @@ import {
   FileBarChart2,
   Settings,
   House,
+  Menu,
 } from "lucide-react";
 
 const menus = [
@@ -34,9 +36,13 @@ const menus = [
 
 export default function SidebarSIMSTOK() {
   const pathname = usePathname();
-
+const [bukaMenu, setBukaMenu] = useState(false);
   return (
-    <aside className="fixed left-0 top-0 w-72 h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-blue-700 text-white shadow-2xl flex flex-col">
+    
+ <aside
+  className={`sidebar ${bukaMenu ? "buka" : ""}`}
+  onClick={(e) => e.stopPropagation()}
+>
 
       {/* Header */}
       <div className="p-6 border-b border-blue-700">
@@ -106,7 +112,29 @@ export default function SidebarSIMSTOK() {
         </p>
 
       </div>
+<header className={`header-mobile ${bukaMenu ? "hidden" : ""}`}>
+  <Image
+    src="/logosimasdi2.png"
+    alt="SIMSTOK"
+    width={120}
+    height={35}
+  />
 
+  <button
+    onClick={() => setBukaMenu(true)}
+    className="text-white"
+    aria-label="Buka Menu"
+  >
+    <Menu size={28} />
+  </button>
+</header>
+
+{bukaMenu && (
+  <div
+    className="overlay-mobile"
+    onClick={() => setBukaMenu(false)}
+  />
+)}
     </aside>
   );
 }
