@@ -179,20 +179,23 @@ const logout = () => {
   font-size:11px;
   line-height:1.6;
 }
-        .sidebar {
-          width: 258px;
-          min-height: 100vh;
-          background: #1e293b;
-          color: white;
-          padding: 26px 16px;
-          box-sizing: border-box;
-          position: fixed;
-          left: 0;
-          top: 0;
-          z-index: 80;
-          display: flex;
-          flex-direction: column;
-        }
+.sidebar {
+  width: 258px;
+  min-height: 100vh;
+  background: #1e293b;
+  color: white;
+  padding: 26px 16px;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
         .sidebar-judul {
           display: flex;
