@@ -97,24 +97,26 @@ const logout = () => {
 
       <aside className={`sidebar ${bukaMenu ? "buka" : ""}`}>
         <div className="sidebar-judul">
- <div className="sidebar-brand">
+<div className="sidebar-brand">
 
-<Image
-  src="/logosimasdi1.png"
-  alt="SIMASDI"
-  width={200}
-  height={200}
-  priority
-  className="sidebar-logo"
-/>
+  <Image
+    src="/logosimasdi1.png"
+    alt="SIMASDI"
+    width={170}
+    height={170}
+    priority
+    className="sidebar-logo"
+  />
+
   <div className="sidebar-user">
+
 
     <h3>{nama}</h3>
 
     <p>{jabatan}</p>
 
-    <span>
-      🟢 Online
+    <span className="status-online">
+      ● Online
     </span>
 
   </div>
@@ -173,16 +175,34 @@ const logout = () => {
   padding:0 18px;
 }
 .versi-app{
-  margin-top:18px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
   text-align:center;
-  color:#94A3B8;
-  font-size:11px;
-  line-height:1.6;
+
+  color:#CBD5E1;
+
+  font-size:10px;
+
+  line-height:1.5;
+
+  letter-spacing:.3px;
 }
 .sidebar {
   width: 258px;
   min-height: 100vh;
-  background: #1e293b;
+ background: linear-gradient(
+  180deg,
+  #061A48 0%,
+  #0B2E78 60%,
+  #103B9E 100%
+);
   color: white;
   padding: 26px 16px;
   box-sizing: border-box;
@@ -195,58 +215,106 @@ const logout = () => {
 
   overflow-y: auto;
   overflow-x: hidden;
+  scroll-behavior:smooth;
+}
+.sidebar::-webkit-scrollbar {
+  width: 6px;
 }
 
-        .sidebar-judul {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0 10px 22px;
-          margin-bottom: 18px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-          font-size: 25px;
-        }
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-        .sidebar-menu {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.30);
+  border-radius: 999px;
+}
 
-        .menu-link {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 13px 14px;
-          border-radius: 10px;
-          color: white;
-          text-decoration: none;
-          font-size: 15px;
-          font-weight: 600;
-        }
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,.55);
+}
+ .sidebar-judul{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 10px 12px;
+  margin-bottom:10px;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
 
-        .menu-link.aktif {
-          background: #2563eb;
-          font-weight: 800;
-        }
+.sidebar-menu{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
 
-        .tombol-logout {
-          margin-top: auto;
-          width: 100%;
-          border: none;
-          border-radius: 10px;
-          padding: 14px;
-          background: #ef2525;
-          color: white;
-          font-weight: 800;
-          font-size: 15px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-        }
+        .menu-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
 
+  padding:13px 14px;
+
+  border-radius:14px;
+
+  color:white;
+
+  text-decoration:none;
+
+  font-size:15px;
+
+  font-weight:600;
+
+  transition:.25s;
+}
+  .menu-link:hover{
+background:rgba(255,255,255,.10);
+transform:translateX(6px);
+box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+  .menu-link svg{
+  flex-shrink:0;
+}
+
+    .menu-link.aktif{
+  background:linear-gradient(90deg,#2563EB,#3B82F6);
+  color:white;
+  font-weight:800;
+  box-shadow:
+    0 10px 25px rgba(37,99,235,.35);
+
+  transform:translateX(6px);
+
+}
+  .menu-link{
+position:relative;
+overflow:hidden;
+}
+
+.menu-link.aktif::before{
+transform:scaleY(1);
+}
+     .tombol-logout{
+  margin-top:20px;
+
+  width:100%;
+  border:none;
+  border-radius:12px;
+  padding:14px;
+  background:#dc2626;
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
+.tombol-logout:hover{
+background:#B91C1C;
+}
         .tombol-hamburger,
         .tombol-tutup {
           background: transparent;
@@ -269,19 +337,20 @@ const logout = () => {
   flex-direction:column;
   align-items:center;
   width:100%;
-  margin-bottom:8px;
+  margin-bottom:0;
 }
 
 .sidebar-logo{
-  width:200px;
+  width:150px;
   height:auto;
-  margin-bottom:8px;
+  margin-bottom:6px;
 }
 
 .sidebar-user{
   width:100%;
   text-align:center;
-  margin-top:10px;
+  margin-top:4px;
+  margin-bottom:12px;
 }
 
 .sidebar-user h3{
@@ -378,6 +447,34 @@ const logout = () => {
             z-index: 75;
           }
         }
+
+.status-online{
+  display:inline-block;
+  margin-top:10px;
+  padding:6px 14px;
+  border-radius:999px;
+  background:#14532D;
+  color:#86EFAC;
+  font-size:12px;
+  font-weight:700;
+}
+
+.sidebar-user{
+  text-align:center;
+  margin-top:12px;
+}
+
+.sidebar-user h3{
+  font-size:16px;
+  font-weight:800;
+  color:white;
+}
+
+.sidebar-user p{
+  color:#CBD5E1;
+  font-size:13px;
+  margin-top:4px;
+}
       `}</style>
     </>
   );
