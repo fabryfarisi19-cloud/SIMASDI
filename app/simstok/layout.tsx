@@ -8,10 +8,10 @@ export default function SIMSTOKLayout({
   children: ReactNode;
 }) {
   return (
-  <div className="flex">
+  <div className="min-h-screen bg-slate-100 md:flex">
   <SidebarSIMSTOK />
 
-  <main className="flex-1 ml-[270px] p-8 bg-slate-100 min-h-screen">
+ <main className="flex-1 bg-slate-100 min-h-screen p-4 md:p-8 md:ml-[270px]">
     {children}
   </main>
 </div>

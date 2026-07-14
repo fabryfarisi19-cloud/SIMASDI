@@ -65,15 +65,15 @@ const logout = () => {
   return (
     <>
       {/* Header khusus HP */}
-    <header className="header-mobile">
+    <header className={`header-mobile ${bukaMenu ? "hidden" : ""}`}>
 
   <div className="header-brand">
 
     <Image
       src="/logosimasdi2.png"
       alt="SIMASDI"
-      width={155}
-      height={45}
+      width={120}
+      height={35}
     />
 
   </div>
@@ -81,6 +81,7 @@ const logout = () => {
   <button
     onClick={() => setBukaMenu(true)}
     className="tombol-hamburger"
+    aria-label="Buka Menu"
   >
     <Menu size={26}/>
   </button>
@@ -95,7 +96,10 @@ const logout = () => {
         />
       )}
 
-      <aside className={`sidebar ${bukaMenu ? "buka" : ""}`}>
+     <aside
+  className={`sidebar ${bukaMenu ? "buka" : ""}`}
+  onClick={(e) => e.stopPropagation()}
+>
         <div className="sidebar-judul">
 <div className="sidebar-brand">
 
@@ -167,8 +171,23 @@ const logout = () => {
 
       <style jsx global>{`
 .header-mobile{
+  display:none;
+
+  height:62px;
+
+  background:linear-gradient(180deg,#061A48,#0B2E78);
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:0 16px;
+
+  box-shadow:0 2px 10px rgba(0,0,0,.2);
+
   z-index:10000;
 }
+
 .versi-app{
   margin-top:12px;
   padding-top:12px;
@@ -207,7 +226,8 @@ z-index:9999;
   display:flex;
   flex-direction:column;
 
-  overflow:hidden;
+  overflow-y:auto;
+overflow-x:hidden;
 }
 .sidebar::-webkit-scrollbar {
   width: 6px;
@@ -226,10 +246,11 @@ z-index:9999;
   background: rgba(255,255,255,.55);
 }
  .sidebar-judul{
+ position:relative;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:0 10px 12px;
+  padding:14px 16px 12px;
   margin-bottom:10px;
   border-bottom:1px solid rgba(255,255,255,.15);
 }
@@ -244,6 +265,8 @@ z-index:9999;
   overflow-x:hidden;
 
   min-height:0;
+  padding-right:4px;
+  padding-bottom:20px;
 }
         .menu-link{
   display:flex;
@@ -264,10 +287,12 @@ z-index:9999;
 
   transition:.25s;
 }
-  .menu-link:hover{
-background:rgba(255,255,255,.10);
-transform:translateX(6px);
-box-shadow:0 8px 20px rgba(0,0,0,.18);
+ .menu-link:hover{
+  background:rgba(255,255,255,.10);
+  transform:translateX(6px);
+}
+  .menu-link:active{
+  transform:scale(.97);
 }
   .menu-link svg{
   flex-shrink:0;
@@ -307,6 +332,7 @@ transform:scaleY(1);
   justify-content:center;
   align-items:center;
   gap:10px;
+  flex-shrink:0;
 }
 .tombol-logout:hover{
 background:#B91C1C;
@@ -321,29 +347,33 @@ background:#B91C1C;
           align-items: center;
         }
 
-        .tombol-tutup {
-          display: none;
-        }
-
-        .overlay-mobile{
-  display:block;
-  position:fixed;
-  inset:0;
-  background:rgba(15,23,42,.55);
-  z-index:9998;
+       .tombol-tutup{
+  display:none;
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  color:white;
+  z-index:10001;
+  align-items:center;
+  justify-content:center;
 }
 .sidebar-brand{
   display:flex;
   flex-direction:column;
   align-items:center;
+  justify-content:center;
   width:100%;
-  margin-bottom:0;
 }
 
 .sidebar-logo{
-  width:150px;
+  width:120px;
   height:auto;
-  margin-bottom:6px;
+  margin:8px auto 4px;
+  display:block;
 }
 
 .sidebar-user{
@@ -403,43 +433,50 @@ background:#B91C1C;
   color: #cbd5e1;
   line-height: 1.3;
 }
-  .header-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.header-brand{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex:1;
 }
 
         @media (max-width: 768px) {
 .header-mobile{
+  display:flex;
+
   position:fixed;
+
   top:0;
   left:0;
   right:0;
+
   z-index:10000;
 }
 
           .sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.25s ease;
-            height: 100vh;
-            top: 0;
-          }
+  transform: translateX(-100%);
+  transition: transform .35s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
 
           .sidebar.buka {
             transform: translateX(0);
+            box-shadow:0 0 40px rgba(0,0,0,.35);
           }
 
           .tombol-tutup {
             display: flex;
           }
 
-          .overlay-mobile {
-            display: block;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.55);
-            z-index: 75;
-          }
+          .overlay-mobile{
+  display:block;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.45);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+  z-index:9998;
+}
         }
 
 .status-online{
@@ -453,22 +490,6 @@ background:#B91C1C;
   font-weight:700;
 }
 
-.sidebar-user{
-  text-align:center;
-  margin-top:12px;
-}
-
-.sidebar-user h3{
-  font-size:16px;
-  font-weight:800;
-  color:white;
-}
-
-.sidebar-user p{
-  color:#CBD5E1;
-  font-size:13px;
-  margin-top:4px;
-}
       `}</style>
     </>
   );
