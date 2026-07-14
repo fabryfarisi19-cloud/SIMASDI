@@ -166,13 +166,8 @@ const logout = () => {
       </aside>
 
       <style jsx global>{`
-        .header-mobile{
-  height:70px;
-  background:#0f2c73;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
+.header-mobile{
+  z-index:10000;
 }
 .versi-app{
   margin-top:12px;
@@ -208,7 +203,7 @@ const logout = () => {
   position:fixed;
   left:0;
   top:0;
-
+z-index:9999;
   display:flex;
   flex-direction:column;
 
@@ -330,9 +325,13 @@ background:#B91C1C;
           display: none;
         }
 
-        .overlay-mobile {
-          display: none;
-        }
+        .overlay-mobile{
+  display:block;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.55);
+  z-index:9998;
+}
 .sidebar-brand{
   display:flex;
   flex-direction:column;
@@ -411,19 +410,13 @@ background:#B91C1C;
 }
 
         @media (max-width: 768px) {
-          .header-mobile {
-            height: 62px;
-           background: linear-gradient(180deg, #061A48 0%, #0B2E78 100%);
-            color: white;
-            padding: 0 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 70;
-            font-size: 20px;
-          }
+.header-mobile{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:10000;
+}
 
           .sidebar {
             transform: translateX(-100%);
