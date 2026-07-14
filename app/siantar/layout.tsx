@@ -13,18 +13,17 @@ export default function SiantarLayout({
 
 const hideSidebar =
   pathname === "/siantar/display" ||
-  pathname === "/siantar/petugas" ||
   pathname === "/siantar/kiosk";
  return (
   <div className="min-h-screen bg-slate-100">
 
   {!hideSidebar && <SidebarSIAP />}
 
-   <main
+<main
   className={
     hideSidebar
       ? "min-h-screen"
-      : "md:ml-72 min-h-screen p-8 pt-20 md:pt-8"
+      : "min-h-screen md:ml-72 p-6 pt-20 md:p-8 md:pt-8"
   }
 >
       {children}

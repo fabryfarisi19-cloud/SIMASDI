@@ -349,7 +349,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
     loop
     playsInline
     controls={false}
-   className="w-full h-full object-contain rounded-3xl bg-black"
+   className="w-full h-full object-co rounded-3xl bg-black"
   />
 </div>
 {/* Statistik */}
@@ -404,8 +404,8 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 </div>
 
       </div>
-<div className="h-16 bg-yellow-400 overflow-hidden flex items-center relative z-50">
-  <div className="animate-marquee whitespace-nowrap text-black text-3xl font-bold">
+<div className="mt-4 h-14 bg-yellow-400 overflow-hidden flex items-center relative z-50">
+  <div className="animate-marquee whitespace-nowrap text-black text-2xl font-bold leading-none">
     {runningText}
     {" • "}
     {runningText}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -46,7 +46,17 @@ const menus = [
 export default function SidebarSIAP() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+useEffect(() => {
+  const resize = () => {
+    if (window.innerWidth >= 768) {
+      setOpen(false);
+    }
+  };
 
+  window.addEventListener("resize", resize);
+
+  return () => window.removeEventListener("resize", resize);
+}, []);
   return (
     <>
       {/* Header HP */}
