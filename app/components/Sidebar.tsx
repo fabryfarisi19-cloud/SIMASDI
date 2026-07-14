@@ -194,28 +194,25 @@ const logout = () => {
 
   letter-spacing:.3px;
 }
-.sidebar {
-  width: 258px;
-  min-height: 100vh;
- background: linear-gradient(
-  180deg,
-  #061A48 0%,
-  #0B2E78 60%,
-  #103B9E 100%
-);
-  color: white;
-  padding: 26px 16px;
-  box-sizing: border-box;
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
+.sidebar{
+  width:258px;
+  height:100vh;
 
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior:smooth;
+  background:linear-gradient(
+    180deg,
+    #061A48 0%,
+    #0B2E78 60%,
+    #103B9E 100%
+  );
+
+  position:fixed;
+  left:0;
+  top:0;
+
+  display:flex;
+  flex-direction:column;
+
+  overflow:hidden;
 }
 .sidebar::-webkit-scrollbar {
   width: 6px;
@@ -247,8 +244,12 @@ const logout = () => {
   display:flex;
   flex-direction:column;
   gap:3px;
-}
 
+  overflow-y:auto;
+  overflow-x:hidden;
+
+  min-height:0;
+}
         .menu-link{
   display:flex;
   align-items:center;

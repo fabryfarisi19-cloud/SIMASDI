@@ -248,7 +248,7 @@ setStatistik({
 
 </div>   
         
-<div className="relative flex justify-center px-8 pt-20">
+<div className="relative flex justify-center px-8 pt-6">
 <Image
   src="/logoimipas.png"
   alt="Watermark"
@@ -329,7 +329,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 <div className="col-span-6 flex flex-col bg-[#0B1F4D] border-l-2 border-white/20">
 
   {/* Header */}
-<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-4 border-b border-white/30">
+<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-2 border-b border-white/30">
     <h2 className="text-xl font-bold text-white">
       VIDEO INFORMASI
     </h2>
@@ -341,7 +341,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 
 
  {/* Video */}
-<div className="h-[805px] overflow-hidden px-2 pb-2 pt-2">
+<div className="h-[820px] overflow-hidden px-2 pb-2 pt-0">
   <video
     src="/videoinformasi.mp4"
     autoPlay
