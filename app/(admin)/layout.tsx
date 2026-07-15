@@ -23,13 +23,16 @@ export default function AdminLayout({
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: 24px;
+  background: #f1f5f9;
 }
 
-        @media (max-width: 768px) {
-          .isi-admin {
-            margin-left: 0;
-          }
-        }
+@media (max-width: 768px) {
+  .isi-admin {
+    margin-left: 0;
+    padding: 84px 20px 20px;
+  }
+}
       `}</style>
   </AuthGuard>
   );

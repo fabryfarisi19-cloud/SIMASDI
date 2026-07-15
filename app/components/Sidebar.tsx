@@ -171,11 +171,27 @@ const logout = () => {
 
       <style jsx global>{`
 .header-mobile{
+  display:none;
   position:fixed;
   top:0;
   left:0;
   right:0;
-  z-index:9990;
+  height:64px;
+
+  background:linear-gradient(
+    90deg,
+    #0B2E78,
+    #2563EB
+  );
+
+  padding:0 16px;
+
+  align-items:center;
+  justify-content:space-between;
+
+  z-index:9999;
+
+  box-shadow:0 3px 15px rgba(0,0,0,.18);
 }
   .header-mobile.hidden{
   display:none !important;
