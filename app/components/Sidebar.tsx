@@ -217,7 +217,7 @@ const logout = () => {
   letter-spacing:.3px;
 }
 .sidebar{
-  width:258px;
+  width:230px;
   height:100vh;
 
   background:linear-gradient(

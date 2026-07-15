@@ -51,7 +51,7 @@ async function getBarang() {
       {/* Filter */}
      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
 
-  <div className="flex flex-wrap gap-4 items-center">
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
     <div className="relative flex-1 max-w-md">
 
@@ -86,62 +86,80 @@ async function getBarang() {
 </div>
 
       {/* Table */}
-      <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+      <div className="overflow-x-auto rounded-3xl shadow-lg">
 
-        <table className="w-full">
+<table className="min-w-[760px] w-full bg-white">
 
-          <thead className="bg-blue-700 text-white">
+    <thead className="bg-blue-600 text-white">
 
-            <tr>
+<tr>
 
-              <th className="p-4">Kode</th>
+<th className="px-3 py-4 text-left w-[90px]">
+Kode
+</th>
 
-              <th>Nama Barang</th>
+<th className="px-3 py-4 text-left min-w-[180px]">
+Nama Barang
+</th>
 
-              <th>Ruangan</th>
+<th className="px-3 py-4 text-center w-[120px]">
+Ruangan
+</th>
 
-              <th>Kondisi</th>
+<th className="px-3 py-4 text-center w-[90px]">
+Kondisi
+</th>
 
-              <th>Jumlah</th>
+<th className="px-3 py-4 text-center w-[70px]">
+Jumlah
+</th>
 
-              <th>Nilai</th>
+</tr>
 
-              <th>Aksi</th>
+</thead>
 
-            </tr>
+         <tbody>
 
-          </thead>
+{barang.map((item)=>(
 
-          <tbody>
+<tr
+key={item.id}
+className="border-b hover:bg-slate-50"
+>
 
-            <tr className="border-b">
+<td className="px-3 py-4 whitespace-nowrap">
+{item.kode_barang}
+</td>
 
-              <td className="p-4">
-                3010101001
-              </td>
+<td className="px-3 py-4">
+<div className="font-semibold">
+{item.nama_barang}
+</div>
+</td>
 
-              <td>Laptop Lenovo ThinkPad</td>
+<td className="px-3 py-4 text-center">
+{item.ruangan}
+</td>
 
-              <td>Subbag TU</td>
+<td className="px-3 py-4 text-center">
 
-              <td>
-                <span className="bg-green-600 text-white px-3 py-1 rounded-full">
-                  Baik
-                </span>
-              </td>
+<span className="px-3 py-1 rounded-full bg-green-500 text-white text-xs">
 
-              <td>5</td>
+{item.kondisi}
 
-              <td>Rp18.500.000</td>
+</span>
 
-              <td className="text-blue-700 font-semibold">
-                Edit
-              </td>
+</td>
 
-            </tr>
+<td className="px-3 py-4 text-center font-bold">
+{item.jumlah}
+</td>
 
-          </tbody>
+</tr>
 
+))}
+
+</tbody>
         </table>
 
       </div>
