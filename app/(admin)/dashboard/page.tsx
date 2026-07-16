@@ -30,6 +30,7 @@ import {
   AreaChart,
 } from "recharts";
 import StatCard from "@/app/components/StatCard";
+import { useRouter } from "next/navigation";
 export default function DashboardPage() {
   const [jam, setJam] = useState("");
   const [tanggal, setTanggal] = useState("");
@@ -46,6 +47,8 @@ const [suratTerbaru, setSuratTerbaru] = useState<any[]>([]);
 const [detailSurat, setDetailSurat] = useState<any>(null);
 const [showDetail, setShowDetail] = useState(false);
 const [showPreview, setShowPreview] = useState(false);
+const router = useRouter();
+const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const loadGrafik = async () => {
@@ -190,12 +193,19 @@ const loadSuratTerbaru = async () => {
   setSuratTerbaru(data || []);
 
 };
+const loadUser = () => {
+  const user = localStorage.getItem("user");
 
+  if (user) {
+    setUser(JSON.parse(user));
+  }
+};
     updateJam();
     loadGrafik();
     loadDashboard();
     loadAgenda();
     loadSuratTerbaru();
+    loadUser();
     const interval = setInterval(updateJam, 1000);
    return () => {
   clearInterval(interval);
@@ -272,15 +282,15 @@ Selamat Datang
 </h2>
 
 <h1 className="text-3xl font-black text-blue-700 mt-2">
-Fabry Farisi Punandio
+  {user?.nama || "Pengguna"}
 </h1>
 
 <p className="text-slate-500 mt-3">
-Kaur Umum
+  {user?.jabatan || "-"}
 </p>
 
 <p className="text-slate-500">
-Balai Pemasyarakatan Kelas I Jakarta Barat
+  {user?.unit_kerja || "Balai Pemasyarakatan Kelas I Jakarta Barat"}
 </p>
 
 </div>
@@ -318,6 +328,7 @@ Waktu Sekarang
 </div>
 
 </div>
+
       {/* Tombol */}
      {/* ACTION */}
 {/* ================= ACTION ================= */}
@@ -778,7 +789,10 @@ py-2.5
 
   {detailSurat?.file_url && (
     <button
-  onClick={() => setShowPreview(true)}
+ onClick={() => {
+  setShowDetail(false);
+  router.push(`/surat-masuk/preview/${detailSurat.id}`);
+}}
   className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
 >
   <Eye size={18} />
