@@ -27,7 +27,7 @@ async function getBarang() {
     <main>
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
 
         <div>
           <h1 className="text-4xl font-bold text-blue-900">
@@ -40,7 +40,7 @@ async function getBarang() {
         </div>
 <Link
   href="/simstok/data-bmn/tambah"
-  className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl flex items-center gap-2"
+  className="w-full md:w-auto justify-center bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl flex items-center gap-2"
 >
   <Plus size={20} />
   Tambah Barang
@@ -86,9 +86,9 @@ async function getBarang() {
 </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-3xl shadow-lg">
+   <div className="w-full overflow-x-auto rounded-3xl shadow-lg">
 
-<table className="min-w-[760px] w-full bg-white">
+<table className="w-full min-w-[760px] bg-white">
 
     <thead className="bg-blue-600 text-white">
 

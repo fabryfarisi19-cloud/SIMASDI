@@ -45,8 +45,8 @@ const [pageNumber, setPageNumber] = useState(1);
      <div className="bg-white rounded-3xl shadow-xl">
 
         <div className="border-b p-5 flex items-center justify-between">
-<div className="grid grid-cols-12 gap-6 items-start">
-<div className="col-span-3">
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<div className="lg:col-span-3">
 
 <h1 className="text-xl font-bold text-blue-700 break-all">
 
@@ -61,7 +61,7 @@ const [pageNumber, setPageNumber] = useState(1);
   </p>
 
 </div>
-<div className="col-span-5">
+<div className="lg:col-span-5">
 
   <div className="grid grid-cols-2 gap-4">
 
@@ -86,7 +86,7 @@ const [pageNumber, setPageNumber] = useState(1);
   </p>
 </div>
 
-<div className="bg-white rounded-xl p-4 shadow-sm border md:col-span-3">
+<div className="col-span-2 bg-white rounded-xl p-4 shadow-sm border">
   <p className="text-xs uppercase tracking-wide text-slate-500">
     Perihal
   </p>
@@ -99,7 +99,7 @@ const [pageNumber, setPageNumber] = useState(1);
 
 </div>   {/* penutup col-span-6 */}
 
-<div className="col-span-4 flex flex-wrap items-start justify-end gap-3">
+<div className="lg:col-span-4 flex flex-wrap items-start justify-start lg:justify-end gap-3">
   {/* Zoom */}
   <button
     onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))}
