@@ -329,7 +329,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 <div className="col-span-6 flex flex-col bg-[#0B1F4D] border-l-2 border-white/20">
 
   {/* Header */}
-<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-2 border-b border-white/30">
+<div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-5 border-b border-white/30">
     <h2 className="text-xl font-bold text-white">
       VIDEO INFORMASI
     </h2>
@@ -340,8 +340,9 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
   </div>
 
 
- {/* Video */}
-<div className="h-[820px] overflow-hidden px-2 pb-2 pt-0">
+ 
+{/* Video */}
+<div className="flex-1 overflow-hidden px-2 pb-2 pt-2">
   <video
     src="/videobansos.mp4"
     autoPlay
@@ -349,7 +350,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
     loop
     playsInline
     controls={false}
-   className="w-full h-full object-co rounded-3xl bg-black"
+    className="w-full h-full object-cover rounded-xl bg-blue-900"
   />
 </div>
 {/* Statistik */}
