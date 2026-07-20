@@ -26,11 +26,11 @@ const menus = [
     href: "/siantar/petugas",
     icon: Users,
   },
-  {
-    title: "Display TV",
-    href: "/siantar/display",
-    icon: Tv,
-  },
+{
+  title: "Display TV",
+  href: "/display",
+  icon: Tv,
+},
   {
     title: "Laporan",
     href: "/siantar/laporan",

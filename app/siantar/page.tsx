@@ -31,11 +31,11 @@ export default function SiantarDashboard() {
   return (
    <main className="p-4 md:p-8 space-y-6">
     <h1 className="text-3xl md:text-4xl font-bold text-slate-800">
-  SIAP
+  Bapas Kelas I Jakarta Barat
 </h1>
 
      <p className="text-slate-500 text-sm md:text-base">
-        Sistem Informasi Antrean Pelayanan
+        Melayani Dengan Sepenuh Hati
       </p>
 
    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">

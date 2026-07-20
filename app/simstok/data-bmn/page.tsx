@@ -1,11 +1,25 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import Image from "next/image";
 import Link from "next/link";
+
+import {
+  Plus,
+  Search,
+  Eye,
+  Pencil,
+  Trash2,
+  QrCode,
+} from "lucide-react";
+
+import { supabase } from "@/lib/supabase";
+
 export default function DataBMNPage() {
     const [barang, setBarang] = useState<any[]>([]);
+const [search, setSearch] = useState("");  
+const [filterKondisi, setFilterKondisi] = useState("");  
+const [filterRuangan, setFilterRuangan] = useState("");
     useEffect(() => {
   getBarang();
 }, []);
@@ -23,6 +37,45 @@ async function getBarang() {
 
   setBarang(data || []);
 }
+
+async function hapusBarang(id: number) {
+  const konfirmasi = confirm(
+    "Apakah Anda yakin ingin menghapus data BMN ini?"
+  );
+
+  if (!konfirmasi) return;
+
+  const { error } = await supabase
+    .from("barang")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  getBarang();
+}
+const barangFilter = barang.filter((item) => {
+  const cocokSearch =
+    item.nama_barang
+      ?.toLowerCase()
+      .includes(search.toLowerCase()) ||
+    item.kode_barang
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+  const cocokKondisi =
+    filterKondisi === "" ||
+    item.kondisi === filterKondisi;
+
+  const cocokRuangan =
+    filterRuangan === "" ||
+    item.ruangan === filterRuangan;
+
+  return cocokSearch && cocokKondisi && cocokRuangan;
+});
   return (
     <main>
 
@@ -60,26 +113,37 @@ async function getBarang() {
         className="absolute left-4 top-4 text-slate-400"
       />
 
-      <input
-        placeholder="Cari Barang..."
-        className="w-full border rounded-xl pl-12 pr-4 py-3"
-      />
+   <input
+  type="text"
+  placeholder="Cari Barang..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full border rounded-xl pl-12 pr-4 py-3"
+/>
 
     </div>
 
-    <select className="border rounded-xl px-4 py-3">
-      <option>Semua Kondisi</option>
-      <option>Baik</option>
-      <option>Rusak Ringan</option>
-      <option>Rusak Berat</option>
-    </select>
-<select className="border rounded-xl px-4 py-3">
-  <option>Semua Ruangan</option>
-  <option>Subbag TU</option>
-  <option>Ruang Kepala Bapas</option>
-  <option>Ruang PK</option>
-  <option>Ruang Umum</option>
-  <option>Gudang</option>
+  <select
+  value={filterKondisi}
+  onChange={(e) => setFilterKondisi(e.target.value)}
+  className="border rounded-xl px-4 py-3"
+>
+  <option value="">Semua Kondisi</option>
+  <option value="Baik">Baik</option>
+  <option value="Rusak Ringan">Rusak Ringan</option>
+  <option value="Rusak Berat">Rusak Berat</option>
+</select>
+<select
+  value={filterRuangan}
+  onChange={(e) => setFilterRuangan(e.target.value)}
+  className="border rounded-xl px-4 py-3"
+>
+  <option value="">Semua Ruangan</option>
+  <option value="Subbag TU">Subbag TU</option>
+  <option value="Ruang Kepala Bapas">Ruang Kepala Bapas</option>
+  <option value="Ruang PK">Ruang PK</option>
+  <option value="Ruang Umum">Ruang Umum</option>
+  <option value="Gudang">Gudang</option>
 </select>
   </div>
 
@@ -113,14 +177,16 @@ Kondisi
 <th className="px-3 py-4 text-center w-[70px]">
 Jumlah
 </th>
-
+<th className="px-3 py-4 text-center w-[180px]">
+  Aksi
+</th>
 </tr>
 
 </thead>
 
          <tbody>
 
-{barang.map((item)=>(
+{barangFilter.map((item) => (
 
 <tr
 key={item.id}
@@ -142,11 +208,25 @@ className="border-b hover:bg-slate-50"
 </td>
 
 <td className="px-3 py-4 text-center">
-
-<span className="px-3 py-1 rounded-full bg-green-500 text-white text-xs">
-
-{item.kondisi}
-
+<span
+  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+    item.kondisi === "Baik"
+      ? "bg-green-100 text-green-700"
+      : item.kondisi === "Rusak Ringan"
+      ? "bg-yellow-100 text-yellow-700"
+      : "bg-red-100 text-red-700"
+  }`}
+>
+  <span
+    className={`w-2 h-2 rounded-full mr-2 ${
+      item.kondisi === "Baik"
+        ? "bg-green-500"
+        : item.kondisi === "Rusak Ringan"
+        ? "bg-yellow-500"
+        : "bg-red-500"
+    }`}
+  />
+  {item.kondisi}
 </span>
 
 </td>

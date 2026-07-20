@@ -1,12 +1,15 @@
+
 import Sidebar from "@/app/components/Sidebar";
 import Footer from "@/app/components/footer";
 import AuthGuard from "@/app/components/AuthGuard";
 
 export default function AdminLayout({
+
   children,
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <AuthGuard>
       <Sidebar />

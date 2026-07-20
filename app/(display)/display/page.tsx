@@ -219,12 +219,12 @@ setStatistik({
 
       <div>
 
-        <h1 className="text-5xl font-black tracking-wide text-white">
-          SIAP
+        <h1 className="text-2xl font-black tracking-wide text-white">
+          Bapas Kelas I Jakarta Barat
         </h1>
 
         <p className="text-2xl text-blue-100">
-          Sistem Informasi Antrean Pelayanan
+          Melayani Dengan Hati
         </p>
 
       </div>

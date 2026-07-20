@@ -1,6 +1,5 @@
 "use client";
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 export default function AuthGuard({
@@ -11,6 +10,7 @@ export default function AuthGuard({
   const router = useRouter();
   const pathname = usePathname();
 const { data: session, status } = useSession();
+const [authorized, setAuthorized] = useState(false);
   useEffect(() => {
    const user = localStorage.getItem("user");
 
@@ -19,16 +19,18 @@ if (status === "loading") return;
 
 // Tidak ada login lokal DAN tidak ada session Google
 if (!user && !session) {
-  router.push("/login");
+  setAuthorized(false);
+  router.replace("/login");
   return;
 }
 
 // Kalau login memakai Google, biarkan lanjut
 if (!user && session) {
+  setAuthorized(true);
   return;
 }
-
     const data: any | null = user ? JSON.parse(user) : null;
+    setAuthorized(true);
     console.log("Role:", data?.jabatan);
     console.log("Path:", pathname);
     // Display hanya boleh ke /display
@@ -44,10 +46,14 @@ if (!user && session) {
     }
 
     // Petugas hanya boleh ke /siantar/petugas
-    if (data?.jabatan === "Petugas" && !pathname.startsWith("/siantar/petugas")) {
-      router.push("/siantar/petugas");
-    }
+  if (data?.jabatan === "Petugas" && !pathname.startsWith("/siantar/petugas")) {
+  router.replace("/siantar/petugas");
+  return;
+}
   }, [pathname, router, session, status]);
+if (!authorized) {
+  return null; // atau bisa diganti spinner/loading nanti
+}
 
-  return <>{children}</>;
+return <>{children}</>;
 }
