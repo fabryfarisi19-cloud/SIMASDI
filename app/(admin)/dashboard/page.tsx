@@ -242,7 +242,7 @@ SIMASDI
 </h1>
 
 <p className="text-blue-100 text-sm xl:text-base">
-Sistem Manajemen Arsip Digital
+Sistem Informasi Manajemen Arsip Digital
 </p>
 
 <p className="text-blue-100 text-sm">

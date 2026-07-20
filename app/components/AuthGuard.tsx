@@ -28,20 +28,26 @@ if (!user && !session) {
 if (!user && session) {
   setAuthorized(true);
   return;
+}const data = user ? JSON.parse(user) : null;
+
+if (!data && !session) {
+  setAuthorized(false);
+  router.replace("/login");
+  return;
 }
-    const data: any | null = user ? JSON.parse(user) : null;
-    setAuthorized(true);
+
+setAuthorized(true);
     console.log("Role:", data?.jabatan);
     console.log("Path:", pathname);
     // Display hanya boleh ke /display
     if (data?.jabatan === "Display" && pathname !== "/display") {
-      router.push("/display");
+      router.replace("/display");
       return;
     }
 
     // Kiosk hanya boleh ke /siantar/kiosk
     if (data?.jabatan === "Kiosk" && !pathname.startsWith("/siantar/kiosk")) {
-      router.push("/siantar/kiosk");
+      router.replace("/siantar/kiosk");
       return;
     }
 

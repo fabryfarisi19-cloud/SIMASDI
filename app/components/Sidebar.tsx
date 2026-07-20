@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
-
+import { signOut } from "next-auth/react";
 const menu = [
   { nama: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { nama: "Surat Masuk", href: "/surat-masuk", icon: Inbox },
@@ -56,12 +56,22 @@ useEffect(() => {
   }
 }, []);
 
-const logout = () => {
+const logout = async () => {
+  // Hapus semua data login lokal
   localStorage.removeItem("login");
   localStorage.removeItem("user");
-  router.push("/login");
-};
+  localStorage.removeItem("nama");
+  localStorage.removeItem("role");
+  localStorage.removeItem("username");
 
+  // Hapus session Google (NextAuth)
+  await signOut({
+    redirect: false,
+  });
+
+  // Arahkan ke login
+  router.replace("/login");
+};
   return (
     <>
       {/* Header khusus HP */}
