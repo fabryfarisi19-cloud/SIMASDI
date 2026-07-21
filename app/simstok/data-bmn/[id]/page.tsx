@@ -6,11 +6,11 @@ import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function DetailBarang({
-  params,
-}: {
-  params: { id: string };
-}) {
+import { useParams } from "next/navigation";
+
+export default function DetailBarang() {
+
+  const params = useParams();
   const [barang, setBarang] = useState<any>(null);
 
   useEffect(() => {
@@ -18,13 +18,18 @@ export default function DetailBarang({
   }, []);
 
   async function loadBarang() {
-    const { data } = await supabase
-      .from("barang")
-      .select("*")
-      .eq("id", params.id)
-      .single();
+  const { data, error } = await supabase
+  .from("barang")
+  .select("*")
+ .eq("id", Number(params.id))
+  .single();
 
-    setBarang(data);
+if (error) {
+  alert(error.message);
+  return;
+}
+
+setBarang(data);
   }
 
   if (!barang) {

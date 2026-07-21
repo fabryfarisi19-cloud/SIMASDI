@@ -199,17 +199,17 @@ export default function SuratMasukPage() {
       }
 
       alert("Pembacaan selesai. Periksa kembali data surat sebelum disimpan.");
-    } catch (error) {
-      console.error(error);
-      alert(
-        "File berhasil dipilih, tetapi pembacaan otomatis gagal. Isi data surat secara manual lalu simpan."
-      );
-    } finally {
-      setSedangMembaca(false);
-    }
-  };
+} catch (error: any) {
+  console.error("OCR ERROR =", error);
 
-  const pilihFile = async (file: File) => {
+  alert(
+    error?.message || JSON.stringify(error)
+  );
+}
+
+}; // <-- TAMBAHKAN BARIS INI
+
+const pilihFile = async (file: File) => {
     const tipeDiizinkan = [
       "application/pdf",
       "image/jpeg",

@@ -234,7 +234,41 @@ className="border-b hover:bg-slate-50"
 <td className="px-3 py-4 text-center font-bold">
 {item.jumlah}
 </td>
+<td className="px-3 py-4">
+  <div className="flex justify-center gap-2">
 
+ <Link
+  href={`/simstok/data-bmn/${item.id}`}
+  className="p-2 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200"
+  title="Detail"
+>
+  <Eye size={18} />
+</Link>
+
+  <Link
+  href={`/simstok/data-bmn/edit/${item.id}`}
+  className="p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200"
+  title="Edit"
+>
+  <Pencil size={18} />
+</Link>
+
+ <button
+  onClick={() => hapusBarang(item.id)}
+  className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-lg"
+>
+  <Trash2 size={18} />
+</button>
+
+    <button
+      className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
+      title="QR Code"
+    >
+      <QrCode size={18} />
+    </button>
+
+  </div>
+</td>
 </tr>
 
 ))}
