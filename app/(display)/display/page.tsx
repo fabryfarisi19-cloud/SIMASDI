@@ -344,7 +344,7 @@ className="absolute opacity-[0.02] w-[380px] h-[380px] top-1/2 left-1/2 -transla
 {/* Video */}
 <div className="flex-1 overflow-hidden px-2 pb-2 pt-2">
   <video
-    src="/videobansos.mp4"
+    src="/videoanak1.mp4"
     autoPlay
     muted
     loop
