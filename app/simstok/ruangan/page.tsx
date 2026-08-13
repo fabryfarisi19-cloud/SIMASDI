@@ -59,7 +59,7 @@ async function handleDelete(id: number) {
 return (
   <div className="mb-6">
 
-  <div className="flex justify-between items-center mb-4">
+ <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
     <div>
       <h1 className="text-3xl font-bold text-slate-800">
         Data Ruangan
@@ -71,14 +71,14 @@ return (
     </div>
 
     <Link
-      href="/simstok/ruangan/tambah"
-      className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow"
-    >
+  href="/simstok/ruangan/tambah"
+  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg shadow text-center"
+>
       + Tambah Ruangan
     </Link>
   </div>
 
-  <div className="flex justify-between items-center">
+ <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
     <p className="text-sm text-slate-600">
       Total Ruangan : <b>{ruangan.length}</b>
     </p>
@@ -88,19 +88,20 @@ return (
       placeholder="Cari Kode atau Nama Ruangan..."
       value={search}
       onChange={(e) => setSearch(e.target.value)}
-      className="border rounded-lg px-4 py-2 w-80"
+     className="border rounded-lg px-4 py-2 w-full md:w-80"
     />
   </div>
 
-  <table className="w-full mt-4">
+ <div className="overflow-x-auto mt-4">
+  <table className="min-w-[800px] w-full">
 
     <thead className="bg-slate-100">
      <tr>
-    <th className="p-3 border w-16">No</th>
-    <th className="p-3 border">Kode</th>
-        <th className="p-3 border">Nama Ruangan</th>
-        <th className="p-3 border">Lantai</th>
-        <th className="p-3 border w-52">Aksi</th>
+  <th className="p-2 border w-14 text-center">No</th>
+<th className="p-2 border w-24 text-center">Kode</th>
+<th className="p-2 border min-w-[220px]">Nama Ruangan</th>
+<th className="p-2 border w-20 text-center">Lantai</th>
+<th className="p-2 border w-40 text-center">Aksi</th>
       </tr>
     </thead>
 
@@ -118,33 +119,53 @@ return (
       })
      .map((item: any, index: number) => (
         <tr key={item.id}>
-          <td className="p-3 border text-center">
-    {index + 1}
-  </td>
-          <td className="p-3 border">{item.kode_ruangan}</td>
-          <td className="p-3 border">{item.nama_ruangan}</td>
-          <td className="p-3 border">{item.lantai}</td>
-          <td className="p-3 border">
-    <div className="flex gap-2 justify-center">
-      <Link
-        href={`/simstok/ruangan/edit/${item.id}`}
-        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-      >
-        Edit
-      </Link>
+        <td className="p-2 border text-center">
+  {index + 1}
+</td>
 
-      <button
-        onClick={() => handleDelete(item.id)}
-        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-      >
-        Hapus
-      </button>
-    </div>
+<td className="p-2 border text-center font-semibold">
+  {item.kode_ruangan}
+</td>
+
+<td className="p-2 border">
+  {item.nama_ruangan}
+</td>
+
+<td className="p-2 border text-center">
+  {item.lantai}
+</td>
+          <td className="p-2 border">
+ <div className="flex flex-col gap-2">
+
+  <Link
+    href={`/simstok/ruangan/${item.id}`}
+    className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm text-center"
+  >
+    BMN
+  </Link>
+
+  <Link
+    href={`/simstok/ruangan/edit/${item.id}`}
+    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm text-center"
+  >
+    Edit
+  </Link>
+
+  <button
+    onClick={() => handleDelete(item.id)}
+    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm"
+  >
+    Hapus
+  </button>
+
+</div>
   </td>
         </tr>
       ))}
   </tbody>
   </table>
-  </div>
+</div>
+
+</div>
   );
 }

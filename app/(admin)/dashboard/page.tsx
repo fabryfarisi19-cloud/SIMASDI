@@ -127,27 +127,33 @@ const channel = supabase
     };
 const loadDashboard = async () => {
 
-  const suratMasuk = await supabase
-    .from("surat_masuk")
-    .select("*", { count: "exact", head: true });
+const hariIni = new Date().toISOString().split("T")[0];
 
-  setTotalSuratMasuk(suratMasuk.count ?? 0);
+const suratMasuk = await supabase
+  .from("surat_masuk")
+  .select("*", { count: "exact", head: true })
+  .eq("tanggal", hariIni);
+
+setTotalSuratMasuk(suratMasuk.count ?? 0);
 
   const suratKeluar = await supabase
     .from("surat_keluar")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("tanggal", hariIni);
 
   setTotalSuratKeluar(suratKeluar.count ?? 0);
 
   const disposisi = await supabase
     .from("surat")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("tanggal", hariIni);
 
   setTotalDisposisi(disposisi.count ?? 0);
 
   const arsip = await supabase
     .from("surat_masuk")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("tanggal", hariIni);
 
   setTotalArsip(arsip.count ?? 0);
 

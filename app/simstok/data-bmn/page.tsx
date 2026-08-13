@@ -253,19 +253,21 @@ className="border-b hover:bg-slate-50"
   <Pencil size={18} />
 </Link>
 
- <button
-  onClick={() => hapusBarang(item.id)}
-  className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-lg"
+ <Link
+  href={`/simstok/data-bmn/delete/${item.id}`}
+  className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+  title="Hapus"
 >
   <Trash2 size={18} />
-</button>
+</Link>
 
-    <button
-      className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
-      title="QR Code"
-    >
-      <QrCode size={18} />
-    </button>
+   <Link
+  href={`/simstok/bmn/${item.id}`}
+  className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
+  title="QR Code"
+>
+  <QrCode size={18} />
+</Link>
 
   </div>
 </td>
