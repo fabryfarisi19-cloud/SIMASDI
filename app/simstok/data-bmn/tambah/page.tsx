@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function TambahBMN() {
+function TambahBMNForm() {
   const searchParams = useSearchParams();
   const ruanganId = searchParams.get("ruangan");
 
@@ -520,5 +520,20 @@ export default function TambahBMN() {
       </div>
 
     </main>
+  );
+}
+export default function TambahBMN() {
+  return (
+    <Suspense
+      fallback={
+        <main className="p-6">
+          <p className="text-slate-500">
+            Memuat halaman Tambah BMN...
+          </p>
+        </main>
+      }
+    >
+      <TambahBMNForm />
+    </Suspense>
   );
 }

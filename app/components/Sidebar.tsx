@@ -11,6 +11,7 @@ import {
   FileText,
   Archive,
   Users,
+  BookOpen,
   CalendarDays,
   LogOut,
   Menu,
@@ -19,6 +20,7 @@ import {
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
 import { signOut } from "next-auth/react";
+
 const menu = [
   { nama: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { nama: "Surat Masuk", href: "/surat-masuk", icon: Inbox },
@@ -34,6 +36,11 @@ const menu = [
   { nama: "SIAP", href: "/siantar", icon: Ticket },
 
   { nama: "Pengguna", href: "/pengguna", icon: Users },
+  {
+  nama: "Majalah SIMASDI",
+  href: "/majalah",
+  icon: BookOpen,
+},
   { nama: "Agenda Kegiatan", href: "/agenda", icon: CalendarDays },
 
 ];

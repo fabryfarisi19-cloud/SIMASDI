@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState, ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function TambahMutasiPage() {
+function TambahMutasiForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -485,5 +485,20 @@ export default function TambahMutasiPage() {
       </div>
 
     </main>
+  );
+}
+export default function TambahMutasiPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="max-w-4xl mx-auto p-6">
+          <div className="bg-white rounded-3xl shadow p-8 text-center">
+            Memuat halaman Mutasi BMN...
+          </div>
+        </main>
+      }
+    >
+      <TambahMutasiForm />
+    </Suspense>
   );
 }
