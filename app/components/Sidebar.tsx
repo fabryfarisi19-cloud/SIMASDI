@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  Megaphone,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
@@ -37,9 +38,9 @@ const menu = [
 
   { nama: "Pengguna", href: "/pengguna", icon: Users },
   {
-  nama: "Majalah SIMASDI",
-  href: "/majalah",
-  icon: BookOpen,
+  nama: "Publikasi",
+  href: "/publikasi",
+  icon: Megaphone,
 },
   { nama: "Agenda Kegiatan", href: "/agenda", icon: CalendarDays },
 

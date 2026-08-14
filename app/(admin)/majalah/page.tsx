@@ -20,10 +20,22 @@ export default function MajalahPage() {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const suaraFlip = useRef<HTMLAudioElement | null>(null);
+ useEffect(() => {
+  suaraFlip.current = new Audio("/sound/paperslidesound.mp3");
+  suaraFlip.current.volume = 0.5;
+}, []);
+  const [isMobile, setIsMobile] = useState(false);
 const [showThumbnails, setShowThumbnails] = useState(false);
   useEffect(() => {
     let mounted = true;
+const cekMobile = () => {
+  setIsMobile(window.innerWidth <= 768);
+};
 
+cekMobile();
+
+window.addEventListener("resize", cekMobile);
     const loadPDF = async () => {
       try {
         setLoading(true);
@@ -74,18 +86,25 @@ const [showThumbnails, setShowThumbnails] = useState(false);
 
     loadPDF();
 
-    return () => {
-      mounted = false;
-    };
+  return () => {
+  mounted = false;
+  window.removeEventListener("resize", cekMobile);
+};
   }, []);
 
-  const halamanSebelumnya = () => {
-    flipBookRef.current?.pageFlip().flipPrev();
-  };
+const halamanSebelumnya = () => {
+  const audio = new Audio("/sound/paperslidesound.mp3");
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
 
-  const halamanBerikutnya = () => {
-    flipBookRef.current?.pageFlip().flipNext();
-  };
+  flipBookRef.current?.pageFlip().flipPrev();
+};
+const halamanBerikutnya = () => {
+  const audio = new Audio("/sound/paperslidesound.mp3");
+audio.volume = 0.5;
+audio.play().catch(() => {});
+  flipBookRef.current?.pageFlip().flipNext();
+};
 
   const fullscreen = () => {
     const element = document.getElementById("flipbook-container");
@@ -221,11 +240,11 @@ const [showThumbnails, setShowThumbnails] = useState(false);
               </p>
             </div>
 
-        <div className="w-full max-w-[1100px] rounded-2xl border border-white/10 bg-black/30 p-2 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm md:p-4">
-             <HTMLFlipBook
+      <div className="w-full max-w-[1100px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-2 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm md:p-4">
+            <HTMLFlipBook
   ref={flipBookRef}
-  width={850}
-  height={1100}
+  width={isMobile ? 340 : 850}
+  height={isMobile ? 480 : 1100}
   size="stretch"
                minWidth={280}
 maxWidth={1000}
@@ -239,7 +258,7 @@ maxHeight={750}
                 startPage={0}
                 drawShadow={true}
                 flippingTime={900}
-                usePortrait={false}
+               usePortrait={isMobile}
                 startZIndex={0}
                 autoSize={true}
                 clickEventForward={true}
@@ -248,9 +267,7 @@ maxHeight={750}
                 showPageCorners={true}
                disableFlipByClick={false}
 onFlip={(e: any) => {
-  const halaman = e.data + 1;
-
-  setCurrentPage(halaman);
+  setCurrentPage(e.data + 1);
 }}
               >
                 {pages.map((image, index) => (
