@@ -20,11 +20,11 @@ export default function MajalahPage() {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const suaraFlip = useRef<HTMLAudioElement | null>(null);
- useEffect(() => {
-  suaraFlip.current = new Audio("/sound/paperslidesound.mp3");
-  suaraFlip.current.volume = 0.5;
-}, []);
+const putarSuaraFlip = () => {
+  const audio = new Audio("/sound/paperslidesound.mp3");
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
+};
   const [isMobile, setIsMobile] = useState(false);
 const [showThumbnails, setShowThumbnails] = useState(false);
   useEffect(() => {
@@ -93,10 +93,6 @@ window.addEventListener("resize", cekMobile);
   }, []);
 
 const halamanSebelumnya = () => {
-  const audio = new Audio("/sound/paperslidesound.mp3");
-  audio.volume = 0.5;
-  audio.play().catch(() => {});
-
   flipBookRef.current?.pageFlip().flipPrev();
 };
 const halamanBerikutnya = () => {
@@ -268,6 +264,7 @@ maxHeight={750}
                disableFlipByClick={false}
 onFlip={(e: any) => {
   setCurrentPage(e.data + 1);
+  putarSuaraFlip();
 }}
               >
                 {pages.map((image, index) => (
