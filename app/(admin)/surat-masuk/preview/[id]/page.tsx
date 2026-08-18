@@ -16,6 +16,20 @@ export default function PreviewSurat() {
   const [zoom, setZoom] = useState(1.2);
   const [numPages, setNumPages] = useState(0);
 const [pageNumber, setPageNumber] = useState(1);
+const [pdfWidth, setPdfWidth] = useState(0);
+useEffect(() => {
+  const updateWidth = () => {
+    setPdfWidth(window.innerWidth);
+  };
+
+  updateWidth();
+
+  window.addEventListener("resize", updateWidth);
+
+  return () => {
+    window.removeEventListener("resize", updateWidth);
+  };
+}, []);
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setPageNumber(1);
@@ -195,7 +209,11 @@ const [pageNumber, setPageNumber] = useState(1);
 
 <Page
   pageNumber={pageNumber}
-  width={1050 * zoom}
+  width={
+    pdfWidth > 0
+      ? Math.min(pdfWidth - 32, 1050) * zoom
+      : undefined
+  }
   renderTextLayer={false}
   renderAnnotationLayer={false}
 />

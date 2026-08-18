@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, ArrowRightLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 import { useParams } from "next/navigation";
@@ -49,14 +49,25 @@ setBarang(data);
           Kembali
         </Link>
 
-        <Link
-          href={`/simstok/data-bmn/edit/${barang.id}`}
-          className="bg-amber-500 text-white px-5 py-3 rounded-xl flex gap-2"
-        >
-          <Pencil size={18} />
-          Edit
-        </Link>
+       <div className="flex gap-2">
 
+  <Link
+    href={`/simstok/mutasi/tambah?barang=${barang.id}`}
+    className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-xl flex gap-2"
+  >
+    <ArrowRightLeft size={18} />
+    Mutasi BMN
+  </Link>
+
+  <Link
+    href={`/simstok/data-bmn/edit/${barang.id}`}
+    className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 rounded-xl flex gap-2"
+  >
+    <Pencil size={18} />
+    Edit
+  </Link>
+
+</div>
       </div>
 
       <div className="bg-white rounded-3xl shadow-lg p-8">

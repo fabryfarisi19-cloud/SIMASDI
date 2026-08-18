@@ -25,7 +25,12 @@ const menus = [
   { title: "Dashboard", href: "/simstok/dashboard", icon: LayoutDashboard },
   { title: "Data BMN", href: "/simstok/data-bmn", icon: Boxes },
   { title: "Barang Masuk", href: "/simstok/barang-masuk", icon: PackagePlus },
-  { title: "Mutasi Barang", href: "/simstok/mutasi", icon: ArrowRightLeft },
+{
+  title: "Riwayat Barang Masuk",
+  href: "/simstok/barang-masuk/riwayat",
+  icon: ClipboardCheck,
+},
+  { title: "Mutasi BMN", href: "/simstok/mutasi", icon: ArrowRightLeft },
   { title: "Penanggung Jawab", href: "/simstok/penanggung-jawab", icon: UserCog },
   { title: "Pemeliharaan", href: "/simstok/pemeliharaan", icon: Wrench },
   { title: "Stock Opname", href: "/simstok/stock-opname", icon: ClipboardCheck },
