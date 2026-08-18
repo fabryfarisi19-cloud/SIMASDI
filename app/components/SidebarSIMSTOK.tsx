@@ -26,7 +26,6 @@ const menus = [
   { title: "Data BMN", href: "/simstok/data-bmn", icon: Boxes },
   { title: "Barang Masuk", href: "/simstok/barang-masuk", icon: PackagePlus },
   { title: "Mutasi Barang", href: "/simstok/mutasi", icon: ArrowRightLeft },
-  { title: "Ruangan", href: "/simstok/ruangan", icon: Building2 },
   { title: "Penanggung Jawab", href: "/simstok/penanggung-jawab", icon: UserCog },
   { title: "Pemeliharaan", href: "/simstok/pemeliharaan", icon: Wrench },
   { title: "Stock Opname", href: "/simstok/stock-opname", icon: ClipboardCheck },

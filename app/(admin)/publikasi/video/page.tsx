@@ -11,11 +11,12 @@ import { useState } from "react";
 
 const videoDummy = [
   {
-    id: 1,
-    judul: "Video Aksi Perubahan SIMASDI",
-    tanggal: "Dokumentasi SIMASDI",
-    video: "/publikasi/video/videosimasdi.mp4",
-  },
+  id: 1,
+  judul: "Video Aksi Perubahan SIMASDI",
+  tanggal: "Aksi Perubahan Pelatihan Kepemimpinan Pengawas",
+  video: "/videosimasdi.mp4",
+  thumbnail: "/thumbnailsimasdi.jpeg",
+},
   {
     id: 2,
     judul: "Kegiatan Bapas Kelas I Jakarta Barat",
@@ -110,30 +111,32 @@ export default function VideoPage() {
 
               {/* VIDEO PREVIEW */}
               <div className="relative aspect-video overflow-hidden bg-slate-900">
-
-                <video
-                  src={item.video}
-                  className="h-full w-full object-cover"
-                  muted
-                  preload="metadata"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
+{item.thumbnail ? (
+  <img
+    src={item.thumbnail}
+    alt={item.judul}
+    className="h-full w-full object-cover"
+  />
+) : (
+  <video
+    src={item.video}
+    className="h-full w-full object-cover"
+    preload="metadata"
+  />
+)}
 
                 {/* PLACEHOLDER */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-950 to-slate-900 text-white">
+               {!item.thumbnail && (
+  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-950 to-slate-900 text-white">
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+      <PlayCircle size={38} />
+    </div>
 
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-                    <PlayCircle size={38} />
-                  </div>
-
-                  <span className="mt-3 text-xs font-semibold text-blue-200">
-                    Video belum tersedia
-                  </span>
-
-                </div>
-
+    <span className="mt-3 text-xs font-semibold text-blue-200">
+      Video belum tersedia
+    </span>
+  </div>
+)}
                 {/* PLAY BUTTON */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
 
@@ -185,13 +188,14 @@ export default function VideoPage() {
             <X size={24} />
           </button>
 
-          <video
-            src={videoTerpilih}
-            controls
-            autoPlay
-            className="max-h-[85vh] max-w-[95vw] rounded-2xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+       <video
+  src={videoTerpilih}
+  controls
+  autoPlay
+   playsInline
+  className="max-h-[90vh] max-w-[98vw] w-full rounded-2xl shadow-2xl"
+  onClick={(e) => e.stopPropagation()}
+/>
 
         </div>
       )}

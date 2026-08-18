@@ -17,33 +17,88 @@ import {
   Menu,
   X,
   Megaphone,
+  Volume2,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const menu = [
-  { nama: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { nama: "Surat Masuk", href: "/surat-masuk", icon: Inbox },
-  { nama: "Surat Keluar", href: "/surat-keluar", icon: Send },
-  { nama: "Disposisi", href: "/disposisi", icon: FileText },
-  { nama: "Arsip Digital", href: "/arsip", icon: Archive },
-{
-  nama: "SIMSTOK BMN",
-  href: "/simstok/dashboard",
-  icon: Boxes,
-},
-  // Tambahkan ini
-  { nama: "SIAP", href: "/siantar", icon: Ticket },
-
-  { nama: "Pengguna", href: "/pengguna", icon: Users },
   {
-  nama: "Publikasi",
-  href: "/publikasi",
-  icon: Megaphone,
-},
-  { nama: "Agenda Kegiatan", href: "/agenda", icon: CalendarDays },
+    nama: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
 
+  {
+    nama: "Surat Masuk",
+    href: "/surat-masuk",
+    icon: Inbox,
+  },
+
+  {
+    nama: "Surat Keluar",
+    href: "/surat-keluar",
+    icon: Send,
+  },
+
+  {
+    nama: "Disposisi",
+    href: "/disposisi",
+    icon: FileText,
+  },
+
+  {
+    nama: "Arsip Digital",
+    href: "/arsip",
+    icon: Archive,
+  },
+
+  {
+    nama: "SIMSTOK BMN",
+    href: "/simstok/dashboard",
+    icon: Boxes,
+  },
+
+  {
+    nama: "SIAP",
+    href: "/siantar",
+    icon: Ticket,
+  },
+
+  // =========================
+  // APEL
+  // =========================
+
+  {
+    nama: "Jadwal Petugas Apel",
+    href: "/jadwal-apel",
+    icon: CalendarDays,
+  },
+
+  {
+    nama: "TV Apel",
+    href: "/tv-apel",
+    icon: Volume2,
+  },
+
+  {
+    nama: "Pengguna",
+    href: "/pengguna",
+    icon: Users,
+  },
+
+  {
+    nama: "Publikasi",
+    href: "/publikasi",
+    icon: Megaphone,
+  },
+
+  {
+    nama: "Agenda Kegiatan",
+    href: "/agenda",
+    icon: CalendarDays,
+  },
 ];
 
 export default function Sidebar() {
