@@ -771,7 +771,7 @@ audio.volume = 1;
         </div>
 
         {/* SUARA */}
-        <div className="mt-8 flex justify-center">
+     <div className="mt-8 flex flex-wrap justify-center gap-3 px-4">
 <button
   onClick={() => {
     const audio = new Audio("/sound/pengumuman-apel.mp3");
@@ -809,8 +809,7 @@ bellAudioRef.current = bell;
 </button>
           <button
            onClick={() => bicaraPengumuman()}
-            disabled={isSpeaking}
-            className="rounded-2xl bg-blue-600 px-8 py-4 text-lg font-bold hover:bg-blue-500 disabled:opacity-50"
+            disabled={isSpeaking}className="w-full max-w-sm rounded-2xl bg-blue-600 px-6 py-4 text-lg font-bold hover:bg-blue-500 disabled:opacity-50"
           >
             🔊{" "}
             {isSpeaking
@@ -826,13 +825,13 @@ bellAudioRef.current = bell;
       console.error("Tes otomatis gagal:", error);
     });
   }}
-  className="ml-3 rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white hover:bg-orange-400"
+ className="w-full max-w-sm rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white hover:bg-orange-400"
 >
   🧪 TES OTOMATIS
 </button>
 <button
   type="button"
-  className="relative z-50 ml-3 cursor-pointer rounded-2xl bg-purple-600 px-6 py-4 font-bold text-white hover:bg-purple-500"
+className="relative z-50 w-full max-w-sm cursor-pointer rounded-2xl bg-purple-600 px-6 py-4 font-bold text-white hover:bg-purple-500"
 onClick={async () => {
   try {
     await putarTingTong();
