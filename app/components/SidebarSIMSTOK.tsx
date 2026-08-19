@@ -33,6 +33,11 @@ const menus = [
   { title: "Mutasi BMN", href: "/simstok/mutasi", icon: ArrowRightLeft },
   { title: "Penanggung Jawab", href: "/simstok/penanggung-jawab", icon: UserCog },
   { title: "Pemeliharaan", href: "/simstok/pemeliharaan", icon: Wrench },
+  {
+  title: "Riwayat Pemeliharaan",
+  href: "/simstok/pemeliharaan/riwayat",
+  icon: ClipboardCheck,
+},
   { title: "Stock Opname", href: "/simstok/stock-opname", icon: ClipboardCheck },
   { title: "QR Code BMN", href: "/simstok/qrcode", icon: QrCode },
   { title: "Laporan", href: "/simstok/laporan", icon: FileBarChart2 },

@@ -8,6 +8,7 @@ import {
   ArrowRightLeft,
   Eye,
   Search,
+  Plus,
 } from "lucide-react";
 
 export default function MutasiPage() {
@@ -15,11 +16,109 @@ export default function MutasiPage() {
   const [barangMap, setBarangMap] = useState<Record<number, any>>({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+const [showForm, setShowForm] = useState(false);
+const [barangList, setBarangList] = useState<any[]>([]);
+const [barangId, setBarangId] = useState("");
+const [keRuangan, setKeRuangan] = useState("");
+const [alasan, setAlasan] = useState("");
+const [keterangan, setKeterangan] = useState("");
+ 
+useEffect(() => {
+  loadMutasi();
+  loadBarang();
+}, []);
 
-  useEffect(() => {
-    loadMutasi();
-  }, []);
+  async function loadBarang() {
+    const { data, error } = await supabase
+      .from("barang")
+      .select("id, kode_barang, nama_barang")
+      .order("nama_barang", { ascending: true });
 
+    if (error) {
+      console.error("ERROR DATA BARANG:", error.message);
+      return;
+    }
+
+    setBarangList(data || []);
+  }
+async function simpanMutasi() {
+  if (!barangId) {
+    alert("Silakan pilih BMN.");
+    return;
+  }
+
+  if (!keRuangan.trim()) {
+    alert("Silakan isi ruangan tujuan.");
+    return;
+  }
+
+  const barangTerpilih = barangList.find(
+    (item) => String(item.id) === String(barangId)
+  );
+
+  if (!barangTerpilih) {
+    alert("Data BMN tidak ditemukan.");
+    return;
+  }
+
+  const { error: mutasiError } = await supabase
+    .from("mutasi_bmn")
+    .insert({
+      barang_id: Number(barangId),
+      dari_ruangan: barangTerpilih.ruangan || null,
+      ke_ruangan: keRuangan.trim(),
+      alasan: alasan.trim() || null,
+      keterangan: keterangan.trim() || null,
+    });
+
+  if (mutasiError) {
+    console.error(
+      "ERROR SIMPAN MUTASI:",
+      mutasiError.message
+    );
+
+    alert(
+      "Gagal menyimpan mutasi: " +
+        mutasiError.message
+    );
+
+    return;
+  }
+
+  // UPDATE RUANGAN BMN
+  const { error: barangError } = await supabase
+    .from("barang")
+    .update({
+      ruangan: keRuangan.trim(),
+    })
+    .eq("id", Number(barangId));
+
+  if (barangError) {
+    console.error(
+      "ERROR UPDATE RUANGAN BMN:",
+      barangError.message
+    );
+
+    alert(
+      "Mutasi tercatat, tetapi ruangan BMN gagal diperbarui."
+    );
+
+    return;
+  }
+
+  alert("Mutasi BMN berhasil disimpan.");
+
+  // RESET FORM
+  setBarangId("");
+  setKeRuangan("");
+  setAlasan("");
+  setKeterangan("");
+  setShowForm(false);
+
+  // REFRESH DATA
+  await loadMutasi();
+  await loadBarang();
+}
   async function loadMutasi() {
     setLoading(true);
 
@@ -107,16 +206,159 @@ if (barangIds.length > 0) {
           </p>
         </div>
 
-        <Link
-          href="/simstok/data-bmn"
-          className="flex items-center justify-center gap-2 bg-slate-200 hover:bg-slate-300 px-5 py-3 rounded-xl"
+       <div className="flex items-center gap-3">
+
+  <button
+    onClick={() => setShowForm(true)}
+    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow"
+  >
+    <Plus size={18} />
+    Tambah Mutasi
+  </button>
+
+  <Link
+    href="/simstok/data-bmn"
+    className="flex items-center justify-center gap-2 bg-slate-200 hover:bg-slate-300 px-5 py-3 rounded-xl"
+  >
+    <ArrowLeft size={18} />
+    Data BMN
+  </Link>
+
+</div>
+
+      </div>
+{/* FORM TAMBAH MUTASI */}
+{showForm && (
+  <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
+
+    <div className="flex items-center justify-between mb-6">
+
+      <div>
+        <h2 className="text-2xl font-bold text-blue-900">
+          Tambah Mutasi BMN
+        </h2>
+
+        <p className="text-sm text-slate-500 mt-1">
+          Catat perpindahan Barang Milik Negara
+        </p>
+      </div>
+
+      <button
+        onClick={() => setShowForm(false)}
+        className="bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded-xl"
+      >
+        Tutup
+      </button>
+
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      {/* PILIH BMN */}
+      <div className="md:col-span-2">
+
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Pilih BMN
+        </label>
+
+        <select
+          value={barangId}
+          onChange={(e) => setBarangId(e.target.value)}
+          className="w-full border border-slate-300 rounded-xl px-4 py-3"
         >
-          <ArrowLeft size={18} />
-          Data BMN
-        </Link>
+
+          <option value="">
+            -- Pilih Barang --
+          </option>
+
+          {barangList.map((barang) => (
+            <option
+              key={barang.id}
+              value={barang.id}
+            >
+              {barang.nama_barang} - {barang.kode_barang}
+              {barang.ruangan
+                ? ` (${barang.ruangan})`
+                : ""}
+            </option>
+          ))}
+
+        </select>
 
       </div>
 
+      {/* RUANGAN TUJUAN */}
+      <div>
+
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Ke Ruangan
+        </label>
+
+        <input
+          value={keRuangan}
+          onChange={(e) => setKeRuangan(e.target.value)}
+          placeholder="Contoh: Umum"
+          className="w-full border border-slate-300 rounded-xl px-4 py-3"
+        />
+
+      </div>
+
+      {/* ALASAN */}
+      <div>
+
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Alasan Mutasi
+        </label>
+
+        <input
+          value={alasan}
+          onChange={(e) => setAlasan(e.target.value)}
+          placeholder="Contoh: Pemeliharaan"
+          className="w-full border border-slate-300 rounded-xl px-4 py-3"
+        />
+
+      </div>
+
+      {/* KETERANGAN */}
+      <div className="md:col-span-2">
+
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Keterangan
+        </label>
+
+        <textarea
+          value={keterangan}
+          onChange={(e) => setKeterangan(e.target.value)}
+          rows={3}
+          placeholder="Keterangan tambahan..."
+          className="w-full border border-slate-300 rounded-xl px-4 py-3"
+        />
+
+      </div>
+
+    </div>
+
+        {/* TOMBOL */}
+      <div className="md:col-span-2 flex justify-end gap-3">
+
+        <button
+          onClick={() => setShowForm(false)}
+          className="bg-slate-200 hover:bg-slate-300 px-5 py-3 rounded-xl"
+        >
+          Batal
+        </button>
+
+        <button
+          onClick={simpanMutasi}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+        >
+          Simpan Mutasi
+        </button>
+
+      </div>
+
+  </div>
+)}
       {/* INFO */}
       <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
 
