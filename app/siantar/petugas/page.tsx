@@ -6,6 +6,7 @@ import {
   panggilBerikutnya,
   panggilUlang,
   selesai,
+  getHariIni,
 } from "@/lib/siantar";
 import { panggilVoice } from "@/app/components/VoiceEngine";
 
@@ -80,7 +81,7 @@ useEffect(() => {
 }, []);
 
 async function loadMenunggu() {
-  const hariIni = new Date().toISOString().split("T")[0];
+ const hariIni = getHariIni();
 
   const { data } = await supabase
     .from("antrian")
