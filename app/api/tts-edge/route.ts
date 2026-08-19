@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
     );
 
     const tts = new EdgeTTS({
-      voice: "id-ID-GadisNeural",
+    voice: "id-ID-GadisNeural",
       lang: "id-ID",
       outputFormat: "audio-24khz-96kbitrate-mono-mp3",
       rate: "-8%",
-      pitch: "-1Hz",
+      pitch: "-6Hz",
       volume: "+0%",
      timeout: 30000,
     });
