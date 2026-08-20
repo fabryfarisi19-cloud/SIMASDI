@@ -1,9 +1,3 @@
-"use client";
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function playAudio(src: string) {
   return new Promise<void>((resolve, reject) => {
     const audio = new Audio(src);
@@ -11,37 +5,57 @@ async function playAudio(src: string) {
     audio.onended = () => resolve();
 
     audio.onerror = () =>
-      reject(new Error("Audio gagal diputar : " + src));
+      reject(new Error("Audio gagal diputar: " + src));
 
     audio.play().catch(reject);
   });
 }
 
 async function speak(text: string) {
-  return new Promise<void>((resolve) => {
-    const suara = new SpeechSynthesisUtterance(text);
+  try {
+    const response = await fetch("/api/tts-edge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
 
-    suara.lang = "id-ID";
-    suara.rate = 0.9;
-    suara.pitch = 1;
+    if (!response.ok) {
+      throw new Error("TTS API gagal");
+    }
 
-    suara.onend = () => resolve();
+    const blob = await response.blob();
 
-    speechSynthesis.speak(suara);
-  });
+    const audioUrl = URL.createObjectURL(blob);
+
+    try {
+      await playAudio(audioUrl);
+    } finally {
+      URL.revokeObjectURL(audioUrl);
+    }
+  } catch (error) {
+    console.error("TTS ERROR:", error);
+  }
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function panggilVoice(
   nomor: string,
   loket: number
 ) {
-  speechSynthesis.cancel();
+  try {
+    await playAudio("/sound/call-to-attention.mp3");
 
-  await playAudio("/sound/call-to-attention.mp3");
+    await delay(500);
 
-  await delay(500);
-
-  await speak(
-    `Nomor antrean ${nomor}. Silakan menuju loket ${loket}. Terima kasih.`
-  );
+    await speak(
+      `Nomor antrean ${nomor}. Silakan menuju loket ${loket}. Terima kasih.`
+    );
+  } catch (error) {
+    console.error("VOICE ERROR:", error);
+  }
 }
