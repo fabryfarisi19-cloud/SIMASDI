@@ -97,7 +97,12 @@ setBarang(data);
             <Item label="Kategori" value={barang.kategori} />
             <Item label="Merk" value={barang.merk} />
             <Item label="NUP" value={barang.nup} />
-            <Item label="Ruangan" value={barang.ruangan} />
+          {barang.kategori !== "Kendaraan Dinas" && (
+  <Item
+    label="Ruangan"
+    value={barang.ruangan}
+  />
+)}
             <Item
               label="Penanggung Jawab"
               value={barang.penanggung_jawab}
@@ -112,7 +117,64 @@ setBarang(data);
               label="Tahun Perolehan"
               value={barang.tahun_perolehan}
             />
+{barang.kategori === "Kendaraan Dinas" && (
+  <div className="md:col-span-2 mt-6 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
 
+    <h2 className="text-xl font-bold text-blue-900 mb-6">
+      🚗 Data Kendaraan Dinas
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-5">
+
+      <Item
+        label="Jenis Kendaraan"
+        value={barang.jenis_kendaraan}
+      />
+
+      <Item
+        label="Nomor Polisi"
+        value={barang.nomor_polisi}
+      />
+
+      <Item
+        label="Nomor BPKB"
+        value={barang.nomor_bpkb}
+      />
+
+      <Item
+        label="Nomor STNK"
+        value={barang.nomor_stnk}
+      />
+
+      <Item
+        label="Nomor Rangka"
+        value={barang.nomor_rangka}
+      />
+
+      <Item
+        label="Nomor Mesin"
+        value={barang.nomor_mesin}
+      />
+
+      <Item
+        label="Tahun Pembuatan"
+        value={barang.tahun_pembuatan}
+      />
+
+      <Item
+        label="Warna"
+        value={barang.warna}
+      />
+
+      <Item
+        label="Status Kendaraan"
+        value={barang.status_kendaraan}
+      />
+
+    </div>
+
+  </div>
+)}
           </div>
 
         </div>

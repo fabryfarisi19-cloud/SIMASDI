@@ -30,7 +30,17 @@ function TambahBMNForm() {
   const [tahunPerolehan, setTahunPerolehan] = useState(
     new Date().getFullYear()
   );
-
+const [jenisKendaraan, setJenisKendaraan] = useState("");
+const [nomorPolisi, setNomorPolisi] = useState("");
+const [nomorBpkb, setNomorBpkb] = useState("");
+const [nomorStnk, setNomorStnk] = useState("");
+const [nomorRangka, setNomorRangka] = useState("");
+const [nomorMesin, setNomorMesin] = useState("");
+const [tahunPembuatan, setTahunPembuatan] = useState(
+  new Date().getFullYear()
+);
+const [warna, setWarna] = useState("");
+const [statusKendaraan, setStatusKendaraan] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
 
@@ -97,25 +107,25 @@ function TambahBMNForm() {
   /*
    * SIMPAN BMN
    */
-  async function simpanBarang() {
-    if (!kodeBarang || !namaBarang) {
-      alert(
-        "Kode Barang dan Nama Barang wajib diisi."
-      );
-      return;
-    }
+async function simpanBarang() {
+  if (!namaBarang) {
+    alert("Nama Barang wajib diisi.");
+    return;
+  }
 
-    if (!ruangan) {
-      alert("Ruangan wajib dipilih.");
-      return;
-    }
+  // Ruangan wajib untuk barang biasa,
+  // tetapi TIDAK wajib untuk Kendaraan Dinas
+  if (kategori !== "Kendaraan Dinas" && !ruangan) {
+    alert("Ruangan wajib dipilih.");
+    return;
+  }
 
-    if (!kondisi) {
-      alert("Kondisi barang wajib dipilih.");
-      return;
-    }
+  if (!kondisi) {
+    alert("Kondisi barang wajib dipilih.");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
     try {
       let fotoUrl = "";
@@ -145,25 +155,33 @@ function TambahBMNForm() {
       /*
        * SIMPAN DATABASE
        */
-      const { error } = await supabase
-        .from("barang")
-        .insert({
-          kode_barang: kodeBarang,
-          nama_barang: namaBarang,
-          kategori: kategori,
-          merk: merk,
-          nup: nup,
-          ruangan: ruangan,
-          penanggung_jawab:
-            penanggungJawab,
-          kondisi: kondisi,
-          jumlah: jumlah,
-          nilai_perolehan:
-            nilaiPerolehan,
-          tahun_perolehan:
-            tahunPerolehan,
-          foto: fotoUrl,
-        });
+    const { error } = await supabase
+  .from("barang")
+  .insert({
+    kode_barang: kodeBarang,
+    nama_barang: namaBarang,
+    kategori: kategori,
+    merk: merk,
+    nup: nup,
+    ruangan: ruangan,
+    penanggung_jawab: penanggungJawab,
+    kondisi: kondisi,
+    jumlah: jumlah,
+    nilai_perolehan: nilaiPerolehan,
+    tahun_perolehan: tahunPerolehan,
+    foto: fotoUrl,
+
+    // DATA KENDARAAN DINAS
+    jenis_kendaraan: jenisKendaraan,
+    nomor_polisi: nomorPolisi,
+    nomor_bpkb: nomorBpkb,
+    nomor_stnk: nomorStnk,
+    nomor_rangka: nomorRangka,
+    nomor_mesin: nomorMesin,
+    tahun_pembuatan: tahunPembuatan,
+    warna: warna,
+    status_kendaraan: statusKendaraan,
+  });
 
       if (error) {
         throw error;
@@ -282,7 +300,9 @@ function TambahBMNForm() {
               <option>
                 Peralatan dan Mesin
               </option>
-
+<option>
+  Kendaraan Dinas
+</option>
               <option>
                 Jaringan
               </option>
@@ -308,7 +328,203 @@ function TambahBMNForm() {
               className="w-full border rounded-xl p-3 mt-2"
             />
           </div>
+{/* DATA KENDARAAN DINAS */}
+{kategori === "Kendaraan Dinas" && (
+  <div className="md:col-span-2 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
 
+    <h2 className="text-xl font-bold text-blue-900 mb-5">
+      Data Kendaraan Dinas
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-6">
+
+      {/* JENIS KENDARAAN */}
+      <div>
+        <label className="font-semibold">
+          Jenis Kendaraan
+        </label>
+
+        <select
+          value={jenisKendaraan}
+          onChange={(e) =>
+            setJenisKendaraan(e.target.value)
+          }
+          className="w-full border rounded-xl p-3 mt-2 bg-white"
+        >
+          <option value="">
+            Pilih Jenis Kendaraan
+          </option>
+
+          <option value="Mobil">
+            Mobil
+          </option>
+
+          <option value="Sepeda Motor">
+            Sepeda Motor
+          </option>
+
+          <option value="Bus">
+            Bus
+          </option>
+
+          <option value="Kendaraan Khusus">
+            Kendaraan Khusus
+          </option>
+        </select>
+      </div>
+
+      {/* NOMOR POLISI */}
+      <div>
+        <label className="font-semibold">
+          Nomor Polisi
+        </label>
+
+        <input
+          value={nomorPolisi}
+          onChange={(e) =>
+            setNomorPolisi(e.target.value.toUpperCase())
+          }
+          placeholder="Contoh: B 1234 XYZ"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* BPKB */}
+      <div>
+        <label className="font-semibold">
+          Nomor BPKB
+        </label>
+
+        <input
+          value={nomorBpkb}
+          onChange={(e) =>
+            setNomorBpkb(e.target.value)
+          }
+          placeholder="Nomor BPKB"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* STNK */}
+      <div>
+        <label className="font-semibold">
+          Nomor STNK
+        </label>
+
+        <input
+          value={nomorStnk}
+          onChange={(e) =>
+            setNomorStnk(e.target.value)
+          }
+          placeholder="Nomor STNK"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* NOMOR RANGKA */}
+      <div>
+        <label className="font-semibold">
+          Nomor Rangka
+        </label>
+
+        <input
+          value={nomorRangka}
+          onChange={(e) =>
+            setNomorRangka(e.target.value.toUpperCase())
+          }
+          placeholder="Nomor rangka kendaraan"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* NOMOR MESIN */}
+      <div>
+        <label className="font-semibold">
+          Nomor Mesin
+        </label>
+
+        <input
+          value={nomorMesin}
+          onChange={(e) =>
+            setNomorMesin(e.target.value.toUpperCase())
+          }
+          placeholder="Nomor mesin kendaraan"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* TAHUN PEMBUATAN */}
+      <div>
+        <label className="font-semibold">
+          Tahun Pembuatan
+        </label>
+
+        <input
+          type="number"
+          value={tahunPembuatan}
+          onChange={(e) =>
+            setTahunPembuatan(
+              Number(e.target.value)
+            )
+          }
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* WARNA */}
+      <div>
+        <label className="font-semibold">
+          Warna
+        </label>
+
+        <input
+          value={warna}
+          onChange={(e) =>
+            setWarna(e.target.value)
+          }
+          placeholder="Contoh: Hitam"
+          className="w-full border rounded-xl p-3 mt-2"
+        />
+      </div>
+
+      {/* STATUS KENDARAAN */}
+      <div>
+        <label className="font-semibold">
+          Status Kendaraan
+        </label>
+
+        <select
+          value={statusKendaraan}
+          onChange={(e) =>
+            setStatusKendaraan(e.target.value)
+          }
+          className="w-full border rounded-xl p-3 mt-2 bg-white"
+        >
+          <option value="">
+            Pilih Status
+          </option>
+
+          <option value="Aktif">
+            Aktif
+          </option>
+
+          <option value="Tidak Aktif">
+            Tidak Aktif
+          </option>
+
+          <option value="Dalam Pemeliharaan">
+            Dalam Pemeliharaan
+          </option>
+
+          <option value="Dihapuskan">
+            Dihapuskan
+          </option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+)}
           {/* NUP */}
           <div>
             <label className="font-semibold">

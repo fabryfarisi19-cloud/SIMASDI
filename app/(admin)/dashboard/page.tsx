@@ -31,6 +31,8 @@ import {
 } from "recharts";
 import StatCard from "@/app/components/StatCard";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 export default function DashboardPage() {
   const [jam, setJam] = useState("");
   const [tanggal, setTanggal] = useState("");
@@ -50,173 +52,374 @@ const [showPreview, setShowPreview] = useState(false);
 const router = useRouter();
 const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
-    const loadGrafik = async () => {
-      const { data, error } = await supabase
-        .from("surat_masuk")
-        .select("created_at");
+  const updateJam = () => {
+    const now = new Date();
 
-      if (error) {
-        console.error(error);
-        return;
-      }
+    setJam(
+      now.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
 
-      const hariMap: Record<string, number> = {
-        Sen: 0,
-        Sel: 0,
-        Rab: 0,
-        Kam: 0,
-        Jum: 0,
-        Sab: 0,
-        Min: 0,
-      };
+    setTanggal(
+      now.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
+  };
 
-      data.forEach((item) => {
-        const hari = new Date(item.created_at).toLocaleDateString("id-ID", {
-          weekday: "short",
-        });
+  const loadGrafik = async () => {
+    const { data, error } = await supabase
+      .from("surat_masuk")
+      .select("created_at");
 
-        if (hariMap[hari] !== undefined) {
-          hariMap[hari]++;
-        }
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const hariMap: Record<string, number> = {
+      Sen: 0,
+      Sel: 0,
+      Rab: 0,
+      Kam: 0,
+      Jum: 0,
+      Sab: 0,
+      Min: 0,
+    };
+
+    data.forEach((item) => {
+      const hari = new Date(item.created_at).toLocaleDateString("id-ID", {
+        weekday: "short",
       });
 
-      setDataGrafik(
-        Object.entries(hariMap).map(([hari, layanan]) => ({
-          hari,
-          layanan,
-        }))
-      );
-    };
-const channel = supabase
-  .channel("grafik-surat-masuk")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "surat_masuk",
-    },
-    () => {
-      loadGrafik();
-      loadDashboard();
-      loadAgenda();
-      const interval = setInterval(updateJam, 1000);
+      if (hariMap[hari] !== undefined) {
+        hariMap[hari]++;
+      }
+    });
+
+    setDataGrafik(
+      Object.entries(hariMap).map(([hari, layanan]) => ({
+        hari,
+        layanan,
+      }))
+    );
+  };
+
+  const loadDashboard = async () => {
+    const hariIni = new Date().toISOString().split("T")[0];
+
+    const suratMasuk = await supabase
+      .from("surat_masuk")
+      .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni);
+
+    setTotalSuratMasuk(suratMasuk.count ?? 0);
+
+    const suratKeluar = await supabase
+      .from("surat_keluar")
+      .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni);
+
+    setTotalSuratKeluar(suratKeluar.count ?? 0);
+
+    const disposisi = await supabase
+      .from("surat")
+      .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni);
+
+    setTotalDisposisi(disposisi.count ?? 0);
+
+    const arsip = await supabase
+      .from("surat_masuk")
+      .select("*", { count: "exact", head: true })
+      .eq("tanggal", hariIni);
+
+    setTotalArsip(arsip.count ?? 0);
+  };
+
+  const loadAgenda = async () => {
+    const hariIni = new Date().toISOString().split("T")[0];
+
+    const besokDate = new Date();
+    besokDate.setDate(besokDate.getDate() + 1);
+
+    const besok = besokDate.toISOString().split("T")[0];
+
+    const { data: hariIniData } = await supabase
+      .from("agenda")
+      .select("*")
+      .eq("tanggal", hariIni)
+      .order("jam");
+
+    const { data: besokData } = await supabase
+      .from("agenda")
+      .select("*")
+      .eq("tanggal", besok)
+      .order("jam");
+
+    setAgendaHariIni(hariIniData || []);
+    setAgendaBesok(besokData || []);
+  };
+
+  const loadSuratTerbaru = async () => {
+    const { data, error } = await supabase
+      .from("surat_masuk")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error(error);
+      return;
     }
-  )
-  .subscribe();
-    const updateJam = () => {
-      const now = new Date();
 
-      setJam(
-        now.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
+    setSuratTerbaru(data || []);
+  };
 
-      setTanggal(
-        now.toLocaleDateString("id-ID", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      );
-    };
-const loadDashboard = async () => {
+  const loadUser = () => {
+    const storedUser = localStorage.getItem("user");
 
-const hariIni = new Date().toISOString().split("T")[0];
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
 
-const suratMasuk = await supabase
-  .from("surat_masuk")
-  .select("*", { count: "exact", head: true })
-  .eq("tanggal", hariIni);
+  const refreshData = async () => {
+    try {
+      await Promise.all([
+        loadGrafik(),
+        loadDashboard(),
+        loadAgenda(),
+        loadSuratTerbaru(),
+      ]);
+    } catch (error) {
+      console.error("Gagal memperbarui data:", error);
+    }
+  };
 
-setTotalSuratMasuk(suratMasuk.count ?? 0);
+ const cetakPDF = () => {
+  const doc = new jsPDF();
 
-  const suratKeluar = await supabase
-    .from("surat_keluar")
-    .select("*", { count: "exact", head: true })
-    .eq("tanggal", hariIni);
+  const tanggalCetak = new Date().toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
-  setTotalSuratKeluar(suratKeluar.count ?? 0);
+  // =========================
+  // HEADER
+  // =========================
 
-  const disposisi = await supabase
-    .from("surat")
-    .select("*", { count: "exact", head: true })
-    .eq("tanggal", hariIni);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text("SIMASDI", 14, 18);
 
-  setTotalDisposisi(disposisi.count ?? 0);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    "Sistem Informasi Manajemen Arsip Digital",
+    14,
+    25
+  );
 
-  const arsip = await supabase
-    .from("surat_masuk")
-    .select("*", { count: "exact", head: true })
-    .eq("tanggal", hariIni);
+  doc.text(
+    "Balai Pemasyarakatan Kelas I Jakarta Barat",
+    14,
+    31
+  );
 
-  setTotalArsip(arsip.count ?? 0);
+  doc.setFontSize(9);
+  doc.text(`Dicetak: ${tanggalCetak}`, 14, 38);
 
-};
-const loadAgenda = async () => {
+  // Garis header
+  doc.setLineWidth(0.5);
+  doc.line(14, 42, 196, 42);
 
-  const hariIni = new Date().toISOString().split("T")[0];
+  // =========================
+  // STATISTIK
+  // =========================
 
-  const besokDate = new Date();
-  besokDate.setDate(besokDate.getDate() + 1);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("Ringkasan Statistik", 14, 52);
 
-  const besok = besokDate.toISOString().split("T")[0];
+  autoTable(doc, {
+    startY: 57,
+    head: [
+      [
+        "Surat Masuk",
+        "Surat Keluar",
+        "Disposisi",
+        "Arsip Digital",
+      ],
+    ],
+    body: [
+      [
+        totalSuratMasuk.toString(),
+        totalSuratKeluar.toString(),
+        totalDisposisi.toString(),
+        totalArsip.toString(),
+      ],
+    ],
+    theme: "grid",
+    styles: {
+      halign: "center",
+      fontSize: 11,
+    },
+    headStyles: {
+      fontStyle: "bold",
+    },
+  });
 
-  const { data: hariIniData } = await supabase
-    .from("agenda")
-    .select("*")
-    .eq("tanggal", hariIni)
-    .order("jam");
+  // =========================
+  // AGENDA HARI INI
+  // =========================
 
-  const { data: besokData } = await supabase
-    .from("agenda")
-    .select("*")
-    .eq("tanggal", besok)
-    .order("jam");
+  let posisiY =
+    (doc as any).lastAutoTable.finalY + 12;
 
-  setAgendaHariIni(hariIniData || []);
-  setAgendaBesok(besokData || []);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("Agenda Hari Ini", 14, posisiY);
 
-};
-const loadSuratTerbaru = async () => {
+  posisiY += 5;
 
-  const { data, error } = await supabase
-    .from("surat_masuk")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  autoTable(doc, {
+    startY: posisiY,
+    head: [["No", "Agenda", "Jam", "Lokasi"]],
+    body:
+      agendaHariIni.length > 0
+        ? agendaHariIni.map((item, index) => [
+            index + 1,
+            item.judul || "-",
+            item.jam || "-",
+            item.lokasi || "-",
+          ])
+        : [["-", "Tidak ada agenda hari ini", "-", "-"]],
+    theme: "grid",
+    styles: {
+      fontSize: 9,
+    },
+  });
 
-  if (error) {
-    console.error(error);
-    return;
+  // =========================
+  // SURAT MASUK TERBARU
+  // =========================
+
+  posisiY =
+    (doc as any).lastAutoTable.finalY + 12;
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("Surat Masuk Terbaru", 14, posisiY);
+
+  posisiY += 5;
+
+  autoTable(doc, {
+    startY: posisiY,
+    head: [
+      [
+        "No",
+        "Nomor Surat",
+        "Pengirim",
+        "Perihal",
+        "Tanggal",
+      ],
+    ],
+    body:
+      suratTerbaru.length > 0
+        ? suratTerbaru.map((item, index) => [
+            index + 1,
+            item.nomor_surat || "-",
+            item.asal_surat || "-",
+            item.perihal || "-",
+            item.tanggal
+              ? new Date(item.tanggal).toLocaleDateString(
+                  "id-ID"
+                )
+              : "-",
+          ])
+        : [["-", "-", "-", "Tidak ada data", "-"]],
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+    },
+    columnStyles: {
+      0: { cellWidth: 10 },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 70 },
+      4: { cellWidth: 25 },
+    },
+  });
+
+  // =========================
+  // FOOTER
+  // =========================
+
+  const jumlahHalaman = (doc as any).internal.getNumberOfPages();
+
+  for (let i = 1; i <= jumlahHalaman; i++) {
+    doc.setPage(i);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+
+    doc.text(
+      `SIMASDI - Bapas Kelas I Jakarta Barat | Halaman ${i} dari ${jumlahHalaman}`,
+      14,
+      290
+    );
   }
 
-  setSuratTerbaru(data || []);
+  // =========================
+  // DOWNLOAD
+  // =========================
 
+  doc.save(
+    `Dashboard-SIMASDI-${new Date()
+      .toISOString()
+      .split("T")[0]}.pdf`
+  );
 };
-const loadUser = () => {
-  const user = localStorage.getItem("user");
 
-  if (user) {
-    setUser(JSON.parse(user));
-  }
-};
+  useEffect(() => {
+    const channel = supabase
+      .channel("grafik-surat-masuk")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "surat_masuk",
+        },
+        () => {
+          loadGrafik();
+          loadDashboard();
+          loadAgenda();
+        }
+      )
+      .subscribe();
+
     updateJam();
     loadGrafik();
     loadDashboard();
     loadAgenda();
     loadSuratTerbaru();
     loadUser();
+
     const interval = setInterval(updateJam, 1000);
-   return () => {
-  clearInterval(interval);
-  supabase.removeChannel(channel);
-};
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
  return (
@@ -355,7 +558,9 @@ Waktu Sekarang
 
   <div className="flex gap-3">
 
-  <button
+<button
+  type="button"
+  onClick={refreshData}
   className="
     flex items-center gap-2
     bg-blue-600
@@ -371,21 +576,23 @@ Waktu Sekarang
       Perbarui Data
     </button>
 
-    <button
-      className="
-      flex items-center gap-2
-      bg-red-600
-      hover:bg-red-700
-      text-white
-      rounded-xl
+   <button
+  type="button"
+  onClick={cetakPDF}
+  className="
+    flex items-center gap-2
+    bg-red-600
+    hover:bg-red-700
+    text-white
+    rounded-xl
     px-4
-py-2.5
-      shadow-lg
-      transition"
-    >
-      <Printer size={18}/>
-      Cetak PDF
-    </button>
+    py-2.5
+    shadow-lg
+    transition"
+>
+  <Printer size={18} />
+  Cetak PDF
+</button>
 
   </div>
 

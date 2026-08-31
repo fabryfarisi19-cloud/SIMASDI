@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import QRCode from "react-qr-code";
-import { ArrowLeft, Pencil, Package, MapPin, User, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Package, MapPin, User, ArrowRightLeft, Printer} from "lucide-react";
 import Link from "next/link";
 
 export default function DetailBMNPage() {
@@ -199,7 +199,8 @@ async function loadRiwayatMutasi() {
           </div>
 
           {/* QR CODE */}
-          <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col items-center justify-center">
+      {/* QR CODE */}
+<div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col items-center justify-center no-print">
 
             <h2 className="text-lg font-bold text-slate-800 mb-4">
               QR Code BMN
@@ -225,7 +226,13 @@ async function loadRiwayatMutasi() {
             <p className="text-xs text-gray-400 mt-3 text-center break-all">
               BMN ID: {bmn.id}
             </p>
-
+<button
+  onClick={() => window.print()}
+  className="mt-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl"
+>
+  <Printer size={18} />
+  Cetak QR
+</button>
           </div>
 
         </div>
@@ -294,29 +301,90 @@ async function loadRiwayatMutasi() {
                   : "-"
               }
             />
+{bmn.kategori !== "Kendaraan Dinas" && (
+            <>
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                  <MapPin size={16} />
+                  Ruangan
+                </div>
 
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <MapPin size={16} />
-                Ruangan
+                <p className="text-lg font-semibold text-slate-800">
+                  {bmn.ruangan || "-"}
+                </p>
               </div>
 
-              <p className="text-lg font-semibold text-slate-800">
-                {bmn.ruangan || "-"}
-              </p>
-            </div>
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                  <User size={16} />
+                  Penanggung Jawab
+                </div>
 
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <User size={16} />
-                Penanggung Jawab
+                <p className="text-lg font-semibold text-slate-800">
+                  {bmn.penanggung_jawab || "-"}
+                </p>
               </div>
+            </>
+            )}
+{/* DATA KENDARAAN DINAS */}
+{bmn.kategori === "Kendaraan Dinas" && (
+  <div className="md:col-span-2 mt-4 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
 
-              <p className="text-lg font-semibold text-slate-800">
-                {bmn.penanggung_jawab || "-"}
-              </p>
-            </div>
+    <h3 className="text-xl font-bold text-blue-900 mb-6">
+      🚗 Data Kendaraan Dinas
+    </h3>
 
+    <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
+
+      <Info
+        label="Jenis Kendaraan"
+        value={bmn.jenis_kendaraan}
+      />
+
+      <Info
+        label="Nomor Polisi"
+        value={bmn.nomor_polisi}
+      />
+
+      <Info
+        label="Nomor BPKB"
+        value={bmn.nomor_bpkb}
+      />
+
+      <Info
+        label="Nomor STNK"
+        value={bmn.nomor_stnk}
+      />
+
+      <Info
+        label="Nomor Rangka"
+        value={bmn.nomor_rangka}
+      />
+
+      <Info
+        label="Nomor Mesin"
+        value={bmn.nomor_mesin}
+      />
+
+      <Info
+        label="Tahun Pembuatan"
+        value={bmn.tahun_pembuatan}
+      />
+
+      <Info
+        label="Warna"
+        value={bmn.warna}
+      />
+
+      <Info
+        label="Status Kendaraan"
+        value={bmn.status_kendaraan}
+      />
+
+    </div>
+
+  </div>
+)}
           </div>
 
         </div>
@@ -429,11 +497,100 @@ async function loadRiwayatMutasi() {
         </div>
 
       </div>
+{/* AREA CETAK QR */}
+<div className="print-qr hidden">
 
+<div className="w-[350px] border-2 border-slate-800 rounded-2xl p-5 text-center bg-white">
+
+    <h1 className="text-2xl font-bold text-slate-800">
+      SIMSTOK BMN
+    </h1>
+
+    <p className="text-sm text-gray-500 mt-1">
+      Bapas Kelas I Jakarta Barat
+    </p>
+
+    <div className="flex justify-center my-6">
+      {qrUrl && (
+        <QRCode
+          value={qrUrl}
+          size={220}
+        />
+      )}
+    </div>
+
+    {bmn.kategori === "Kendaraan Dinas" ? (
+      <>
+        <div className="text-lg font-bold text-blue-900">
+          KENDARAAN DINAS
+        </div>
+
+        <div className="text-xl font-bold mt-2">
+          {bmn.nama_barang}
+        </div>
+
+        <div className="text-lg font-semibold mt-1">
+          {bmn.nomor_polisi || "-"}
+        </div>
+
+        <div className="text-sm text-gray-500 mt-2">
+          {bmn.jenis_kendaraan || "-"} •{" "}
+          {bmn.warna || "-"}
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="text-lg font-bold">
+          {bmn.nama_barang}
+        </div>
+
+        <div className="text-sm text-gray-500 mt-1">
+          Kode: {bmn.kode_barang || "-"}
+        </div>
+
+        <div className="text-sm text-gray-500">
+          NUP: {bmn.nup || "-"}
+        </div>
+      </>
+    )}
+
+    <div className="border-t mt-5 pt-3 text-xs text-gray-400">
+      Scan QR untuk melihat data BMN
+    </div>
+
+  </div>
+
+</div>
     </main>
   );
 }
+<style jsx global>{`
+  @media print {
+    body * {
+      visibility: hidden;
+    }
 
+    .print-qr,
+    .print-qr * {
+      visibility: visible;
+    }
+
+    .print-qr {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+  }
+`}</style>
 function Info({
   label,
   value,

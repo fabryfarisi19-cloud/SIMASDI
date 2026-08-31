@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 
@@ -18,7 +18,7 @@ export default function DisplayTV() {
   const [dipanggil, setDipanggil] = useState<Antrian | null>(null); 
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 const [jam, setJam] = useState("");
-
+const [audioAktif, setAudioAktif] = useState(false);
   useEffect(() => {
     loadData();
 const timer = setInterval(() => {
@@ -82,7 +82,14 @@ const timer = setInterval(() => {
 
   return (
     <main className="min-h-screen bg-blue-900 text-white">
-
+{!audioAktif && (
+  <button
+    onClick={() => setAudioAktif(true)}
+    className="fixed bottom-20 right-6 z-50 rounded-xl bg-yellow-400 px-6 py-4 text-xl font-bold text-black shadow-lg"
+  >
+    🔊 AKTIFKAN AUDIO
+  </button>
+)}
       <div className="grid grid-cols-3 h-screen">
 
         {/* Panel Nomor */}
@@ -146,7 +153,8 @@ const timer = setInterval(() => {
         </div>
 
         {/* Panel Video */}
-        <div className="bg-black flex items-center justify-center">
+    {/* Panel Video */}
+<div className="relative bg-black flex items-center justify-center">
 
           <video
             src="/video-5s.mp4"
@@ -156,7 +164,14 @@ const timer = setInterval(() => {
             controls={false}
             className="w-full h-full object-cover"
           />
-
+{!audioAktif && (
+  <button
+    onClick={() => setAudioAktif(true)}
+    className="absolute bottom-8 right-8 z-50 rounded-xl bg-yellow-400 px-6 py-4 text-lg font-bold text-black shadow-lg"
+  >
+    🔊 AKTIFKAN AUDIO
+  </button>
+)}
         </div>
 
       </div>

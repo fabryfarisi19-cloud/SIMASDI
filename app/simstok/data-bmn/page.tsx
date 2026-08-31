@@ -198,15 +198,22 @@ className="border-b hover:bg-slate-50"
 </td>
 
 <td className="px-3 py-4">
-<div className="font-semibold">
-{item.nama_barang}
-</div>
-</td>
+  <div className="font-semibold">
+    {item.nama_barang}
+  </div>
 
+  {item.kategori === "Kendaraan Dinas" && (
+    <div className="mt-1 text-sm text-blue-700 font-medium">
+      🚗 {item.jenis_kendaraan || "Kendaraan"}{" "}
+      {item.nomor_polisi && `• ${item.nomor_polisi}`}
+    </div>
+  )}
+</td>
 <td className="px-3 py-4 text-center">
-{item.ruangan}
+  {item.kategori === "Kendaraan Dinas"
+    ? "-"
+    : item.ruangan || "-"}
 </td>
-
 <td className="px-3 py-4 text-center">
 <span
   className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${

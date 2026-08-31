@@ -17,20 +17,31 @@ export default function EditBMNPage() {
 
   const [daftarRuangan, setDaftarRuangan] = useState<any[]>([]);
 
-  const [form, setForm] = useState({
-    kode_barang: "",
-    nama_barang: "",
-    kategori: "",
-    merk: "",
-    nup: "",
-    ruangan: "",
-    penanggung_jawab: "",
-    kondisi: "",
-    jumlah: 1,
-    nilai_perolehan: 0,
-    tahun_perolehan: new Date().getFullYear(),
-    foto: "",
-  });
+const [form, setForm] = useState({
+  kode_barang: "",
+  nama_barang: "",
+  kategori: "",
+  merk: "",
+  nup: "",
+  ruangan: "",
+  penanggung_jawab: "",
+  kondisi: "",
+  jumlah: 1,
+  nilai_perolehan: 0,
+  tahun_perolehan: new Date().getFullYear(),
+  foto: "",
+
+  // DATA KENDARAAN DINAS
+  jenis_kendaraan: "",
+  nomor_polisi: "",
+  nomor_bpkb: "",
+  nomor_stnk: "",
+  nomor_rangka: "",
+  nomor_mesin: "",
+  tahun_pembuatan: new Date().getFullYear(),
+  warna: "",
+  status_kendaraan: "",
+});
 
   const [fotoBaru, setFotoBaru] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
@@ -59,24 +70,45 @@ export default function EditBMNPage() {
     }
 
     if (data) {
-      setForm({
-        kode_barang: data.kode_barang ?? "",
-        nama_barang: data.nama_barang ?? "",
-        kategori: data.kategori ?? "",
-        merk: data.merk ?? "",
-        nup: data.nup ?? "",
-        ruangan: data.ruangan ?? "",
-        penanggung_jawab:
-          data.penanggung_jawab ?? "",
-        kondisi: data.kondisi ?? "",
-        jumlah: data.jumlah ?? 1,
-        nilai_perolehan:
-          data.nilai_perolehan ?? 0,
-        tahun_perolehan:
-          data.tahun_perolehan ??
-          new Date().getFullYear(),
-        foto: data.foto ?? "",
-      });
+    setForm({
+  kode_barang: data.kode_barang ?? "",
+  nama_barang: data.nama_barang ?? "",
+  kategori: data.kategori ?? "",
+  merk: data.merk ?? "",
+  nup: data.nup ?? "",
+  ruangan: data.ruangan ?? "",
+  penanggung_jawab:
+    data.penanggung_jawab ?? "",
+  kondisi: data.kondisi ?? "",
+  jumlah: data.jumlah ?? 1,
+  nilai_perolehan:
+    data.nilai_perolehan ?? 0,
+  tahun_perolehan:
+    data.tahun_perolehan ??
+    new Date().getFullYear(),
+  foto: data.foto ?? "",
+
+  // DATA KENDARAAN DINAS
+  jenis_kendaraan:
+    data.jenis_kendaraan ?? "",
+  nomor_polisi:
+    data.nomor_polisi ?? "",
+  nomor_bpkb:
+    data.nomor_bpkb ?? "",
+  nomor_stnk:
+    data.nomor_stnk ?? "",
+  nomor_rangka:
+    data.nomor_rangka ?? "",
+  nomor_mesin:
+    data.nomor_mesin ?? "",
+  tahun_pembuatan:
+    data.tahun_pembuatan ??
+    new Date().getFullYear(),
+  warna:
+    data.warna ?? "",
+  status_kendaraan:
+    data.status_kendaraan ?? "",
+});
     }
 
     setLoading(false);
@@ -123,20 +155,19 @@ export default function EditBMNPage() {
   }
 
   async function simpan() {
-    if (!form.kode_barang) {
-      alert("Kode Barang wajib diisi.");
-      return;
-    }
 
     if (!form.nama_barang) {
       alert("Nama Barang wajib diisi.");
       return;
     }
 
-    if (!form.ruangan) {
-      alert("Ruangan wajib dipilih.");
-      return;
-    }
+  if (
+  form.kategori !== "Kendaraan Dinas" &&
+  !form.ruangan
+) {
+  alert("Ruangan wajib dipilih.");
+  return;
+}
 
     if (!form.kondisi) {
       alert("Kondisi barang wajib dipilih.");
@@ -177,23 +208,43 @@ export default function EditBMNPage() {
        */
       const { error } = await supabase
         .from("barang")
-        .update({
-          kode_barang: form.kode_barang,
-          nama_barang: form.nama_barang,
-          kategori: form.kategori,
-          merk: form.merk,
-          nup: form.nup,
-          ruangan: form.ruangan,
-          penanggung_jawab:
-            form.penanggung_jawab,
-          kondisi: form.kondisi,
-          jumlah: form.jumlah,
-          nilai_perolehan:
-            form.nilai_perolehan,
-          tahun_perolehan:
-            form.tahun_perolehan,
-          foto: fotoUrl,
-        })
+      .update({
+  kode_barang: form.kode_barang,
+  nama_barang: form.nama_barang,
+  kategori: form.kategori,
+  merk: form.merk,
+  nup: form.nup,
+  ruangan: form.ruangan,
+  penanggung_jawab:
+    form.penanggung_jawab,
+  kondisi: form.kondisi,
+  jumlah: form.jumlah,
+  nilai_perolehan:
+    form.nilai_perolehan,
+  tahun_perolehan:
+    form.tahun_perolehan,
+  foto: fotoUrl,
+
+  // DATA KENDARAAN DINAS
+  jenis_kendaraan:
+    form.jenis_kendaraan,
+  nomor_polisi:
+    form.nomor_polisi,
+  nomor_bpkb:
+    form.nomor_bpkb,
+  nomor_stnk:
+    form.nomor_stnk,
+  nomor_rangka:
+    form.nomor_rangka,
+  nomor_mesin:
+    form.nomor_mesin,
+  tahun_pembuatan:
+    form.tahun_pembuatan,
+  warna:
+    form.warna,
+  status_kendaraan:
+    form.status_kendaraan,
+})
         .eq("id", Number(id));
 
       if (error) {
@@ -333,7 +384,9 @@ export default function EditBMNPage() {
               <option>
                 Peralatan dan Mesin
               </option>
-
+<option>
+  Kendaraan Dinas
+</option>
               <option>
                 Jaringan
               </option>
@@ -362,7 +415,216 @@ export default function EditBMNPage() {
               className="w-full border rounded-xl px-4 py-3 mt-2"
             />
           </div>
+{/* DATA KENDARAAN DINAS */}
+{form.kategori === "Kendaraan Dinas" && (
+  <div className="md:col-span-2 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
 
+    <h2 className="text-xl font-bold text-blue-900 mb-6">
+      🚗 Data Kendaraan Dinas
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-6">
+
+      {/* JENIS KENDARAAN */}
+      <div>
+        <label className="font-semibold">
+          Jenis Kendaraan
+        </label>
+
+        <select
+          value={form.jenis_kendaraan}
+          onChange={(e) =>
+            updateField(
+              "jenis_kendaraan",
+              e.target.value
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        >
+          <option value="">
+            Pilih Jenis Kendaraan
+          </option>
+          <option value="Mobil">
+            Mobil
+          </option>
+          <option value="Sepeda Motor">
+            Sepeda Motor
+          </option>
+          <option value="Bus">
+            Bus
+          </option>
+          <option value="Kendaraan Khusus">
+            Kendaraan Khusus
+          </option>
+        </select>
+      </div>
+
+      {/* NOMOR POLISI */}
+      <div>
+        <label className="font-semibold">
+          Nomor Polisi
+        </label>
+
+        <input
+          value={form.nomor_polisi}
+          onChange={(e) =>
+            updateField(
+              "nomor_polisi",
+              e.target.value.toUpperCase()
+            )
+          }
+          placeholder="Contoh: B 1234 XYZ"
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* BPKB */}
+      <div>
+        <label className="font-semibold">
+          Nomor BPKB
+        </label>
+
+        <input
+          value={form.nomor_bpkb}
+          onChange={(e) =>
+            updateField(
+              "nomor_bpkb",
+              e.target.value
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* STNK */}
+      <div>
+        <label className="font-semibold">
+          Nomor STNK
+        </label>
+
+        <input
+          value={form.nomor_stnk}
+          onChange={(e) =>
+            updateField(
+              "nomor_stnk",
+              e.target.value
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* NOMOR RANGKA */}
+      <div>
+        <label className="font-semibold">
+          Nomor Rangka
+        </label>
+
+        <input
+          value={form.nomor_rangka}
+          onChange={(e) =>
+            updateField(
+              "nomor_rangka",
+              e.target.value.toUpperCase()
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* NOMOR MESIN */}
+      <div>
+        <label className="font-semibold">
+          Nomor Mesin
+        </label>
+
+        <input
+          value={form.nomor_mesin}
+          onChange={(e) =>
+            updateField(
+              "nomor_mesin",
+              e.target.value.toUpperCase()
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* TAHUN PEMBUATAN */}
+      <div>
+        <label className="font-semibold">
+          Tahun Pembuatan
+        </label>
+
+        <input
+          type="number"
+          value={form.tahun_pembuatan}
+          onChange={(e) =>
+            updateField(
+              "tahun_pembuatan",
+              Number(e.target.value)
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* WARNA */}
+      <div>
+        <label className="font-semibold">
+          Warna
+        </label>
+
+        <input
+          value={form.warna}
+          onChange={(e) =>
+            updateField(
+              "warna",
+              e.target.value
+            )
+          }
+          placeholder="Contoh: Hitam"
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        />
+      </div>
+
+      {/* STATUS */}
+      <div>
+        <label className="font-semibold">
+          Status Kendaraan
+        </label>
+
+        <select
+          value={form.status_kendaraan}
+          onChange={(e) =>
+            updateField(
+              "status_kendaraan",
+              e.target.value
+            )
+          }
+          className="w-full border rounded-xl px-4 py-3 mt-2"
+        >
+          <option value="">
+            Pilih Status
+          </option>
+          <option value="Aktif">
+            Aktif
+          </option>
+          <option value="Tidak Aktif">
+            Tidak Aktif
+          </option>
+          <option value="Dalam Pemeliharaan">
+            Dalam Pemeliharaan
+          </option>
+          <option value="Dihapuskan">
+            Dihapuskan
+          </option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+)}
           {/* NUP */}
           <div>
             <label className="font-semibold">

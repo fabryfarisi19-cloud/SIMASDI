@@ -18,8 +18,9 @@ export default function TvApelPage() {
   const [jamSekarang, setJamSekarang] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
-    const audioLockRef = useRef(false);
-    const bellAudioRef = useRef<HTMLAudioElement | null>(null);
+   const audioLockRef = useRef(false);
+const bellAudioRef = useRef<HTMLAudioElement | null>(null);
+const indonesiaRayaLockRef = useRef(false);
   const [statusApel, setStatusApel] = useState<
   "belum" | "persiapan" | "berlangsung" | "selesai"
 >("belum");
@@ -109,7 +110,33 @@ const interval = setInterval(() => {
 
     return () => clearInterval(timer);
   }, []);
+// ================================
+// INDONESIA RAYA OTOMATIS 10.00 WIB
+// ================================
+// ================================
+// 🇮🇩 INDONESIA RAYA OTOMATIS 10.00 WIB
+// ================================
+useEffect(() => {
+  if (!audioAktif) return;
 
+  const cekIndonesiaRaya = () => {
+    const sekarang = new Date();
+
+    const waktuJakarta = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(sekarang);
+
+    if (waktuJakarta === "10:00") {
+      putarIndonesiaRaya();
+    }
+  };
+
+  const timer = setInterval(cekIndonesiaRaya, 1000);
+
+  return () => clearInterval(timer);
+}, [audioAktif]);
   function formatTanggal(tgl: string) {
     if (!tgl) return "";
 
@@ -141,7 +168,109 @@ function getPetugas(tugas: string) {
     a.jam_apel.localeCompare(b.jam_apel)
   )[0];
 }
+// ================================
+// INDONESIA RAYA
+// ================================
+async function putarIndonesiaRaya() {
+  if (typeof window === "undefined") return;
+  if (!audioAktif) return;
+  if (indonesiaRayaLockRef.current) return;
 
+  indonesiaRayaLockRef.current = true;
+
+  try {
+    // ================================
+    // PENGUMUMAN SEBELUM INDONESIA RAYA
+    // ================================
+    const teks =
+      "Mohon perhatian. " +
+      "Lagu Kebangsaan Indonesia Raya akan segera diputar. " +
+      "Kepada seluruh pegawai, dimohon berdiri tegak dan sempurna.";
+
+    const response = await fetch("/api/tts-edge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: teks,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `TTS gagal: ${response.status}`
+      );
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // ================================
+    // PUTAR SUARA PEREMPUAN
+    // ================================
+    await new Promise<void>((resolve, reject) => {
+      const pengumuman = new Audio(url);
+
+      pengumuman.volume = 1;
+
+      pengumuman.onended = () => {
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+
+      pengumuman.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(
+          new Error(
+            "Audio pengumuman gagal diputar"
+          )
+        );
+      };
+
+      pengumuman.play().catch(reject);
+    });
+
+    // ================================
+    // JEDA SEBELUM INDONESIA RAYA
+    // ================================
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000)
+    );
+
+    // ================================
+    // INDONESIA RAYA
+    // ================================
+    const audio = new Audio(
+      "/audio/indonesia-raya.mp3"
+    );
+
+    audio.volume = 1;
+
+    audio.onended = () => {
+      indonesiaRayaLockRef.current = false;
+    };
+
+    audio.onerror = (error) => {
+      console.error(
+        "INDONESIA RAYA ERROR:",
+        error
+      );
+
+      indonesiaRayaLockRef.current = false;
+    };
+
+    await audio.play();
+
+  } catch (error) {
+    console.error(
+      "❌ INDONESIA RAYA ERROR:",
+      error
+    );
+
+    indonesiaRayaLockRef.current = false;
+  }
+}
 function bicaraPengumuman() {
   if (typeof window === "undefined") return;
 

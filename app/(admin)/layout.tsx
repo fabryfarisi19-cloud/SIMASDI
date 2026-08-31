@@ -2,7 +2,7 @@
 import Sidebar from "@/app/components/Sidebar";
 import Footer from "@/app/components/footer";
 import AuthGuard from "@/app/components/AuthGuard";
-
+import AnnouncerApel from "@/app/components/AnnouncerApel";
 export default function AdminLayout({
 
   children,
@@ -13,7 +13,7 @@ export default function AdminLayout({
   return (
     <AuthGuard>
       <Sidebar />
-
+<AnnouncerApel />
       <main className="isi-admin">
         <div className="isi-content">{children}</div>
 
