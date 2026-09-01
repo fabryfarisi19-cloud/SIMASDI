@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -7,238 +6,290 @@ export default function GlobalAudioEngine() {
   const [audioAktif, setAudioAktif] = useState(false);
 
   const audioAktifRef = useRef(false);
-  const indonesiaRayaRef = useRef<HTMLAudioElement | null>(null);
+  const indonesiaRayaRef =
+    useRef<HTMLAudioElement | null>(null);
+
   const sedangDiputarRef = useRef(false);
-  const sudahDiputarHariIni = useRef(false);
+  const sudahDiputarHariIni =
+    useRef(false);
+
+  // =========================================================
+  // CEK STATUS AUDIO
+  // =========================================================
+
+  useEffect(() => {
+    const status =
+      localStorage.getItem(
+        "simasdi-global-audio"
+      );
+
+    if (status === "aktif") {
+      audioAktifRef.current = true;
+      setAudioAktif(true);
+    }
+  }, []);
 
   // =========================================================
   // AKTIFKAN AUDIO
   // =========================================================
-  const aktifkanAudio = async () => {
-    try {
-      audioAktifRef.current = true;
-      setAudioAktif(true);
 
-      const audio = indonesiaRayaRef.current;
+  const aktifkanAudio = async () => {
+    console.log(
+      "🔊 AKTIFKAN AUDIO GLOBAL"
+    );
+
+    try {
+      const audio =
+        indonesiaRayaRef.current;
 
       if (audio) {
         audio.muted = false;
         audio.volume = 1;
 
-        // Play sebentar untuk mendapatkan izin browser
-        await audio.play();
+        try {
+          await audio.play();
 
-        audio.pause();
-        audio.currentTime = 0;
+          audio.pause();
+          audio.currentTime = 0;
+
+          console.log(
+            "✅ AUDIO BROWSER BERHASIL DI-UNLOCK"
+          );
+        } catch (error) {
+          console.log(
+            "ℹ️ Audio unlock:",
+            error
+          );
+        }
       }
+
+      audioAktifRef.current = true;
+
+      setAudioAktif(true);
 
       localStorage.setItem(
         "simasdi-global-audio",
         "aktif"
       );
 
-      console.log("🔊 GLOBAL AUDIO AKTIF");
+      console.log(
+        "✅ GLOBAL AUDIO AKTIF"
+      );
     } catch (error) {
       console.error(
-        "❌ Gagal mengaktifkan audio:",
+        "❌ Gagal mengaktifkan audio global:",
         error
       );
     }
   };
 
   // =========================================================
-  // PENGUMUMAN EDGE TTS
+  // PUTAR INDONESIA RAYA
   // =========================================================
-  const putarPengumuman = async () => {
-    try {
-      const text =
-        "Mohon perhatian. Sesaat lagi akan diperdengarkan Lagu Kebangsaan Indonesia Raya. Dimohon kepada seluruh pegawai dan pengunjung untuk berdiri tegak dan sempurna. Terima kasih.";
 
-      const response = await fetch("/api/tts-edge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          "Gagal mengambil audio Edge TTS"
+  const putarIndonesiaRaya =
+    async () => {
+      if (!audioAktifRef.current) {
+        console.log(
+          "🔇 Audio global belum aktif"
         );
+        return;
       }
 
-      const blob = await response.blob();
+      if (sedangDiputarRef.current) {
+        console.log(
+          "🇮🇩 Indonesia Raya sedang diputar"
+        );
+        return;
+      }
 
-      const url = URL.createObjectURL(blob);
+      const audio =
+        indonesiaRayaRef.current;
 
-      const audio = new Audio(url);
+      if (!audio) {
+        console.error(
+          "❌ Audio Indonesia Raya tidak ditemukan"
+        );
+        return;
+      }
 
-      audio.volume = 1;
+      sedangDiputarRef.current =
+        true;
 
-      await audio.play();
+      try {
+        console.log(
+          "🇮🇩 MEMUTAR INDONESIA RAYA"
+        );
 
-      await new Promise<void>((resolve) => {
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-      });
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = 1;
 
-    } catch (error) {
-      console.error(
-        "❌ Pengumuman Edge TTS gagal:",
-        error
-      );
-    }
-  };
+        await audio.play();
 
-  // =========================================================
-  // INDONESIA RAYA
-  // =========================================================
-  const putarIndonesiaRaya = async () => {
-    if (sedangDiputarRef.current) return;
+        console.log(
+          "🇮🇩 INDONESIA RAYA BERHASIL DIPUTAR"
+        );
+      } catch (error) {
+        console.error(
+          "❌ Indonesia Raya gagal diputar:",
+          error
+        );
 
-    if (!audioAktifRef.current) {
-      console.log(
-        "⚠️ Audio global belum diaktifkan"
-      );
-      return;
-    }
-
-    const audio = indonesiaRayaRef.current;
-
-    if (!audio) {
-      console.error(
-        "❌ Audio Indonesia Raya tidak ditemukan"
-      );
-      return;
-    }
-
-    try {
-      sedangDiputarRef.current = true;
-
-      console.log(
-        "📢 Memulai pengumuman Indonesia Raya"
-      );
-
-      // Pengumuman Edge TTS
-      await putarPengumuman();
-
-      // Jeda 1 detik
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000)
-      );
-
-      // Lagu Indonesia Raya
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
-      audio.volume = 1;
-
-      await audio.play();
-
-      console.log(
-        "🇮🇩 Indonesia Raya sedang diputar"
-      );
-
-    } catch (error) {
-      console.error(
-        "❌ Indonesia Raya gagal diputar:",
-        error
-      );
-
-      sedangDiputarRef.current = false;
-    }
-  };
+        sedangDiputarRef.current =
+          false;
+      }
+    };
 
   // =========================================================
-  // CEK JAM 10.00 WIB
+  // JADWAL INDONESIA RAYA 10:00 WIB
   // =========================================================
+
   useEffect(() => {
-    const audioStatus =
-      localStorage.getItem(
-        "simasdi-global-audio"
-      );
+    const cekJadwal = () => {
+      if (!audioAktifRef.current) {
+        return;
+      }
 
-    if (audioStatus === "aktif") {
-      audioAktifRef.current = true;
-      setAudioAktif(true);
-    }
-
-    const cekIndonesiaRaya = () => {
-      const sekarang = new Date();
+      const sekarang =
+        new Date();
 
       const waktuWIB =
-        new Intl.DateTimeFormat("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        }).formatToParts(sekarang);
+        new Intl.DateTimeFormat(
+          "en-GB",
+          {
+            timeZone:
+              "Asia/Jakarta",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }
+        ).formatToParts(
+          sekarang
+        );
 
       const jam =
         waktuWIB.find(
-          (item) => item.type === "hour"
+          (item) =>
+            item.type === "hour"
         )?.value;
 
       const menit =
         waktuWIB.find(
-          (item) => item.type === "minute"
+          (item) =>
+            item.type === "minute"
         )?.value;
 
       const detik =
         waktuWIB.find(
-          (item) => item.type === "second"
+          (item) =>
+            item.type === "second"
         )?.value;
 
-      const tanggalWIB =
-        new Intl.DateTimeFormat("en-CA", {
-          timeZone: "Asia/Jakarta",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(sekarang);
+      const tanggal =
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:
+              "Asia/Jakarta",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }
+        ).format(sekarang);
 
       const sudahDiputar =
         localStorage.getItem(
-          "simasdi-indonesia-raya"
+          "simasdi-global-indonesia-raya"
         );
+
+      if (
+        sudahDiputar === tanggal
+      ) {
+        sudahDiputarHariIni.current =
+          true;
+      } else {
+        sudahDiputarHariIni.current =
+          false;
+      }
 
       if (
         jam === "10" &&
         menit === "00" &&
         detik === "00" &&
-        sudahDiputar !== tanggalWIB &&
         !sudahDiputarHariIni.current
       ) {
-        sudahDiputarHariIni.current = true;
+        console.log(
+          "🇮🇩 JADWAL INDONESIA RAYA 10:00 WIB"
+        );
+
+        sudahDiputarHariIni.current =
+          true;
 
         localStorage.setItem(
-          "simasdi-indonesia-raya",
-          tanggalWIB
+          "simasdi-global-indonesia-raya",
+          tanggal
         );
 
         putarIndonesiaRaya();
       }
     };
 
-    const timer = setInterval(
-      cekIndonesiaRaya,
-      1000
-    );
+    cekJadwal();
+
+    const timer =
+      setInterval(
+        cekJadwal,
+        1000
+      );
 
     return () => {
       clearInterval(timer);
     };
   }, []);
 
+  // =========================================================
+  // RESET SETELAH INDONESIA RAYA SELESAI
+  // =========================================================
+
+  useEffect(() => {
+    const audio =
+      indonesiaRayaRef.current;
+
+    if (!audio) {
+      return;
+    }
+
+    const selesai = () => {
+      console.log(
+        "🇮🇩 INDONESIA RAYA SELESAI"
+      );
+
+      sedangDiputarRef.current =
+        false;
+    };
+
+    audio.addEventListener(
+      "ended",
+      selesai
+    );
+
+    return () => {
+      audio.removeEventListener(
+        "ended",
+        selesai
+      );
+    };
+  }, []);
+
+  // =========================================================
+  // RENDER
+  // =========================================================
+
   return (
     <>
-   
       <audio
         ref={indonesiaRayaRef}
         src="/audio/indonesia-raya.mp3"
@@ -250,7 +301,13 @@ export default function GlobalAudioEngine() {
         <button
           type="button"
           onClick={aktifkanAudio}
-          className="fixed bottom-6 right-6 z-[2147483647] rounded-xl bg-yellow-400 px-6 py-4 text-xl font-bold text-black shadow-2xl"
+          style={{
+            position: "fixed",
+            bottom: "90px",
+            right: "20px",
+            zIndex: 2147483647,
+          }}
+          className="px-6 py-4 rounded-xl bg-yellow-400 text-black text-xl font-black shadow-2xl cursor-pointer"
         >
           🔊 AKTIFKAN AUDIO
         </button>
