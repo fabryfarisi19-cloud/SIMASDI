@@ -1,5 +1,7 @@
+
 import "./globals.css";
 import Providers from "./providers";
+import GlobalAudioEngine from "./components/GlobalAudioEngine";
 
 export const metadata = {
   title: "SIMASDI",
@@ -14,8 +16,13 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <GlobalAudioEngine />
+          {children}
+        </Providers>
       </body>
     </html>
   );
 }
+
+
