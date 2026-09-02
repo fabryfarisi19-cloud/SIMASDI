@@ -1054,26 +1054,6 @@ const putarIndonesiaRaya = async () => {
 
 
       {/* =====================================================
-          TOMBOL AKTIFKAN AUDIO
-      ====================================================== */}
-
-      {!audioAktif && (
-        <button
-          type="button"
-          onClick={aktifkanAudio}
-          style={{
-            position: "fixed",
-            bottom: "90px",
-            right: "20px",
-            zIndex: 2147483647,
-          }}
-          className="px-6 py-4 rounded-xl bg-yellow-400 text-black text-xl font-black shadow-2xl cursor-pointer"
-        >
-          🔊 AKTIFKAN AUDIO
-        </button>
-      )}
-
-      {/* =====================================================
           GRID UTAMA
       ====================================================== */}
 

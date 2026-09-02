@@ -164,14 +164,7 @@ const timer = setInterval(() => {
             controls={false}
             className="w-full h-full object-cover"
           />
-{!audioAktif && (
-  <button
-    onClick={() => setAudioAktif(true)}
-    className="absolute bottom-8 right-8 z-50 rounded-xl bg-yellow-400 px-6 py-4 text-lg font-bold text-black shadow-lg"
-  >
-    🔊 AKTIFKAN AUDIO
-  </button>
-)}
+
         </div>
 
       </div>

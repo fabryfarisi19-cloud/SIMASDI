@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Pencil, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Pencil, ArrowRightLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-
 import { useParams } from "next/navigation";
 
 export default function DetailBarang() {
@@ -31,6 +30,151 @@ if (error) {
 
 setBarang(data);
   }
+
+
+async function hapusBarang() {
+  if (!barang) return;
+
+  const kendaraan =
+    barang.kategori === "Kendaraan Dinas";
+
+  // ==============================
+  // KONFIRMASI
+  // ==============================
+  const pesan = kendaraan
+    ? `⚠️ HAPUS KENDARAAN DINAS
+
+Nama:
+${barang.nama_barang || "-"}
+
+Nomor Polisi:
+${barang.nomor_polisi || "-"}
+
+Nomor Rangka:
+${barang.nomor_rangka || "-"}
+
+Data kendaraan akan dihapus permanen.
+
+Lanjutkan?`
+    : `Hapus barang:
+
+${barang.nama_barang || "-"}
+
+Data akan dihapus permanen.
+
+Lanjutkan?`;
+
+  if (!window.confirm(pesan)) {
+    return;
+  }
+
+  // ==============================
+  // KONFIRMASI KEDUA
+  // ==============================
+  if (kendaraan) {
+    const kode = window.prompt(
+      `Ketik HAPUS untuk menghapus kendaraan:
+
+${barang.nama_barang || "-"}
+${barang.nomor_polisi || "-"}`
+    );
+
+    if (kode !== "HAPUS") {
+      window.alert("Penghapusan dibatalkan.");
+      return;
+    }
+  }
+
+  // ==============================
+  // HAPUS DATA
+  // ==============================
+  try {
+    console.log("MULAI HAPUS BMN");
+    console.log("ID:", barang.id);
+    console.log("Nama:", barang.nama_barang);
+    console.log("Kategori:", barang.kategori);
+
+ const { error } = await supabase
+  .from("barang")
+  .delete()
+  .eq("id", barang.id);
+
+console.log("ERROR DELETE:", error);
+
+if (error) {
+  alert(
+    `GAGAL MENGHAPUS DATA\n\n${error.message}`
+  );
+  return;
+}
+   
+    // ==============================
+    // HAPUS FOTO
+    // ==============================
+    if (barang.foto) {
+      try {
+        const url = new URL(barang.foto);
+
+        const marker =
+          "/storage/v1/object/public/barang/";
+
+        const index =
+          url.pathname.indexOf(marker);
+
+        if (index !== -1) {
+          const namaFile =
+            decodeURIComponent(
+              url.pathname.substring(
+                index + marker.length
+              )
+            );
+
+          if (namaFile) {
+            const { error: fotoError } =
+              await supabase.storage
+                .from("barang")
+                .remove([namaFile]);
+
+            if (fotoError) {
+              console.warn(
+                "Foto tidak terhapus:",
+                fotoError.message
+              );
+            }
+          }
+        }
+      } catch (errorFoto) {
+        console.warn(
+          "Foto tidak dapat diproses:",
+          errorFoto
+        );
+      }
+    }
+
+    alert(
+      kendaraan
+        ? "✅ Kendaraan Dinas berhasil dihapus."
+        : "✅ Barang BMN berhasil dihapus."
+    );
+
+    window.location.href =
+      "/simstok/data-bmn";
+
+  } catch (error: any) {
+    console.error(
+      "ERROR HAPUS:",
+      error
+    );
+
+    alert(
+      "Terjadi kesalahan:\n\n" +
+      (error?.message || error)
+    );
+  }
+}
+
+
+
 
   if (!barang) {
     return <div className="p-8">Loading...</div>;
@@ -58,14 +202,14 @@ setBarang(data);
     <ArrowRightLeft size={18} />
     Mutasi BMN
   </Link>
-
-  <Link
-    href={`/simstok/data-bmn/edit/${barang.id}`}
-    className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 rounded-xl flex gap-2"
-  >
-    <Pencil size={18} />
-    Edit
-  </Link>
+<button
+  type="button"
+  onClick={hapusBarang}
+  className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+  title="Hapus"
+>
+  <Trash2 size={18} />
+</button>
 
 </div>
       </div>

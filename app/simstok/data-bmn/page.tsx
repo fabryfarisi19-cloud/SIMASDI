@@ -39,9 +39,23 @@ async function getBarang() {
 }
 
 async function hapusBarang(id: number) {
-  const konfirmasi = confirm(
-    "Apakah Anda yakin ingin menghapus data BMN ini?"
-  );
+  const item = barang.find((b) => b.id === id);
+
+  if (!item) return;
+
+  let pesan = `Apakah Anda yakin ingin menghapus data BMN "${item.nama_barang}"?`;
+
+  if (item.kategori === "Kendaraan Dinas") {
+    pesan =
+      `⚠️ PERINGATAN KENDARAAN DINAS\n\n` +
+      `Nama: ${item.nama_barang}\n` +
+      `Jenis: ${item.jenis_kendaraan || "-"}\n` +
+      `Nomor Polisi: ${item.nomor_polisi || "-"}\n\n` +
+      `Data kendaraan ini akan dihapus dari Data BMN.\n\n` +
+      `Apakah Anda benar-benar yakin ingin menghapusnya?`;
+  }
+
+  const konfirmasi = confirm(pesan);
 
   if (!konfirmasi) return;
 
@@ -51,9 +65,11 @@ async function hapusBarang(id: number) {
     .eq("id", id);
 
   if (error) {
-    alert(error.message);
+    alert("Gagal menghapus data BMN:\n" + error.message);
     return;
   }
+
+  alert("Data BMN berhasil dihapus.");
 
   getBarang();
 }
@@ -251,31 +267,15 @@ className="border-b hover:bg-slate-50"
 >
   <Eye size={18} />
 </Link>
-
-  <Link
-  href={`/simstok/data-bmn/edit/${item.id}`}
-  className="p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200"
-  title="Edit"
->
-  <Pencil size={18} />
-</Link>
-
- <Link
-  href={`/simstok/data-bmn/delete/${item.id}`}
+<Link href={`/simstok/data-bmn/edit/${item.id}`} className="p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200" title="Edit" > <Pencil size={18} /> </Link>
+ <button
+  type="button"
+  onClick={() => hapusBarang(item.id)}
   className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
   title="Hapus"
 >
   <Trash2 size={18} />
-</Link>
-
-   <Link
-  href={`/simstok/bmn/${item.id}`}
-  className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
-  title="QR Code"
->
-  <QrCode size={18} />
-</Link>
-
+</button>
   </div>
 </td>
 </tr>
