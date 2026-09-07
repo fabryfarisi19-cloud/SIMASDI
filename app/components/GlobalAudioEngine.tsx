@@ -87,60 +87,221 @@ export default function GlobalAudioEngine() {
   // PUTAR INDONESIA RAYA
   // =========================================================
 
-  const putarIndonesiaRaya =
-    async () => {
-      if (!audioAktifRef.current) {
-        console.log(
-          "🔇 Audio global belum aktif"
-        );
-        return;
+const putarIndonesiaRaya = async () => {
+  // =====================================================
+  // CEK AUDIO GLOBAL
+  // =====================================================
+
+  if (!audioAktifRef.current) {
+    console.log("🔇 Audio global belum aktif");
+    return;
+  }
+
+  // =====================================================
+  // CEK APAKAH AUDIO SEDANG BERJALAN
+  // =====================================================
+
+  if (sedangDiputarRef.current) {
+    console.log("🇮🇩 Indonesia Raya sedang diputar");
+    return;
+  }
+
+  // =====================================================
+  // CEK LOCK GLOBAL
+  // Mencegah dua instance/tab memutar bersamaan
+  // =====================================================
+
+  const lockKey =
+    "simasdi-global-indonesia-raya-lock";
+
+  const lockSekarang =
+    localStorage.getItem(lockKey);
+
+  if (lockSekarang) {
+    console.log(
+      "🔒 Indonesia Raya sudah dikunci oleh instance lain"
+    );
+    return;
+  }
+
+  // =====================================================
+  // KUNCI AUDIO
+  // =====================================================
+
+  localStorage.setItem(
+    lockKey,
+    Date.now().toString()
+  );
+
+  const audio =
+    indonesiaRayaRef.current;
+
+  if (!audio) {
+    console.error(
+      "❌ Audio Indonesia Raya tidak ditemukan"
+    );
+
+    localStorage.removeItem(lockKey);
+
+    return;
+  }
+
+  sedangDiputarRef.current = true;
+
+  try {
+    // ===================================================
+    // 1. TENG TONG
+    // ===================================================
+
+    console.log(
+      "🔔 MEMUTAR TENG TONG"
+    );
+
+    const tengTong =
+      new Audio(
+        "/sound/call-to-attention.mp3"
+      );
+
+    tengTong.preload = "auto";
+    tengTong.volume = 1;
+
+    await tengTong.play();
+
+    await new Promise<void>(
+      (resolve) => {
+        tengTong.onended = () => {
+          resolve();
+        };
+
+        tengTong.onerror = () => {
+          console.error(
+            "❌ Teng-tong gagal"
+          );
+
+          resolve();
+        };
       }
+    );
 
-      if (sedangDiputarRef.current) {
-        console.log(
-          "🇮🇩 Indonesia Raya sedang diputar"
-        );
-        return;
+    console.log(
+      "🔔 TENG TONG SELESAI"
+    );
+
+    // ===================================================
+    // 2. PENGUMUMAN TTS
+    // ===================================================
+
+    console.log(
+      "📢 MEMUTAR PENGUMUMAN INDONESIA RAYA"
+    );
+
+    const response =
+      await fetch(
+        "/api/tts-edge",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            text:
+              "Mohon perhatian. Sesaat lagi akan diperdengarkan Lagu Kebangsaan Indonesia Raya. Dimohon kepada seluruh pegawai dan pengunjung untuk berdiri tegak dan sempurna. Terima kasih.",
+          }),
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        "Gagal membuat suara pengumuman"
+      );
+    }
+
+    const blob =
+      await response.blob();
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const pengumuman =
+      new Audio(url);
+
+    pengumuman.preload = "auto";
+    pengumuman.volume = 1;
+
+    await pengumuman.play();
+
+    await new Promise<void>(
+      (resolve) => {
+        pengumuman.onended = () => {
+          resolve();
+        };
+
+        pengumuman.onerror = () => {
+          console.error(
+            "❌ Audio pengumuman gagal"
+          );
+
+          resolve();
+        };
       }
+    );
 
-      const audio =
-        indonesiaRayaRef.current;
+    URL.revokeObjectURL(url);
 
-      if (!audio) {
-        console.error(
-          "❌ Audio Indonesia Raya tidak ditemukan"
+    console.log(
+      "📢 PENGUMUMAN SELESAI"
+    );
+
+    // ===================================================
+    // 3. JEDA 1 DETIK
+    // ===================================================
+
+    await new Promise<void>(
+      (resolve) => {
+        setTimeout(
+          resolve,
+          1000
         );
-        return;
       }
+    );
 
-      sedangDiputarRef.current =
-        true;
+    // ===================================================
+    // 4. INDONESIA RAYA
+    // ===================================================
 
-      try {
-        console.log(
-          "🇮🇩 MEMUTAR INDONESIA RAYA"
-        );
+    console.log(
+      "🇮🇩 MEMUTAR INDONESIA RAYA"
+    );
 
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
-        audio.volume = 1;
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = false;
+    audio.volume = 1;
 
-        await audio.play();
+    await audio.play();
 
-        console.log(
-          "🇮🇩 INDONESIA RAYA BERHASIL DIPUTAR"
-        );
-      } catch (error) {
-        console.error(
-          "❌ Indonesia Raya gagal diputar:",
-          error
-        );
+    console.log(
+      "🇮🇩 INDONESIA RAYA BERHASIL DIPUTAR"
+    );
 
-        sedangDiputarRef.current =
-          false;
-      }
-    };
+  } catch (error) {
+
+    console.error(
+      "❌ Pengumuman / Indonesia Raya gagal:",
+      error
+    );
+
+    // Reset status agar dapat dicoba lagi
+    sedangDiputarRef.current =
+      false;
+
+    // Lepaskan lock jika gagal
+    localStorage.removeItem( 
+      lockKey
+    );
+  }
+};
 
   // =========================================================
   // JADWAL INDONESIA RAYA 10:00 WIB

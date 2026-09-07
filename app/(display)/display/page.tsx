@@ -33,12 +33,11 @@ export default function DisplayTV() {
   const [blink, setBlink] = useState(false);
   const [lastCalled, setLastCalled] = useState("");
   const [audioAktif, setAudioAktif] = useState(false);
-  const [sedangIndonesiaRaya, setSedangIndonesiaRaya] = useState(false);
+ 
 
-  const indonesiaRayaRef = useRef<HTMLAudioElement | null>(null);
+ 
   const videoInfoRef = useRef<HTMLVideoElement | null>(null);
 
-  const sudahDiputarHariIni = useRef(false);
 
   const audioAktifRef = useRef(false);
 
@@ -111,204 +110,6 @@ export default function DisplayTV() {
       }
     }, 300);
   };
-
-
-  
-  // =========================================================
-  // PUTAR INDONESIA RAYA
-  // =========================================================
-
-const putarIndonesiaRaya = async () => {
-  if (sedangIndonesiaRaya) return;
-
-  const audioIndonesiaRaya =
-    indonesiaRayaRef.current;
-
-  if (!audioIndonesiaRaya) {
-    console.error(
-      "❌ Audio Indonesia Raya tidak ditemukan"
-    );
-    return;
-  }
-
-  try {
-    setSedangIndonesiaRaya(true);
-
-    console.log(
-      "🇮🇩 MEMULAI RANGKAIAN INDONESIA RAYA"
-    );
-
-    // =====================================================
-    // HENTIKAN VIDEO INFORMASI
-    // =====================================================
-
-    if (videoInfoRef.current) {
-      videoInfoRef.current.pause();
-    }
-
-    // =====================================================
-    // PENGUMUMAN MENGGUNAKAN EDGE TTS
-    // =====================================================
-
-    const teksPengumuman =
-      "Mohon perhatian. Sesaat lagi akan diperdengarkan Lagu Kebangsaan Indonesia Raya. Dimohon kepada seluruh pegawai dan pengunjung untuk berdiri tegak sempurna. Terima kasih.";
-
-    console.log(
-      "🎤 EDGE TTS:",
-      teksPengumuman
-    );
-
-    const response = await fetch(
-      "/api/tts-edge",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: teksPengumuman,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `TTS API gagal: ${response.status}`
-      );
-    }
-
-    const blob =
-      await response.blob();
-
-    console.log(
-      "✅ Edge TTS berhasil dibuat",
-      blob.type,
-      blob.size
-    );
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const pengumumanAudio =
-      new Audio(url);
-
-    pengumumanAudio.volume = 1;
-    pengumumanAudio.preload = "auto";
-
-    // =====================================================
-    // PUTAR PENGUMUMAN
-    // =====================================================
-
-    await new Promise<void>(
-      (resolve, reject) => {
-        pengumumanAudio.onended =
-          () => {
-            console.log(
-              "✅ PENGUMUMAN SELESAI"
-            );
-
-            URL.revokeObjectURL(
-              url
-            );
-
-            resolve();
-          };
-
-        pengumumanAudio.onerror =
-          () => {
-            console.error(
-              "❌ Pengumuman Edge TTS gagal diputar"
-            );
-
-            URL.revokeObjectURL(
-              url
-            );
-
-            reject(
-              new Error(
-                "Audio pengumuman gagal diputar"
-              )
-            );
-          };
-
-        pengumumanAudio
-          .play()
-          .then(() => {
-            console.log(
-              "▶️ EDGE TTS MULAI BERBUNYI"
-            );
-          })
-          .catch((error) => {
-            console.error(
-              "❌ EDGE TTS PLAY GAGAL:",
-              error
-            );
-
-            URL.revokeObjectURL(
-              url
-            );
-
-            reject(error);
-          });
-      }
-    );
-
-    // =====================================================
-    // JEDA SEBELUM INDONESIA RAYA
-    // =====================================================
-
-    console.log(
-      "⏳ Jeda 800 ms..."
-    );
-
-    await new Promise<void>(
-      (resolve) => {
-        setTimeout(
-          resolve,
-          800
-        );
-      }
-    );
-
-    // =====================================================
-    // PUTAR INDONESIA RAYA
-    // =====================================================
-
-    console.log(
-      "🇮🇩 MEMUTAR INDONESIA RAYA"
-    );
-
-    audioIndonesiaRaya.pause();
-
-    audioIndonesiaRaya.currentTime = 0;
-
-    audioIndonesiaRaya.muted = false;
-
-    audioIndonesiaRaya.volume = 1;
-
-    await audioIndonesiaRaya.play();
-
-    console.log(
-      "🇮🇩 INDONESIA RAYA BERHASIL DIPUTAR"
-    );
-  } catch (error) {
-    console.error(
-      "❌ RANGKAIAN INDONESIA RAYA GAGAL:",
-      error
-    );
-
-    setSedangIndonesiaRaya(false);
-
-    // Kembalikan video jika terjadi error
-    if (videoInfoRef.current) {
-      videoInfoRef.current
-        .play()
-        .catch(() => {});
-    }
-  }
-};
-
-
 
   // =========================================================
   // TING TONG
@@ -470,16 +271,6 @@ const putarIndonesiaRaya = async () => {
       return;
     }
 
-    /*
-     * Indonesia Raya sedang berjalan.
-     */
-    if (sedangIndonesiaRaya) {
-      console.log(
-        "🇮🇩 Indonesia Raya sedang berjalan"
-      );
-
-      return;
-    }
 
     /*
      * Ada panggilan lain yang sedang berjalan.
@@ -564,10 +355,7 @@ const putarIndonesiaRaya = async () => {
       /*
        * 5. Jalankan kembali video.
        */
-      if (
-        videoInfoRef.current &&
-        !sedangIndonesiaRaya
-      ) {
+    if (videoInfoRef.current) {
         try {
           await videoInfoRef.current.play();
 
@@ -938,104 +726,10 @@ const putarIndonesiaRaya = async () => {
 
         .subscribe();
 
-    // =======================================================
-    // CEK INDONESIA RAYA 10:00 WIB
-    // =======================================================
-
-    const cekIndonesiaRaya =
-      () => {
-        const sekarang =
-          new Date();
-
-        const waktuWIB =
-          new Intl.DateTimeFormat(
-            "id-ID",
-            {
-              timeZone:
-                "Asia/Jakarta",
-
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-
-              hour12: false,
-            }
-          ).formatToParts(
-            sekarang
-          );
-
-        const jamWIB =
-          waktuWIB.find(
-            (item) =>
-              item.type === "hour"
-          )?.value;
-
-        const menitWIB =
-          waktuWIB.find(
-            (item) =>
-              item.type === "minute"
-          )?.value;
-
-        const detikWIB =
-          waktuWIB.find(
-            (item) =>
-              item.type === "second"
-          )?.value;
-
-        const tanggalWIB =
-          new Intl.DateTimeFormat(
-            "en-CA",
-            {
-              timeZone:
-                "Asia/Jakarta",
-
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            }
-          ).format(sekarang);
-
-        const sudahDiputar =
-          localStorage.getItem(
-            "simasdi-indonesia-raya"
-          );
-
-        /*
-         * Hindari warning unused variable.
-         */
-        void detikWIB;
-
-        if (
-          jamWIB === "10" &&
-          menitWIB === "00" &&
-          sudahDiputar !==
-            tanggalWIB &&
-          !sudahDiputarHariIni.current
-        ) {
-          sudahDiputarHariIni.current =
-            true;
-
-          localStorage.setItem(
-            "simasdi-indonesia-raya",
-            tanggalWIB
-          );
-
-          putarIndonesiaRaya();
-        }
-      };
-
-    const timerIndonesiaRaya =
-      setInterval(
-        cekIndonesiaRaya,
-        1000
-      );
 
     return () => {
       clearInterval(timer);
 
-      clearInterval(
-        timerIndonesiaRaya
-      );
 
       window.speechSynthesis?.cancel();
 
@@ -1248,34 +942,6 @@ const putarIndonesiaRaya = async () => {
             />
 
           </div>
-
-          {/* =================================================
-              AUDIO INDONESIA RAYA
-          ================================================== */}
-
-          <audio
-            ref={
-              indonesiaRayaRef
-            }
-            src="/audio/indonesia-raya.mp3"
-            preload="auto"
-            controls={false}
-            muted={false}
-            autoPlay={false}
-            onEnded={() => {
-              setSedangIndonesiaRaya(
-                false
-              );
-
-              if (
-                videoInfoRef.current
-              ) {
-                videoInfoRef.current
-                  .play()
-                  .catch(() => {});
-              }
-            }}
-          />
 
           {/* =================================================
               STATISTIK
