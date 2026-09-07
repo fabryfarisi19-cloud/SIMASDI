@@ -18,6 +18,7 @@ import {
   X,
   Megaphone,
   Volume2,
+   Wallet,
 
 } from "lucide-react";
 import { Ticket } from "lucide-react";
@@ -95,10 +96,16 @@ const menu = [
     icon: Megaphone,
   },
 
-  {
+   {
     nama: "Agenda Kegiatan",
     href: "/agenda",
     icon: CalendarDays,
+  },
+
+  {
+    nama: "Rincian Gaji",
+    href: "/rincian-gaji",
+    icon: Wallet,
   },
 ];
 
