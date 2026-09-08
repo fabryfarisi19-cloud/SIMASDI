@@ -215,9 +215,14 @@ const dataGaji = (result.data || []) as Gaji[];
     loadData();
   }, []);
 
-  function cetakSlip() {
+function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
+  e?.preventDefault();
+  e?.stopPropagation();
+
+  setTimeout(() => {
     window.print();
-  }
+  }, 100);
+}
 
   if (loading) {
     return (
@@ -299,7 +304,8 @@ const dataGaji = (result.data || []) as Gaji[];
 
                 {gaji && (
                   <button
-                    onClick={cetakSlip}
+  type="button"
+  onClick={cetakSlip}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white shadow-sm hover:bg-blue-800"
                   >
                     <Printer size={18} />
