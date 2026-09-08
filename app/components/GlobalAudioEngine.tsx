@@ -297,9 +297,7 @@ const putarIndonesiaRaya = async () => {
       false;
 
     // Lepaskan lock jika gagal
-    localStorage.removeItem( 
-      lockKey
-    );
+   localStorage.removeItem(lockKey);
   }
 };
 
@@ -376,26 +374,24 @@ const putarIndonesiaRaya = async () => {
           false;
       }
 
-      if (
-        jam === "10" &&
-        menit === "00" &&
-        detik === "00" &&
-        !sudahDiputarHariIni.current
-      ) {
-        console.log(
-          "🇮🇩 JADWAL INDONESIA RAYA 10:00 WIB"
-        );
+     if (
+  jam === "10" &&
+  menit === "00" &&
+  !sudahDiputarHariIni.current
+) {
+  console.log(
+    "🇮🇩 JADWAL INDONESIA RAYA 10:00 WIB"
+  );
 
-        sudahDiputarHariIni.current =
-          true;
+  sudahDiputarHariIni.current = true;
 
-        localStorage.setItem(
-          "simasdi-global-indonesia-raya",
-          tanggal
-        );
+  localStorage.setItem(
+    "simasdi-global-indonesia-raya",
+    tanggal
+  );
 
-        putarIndonesiaRaya();
-      }
+  putarIndonesiaRaya();
+}
     };
 
     cekJadwal();
