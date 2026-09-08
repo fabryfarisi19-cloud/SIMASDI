@@ -1,8 +1,10 @@
 
 "use client";
-
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+
 import { supabase } from "@/lib/supabase";
+
 import {
   Wallet,
   TrendingUp,
@@ -137,6 +139,7 @@ function PrintRow({
   );
 }
 export default function RincianGajiPage() {
+  const { data: session, status: sessionStatus } = useSession();
   const [gaji, setGaji] = useState<Gaji | null>(null);
   const [riwayat, setRiwayat] = useState<Gaji[]>([]);
   const [nama, setNama] = useState("");
@@ -155,24 +158,22 @@ const tanggalCetak = new Date().toLocaleDateString("id-ID", {
     try {
       setLoading(true);
       setError("");
+if (sessionStatus === "loading") {
+  return;
+}
 
-      const userStorage = localStorage.getItem("user");
+if (sessionStatus !== "authenticated" || !session?.penggunaId) {
+  setError("Sesi pengguna tidak ditemukan. Silakan login kembali.");
+  return;
+}
 
-      if (!userStorage) {
-        setError("Data pengguna tidak ditemukan. Silakan login kembali.");
-        return;
-      }
+const penggunaId = Number(session.penggunaId);
 
-      const user = JSON.parse(userStorage) as UserData;
-
-      if (!user.id) {
-        setError("ID pengguna tidak ditemukan.");
-        return;
-      }
-
-      setNama(user.nama || "");
-      setGolongan(user.golongan || user.pangkat_golongan || "");
-      setJabatan(user.jabatan || "");
+if (!penggunaId) {
+  setError("ID pengguna tidak ditemukan.");
+  return;
+}
+setNama(session.user?.name || "");
 
       // Ambil jumlah pegawai
       const { count, error: countError } = await supabase
@@ -184,20 +185,21 @@ const tanggalCetak = new Date().toLocaleDateString("id-ID", {
       }
 
       // Ambil rincian gaji
-      const { data, error: queryError } = await supabase
-        .from("rincian_gaji")
-        .select("*")
-        .eq("pengguna_id", user.id)
-        .order("tahun", { ascending: false })
-        .order("bulan", { ascending: false });
+     // Ambil rincian gaji melalui API server
+const response = await fetch("/api/rincian-gaji", {
+  method: "GET",
+  cache: "no-store",
+});
 
-      if (queryError) {
-        console.error(queryError);
-        setError("Gagal mengambil data rincian gaji.");
-        return;
-      }
+const result = await response.json();
 
-      const dataGaji = (data || []) as Gaji[];
+if (!response.ok) {
+  console.error(result);
+  setError(result.error || "Gagal mengambil data rincian gaji.");
+  return;
+}
+
+const dataGaji = (result.data || []) as Gaji[];
 
       setRiwayat(dataGaji);
       setGaji(dataGaji.length > 0 ? dataGaji[0] : null);
@@ -742,217 +744,277 @@ const tanggalCetak = new Date().toLocaleDateString("id-ID", {
 
   </div>
 
-      {/* PRINT STYLE */}
-      <style jsx global>{`
+     {/* PRINT STYLE */}
+<style jsx global>{`
 
-        .print-only {
-          display: none;
-        }
+  .print-only {
+    display: none;
+  }
 
-        @media print {
+  @media print {
 
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
-          }
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
 
-          html,
-          body {
-            background: white !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
+    html,
+    body {
+      background: #fff !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
 
-          body * {
-            visibility: hidden !important;
-          }
+    /* Sembunyikan tampilan web */
+    .screen-only {
+      display: none !important;
+    }
 
-          .print-only,
-          .print-only * {
-            visibility: visible !important;
-          }
+    /* Tampilkan slip */
+    .print-only {
+      display: block !important;
+      width: 100% !important;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000 !important;
+      font-size: 10px;
+    }
 
-          .screen-only {
-            display: none !important;
-          }
+    .print-only * {
+      color: #000 !important;
+      box-sizing: border-box;
+    }
 
-          .print-only {
-            display: block !important;
-            width: 100%;
-          }
+    /* =========================
+       HEADER
+    ========================== */
 
-          .slip-container {
-            display: block;
-            width: 100%;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #000;
-            font-size: 10px;
-          }
+    .slip-header {
+      border: 1px solid #000;
+      padding: 8px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
 
-          .slip-header {
-            border: 1px solid #000;
-            padding: 10px;
-            margin-bottom: 8px;
-          }
+    .slip-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
 
-          .slip-header h1 {
-            text-align: center;
-            font-size: 16px;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-          }
+    .slip-subtitle {
+      font-size: 11px;
+      font-weight: 700;
+    }
 
-          .identitas-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            border-top: 1px solid #000;
-          }
+    /* =========================
+       IDENTITAS
+    ========================== */
 
-          .identitas-grid > div {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            padding: 4px 6px;
-            border-bottom: 1px solid #000;
-          }
+    .identitas-slip {
+      border: 1px solid #000;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 20px;
+      row-gap: 3px;
+    }
 
-          .identitas-grid > div:nth-child(odd) {
-            border-right: 1px solid #000;
-          }
+    .identitas-slip > div {
+      display: grid;
+      grid-template-columns: 105px 1fr;
+      font-size: 10px;
+    }
 
-          .identitas-grid span {
-            font-weight: 600;
-          }
+    .identitas-slip span {
+      font-weight: 600;
+    }
 
-          .identitas-grid strong {
-            font-weight: 700;
-          }
+    .identitas-slip b {
+      font-weight: 700;
+    }
 
-          .slip-two-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            align-items: start;
-          }
+    /* =========================
+       DUA KOLOM
+    ========================== */
 
-          .slip-section {
-            border: 1px solid #000;
-          }
+    .slip-columns {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+      align-items: start;
+    }
 
-          .slip-section-title {
-            text-align: center;
-            font-weight: 700;
-            font-size: 12px;
-            padding: 6px;
-            border-bottom: 1px solid #000;
-            background: #f3f3f3;
-          }
+    .slip-box {
+      border: 1px solid #000;
+      width: 100%;
+    }
 
-          .slip-row {
-            display: grid;
-            grid-template-columns: 1fr 105px;
-            min-height: 20px;
-            border-bottom: 1px solid #ddd;
-          }
+    .slip-box-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px;
+      border-bottom: 1px solid #000;
+      background: #f3f3f3 !important;
+    }
 
-          .slip-row:last-child {
-            border-bottom: none;
-          }
+    /* =========================
+       BARIS
+    ========================== */
 
-          .slip-row-label {
-            padding: 3px 6px;
-          }
+    .print-row {
+      display: grid;
+      grid-template-columns: 1fr 105px;
+      min-height: 20px;
+      border-bottom: 1px solid #ddd;
+    }
 
-          .slip-row-value {
-            padding: 3px 6px;
-            text-align: right;
-            white-space: nowrap;
-          }
+    .print-row span {
+      padding: 3px 6px;
+    }
 
-          .slip-total {
-            display: grid;
-            grid-template-columns: 1fr 105px;
-            border-top: 1px solid #000;
-            padding: 5px 6px;
-            font-weight: 700;
-            background: #f3f3f3;
-          }
+    .print-row strong {
+      padding: 3px 6px;
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 600;
+    }
 
-          .slip-total-value {
-            text-align: right;
-            white-space: nowrap;
-          }
+    .print-row:last-child {
+      border-bottom: none;
+    }
 
-          .bersih-box {
-            border: 1px solid #000;
-            margin-top: 8px;
-            padding: 7px 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-weight: 700;
-          }
+    /* =========================
+       TOTAL
+    ========================== */
 
-          .bersih-label {
-            font-size: 12px;
-          }
+    .print-total {
+      display: grid;
+      grid-template-columns: 1fr 105px;
+      border-top: 1px solid #000;
+      padding: 5px 6px;
+      font-weight: 700;
+      background: #f3f3f3 !important;
+    }
 
-          .bersih-value {
-            font-size: 14px;
-          }
+    .print-total strong {
+      text-align: right;
+      white-space: nowrap;
+    }
 
-          .bapas-section {
-            border: 1px solid #000;
-            margin-top: 8px;
-          }
+    /* =========================
+       PENGHASILAN BERSIH
+    ========================== */
 
-          .bapas-title {
-            text-align: center;
-            font-weight: 700;
-            font-size: 12px;
-            padding: 6px;
-            border-bottom: 1px solid #000;
-            background: #f3f3f3;
-          }
+    .bersih-box {
+      border: 1px solid #000;
+      margin-top: 8px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+    }
 
-          .bapas-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 20px;
-          }
+    .bersih-box span {
+      font-size: 12px;
+    }
 
-          .bapas-grid .slip-row {
-            grid-template-columns: 1fr 90px;
-          }
+    .bersih-box strong {
+      font-size: 14px;
+    }
 
-          .bapas-total {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px;
-            border-top: 1px solid #000;
-            font-weight: 700;
-            background: #f3f3f3;
-          }
+    /* =========================
+       POTONGAN BAPAS
+    ========================== */
 
-          .sisa-box {
-            border: 2px solid #000;
-            margin-top: 10px;
-            padding: 10px;
-            text-align: center;
-            font-weight: 700;
-          }
+    .bapas-section {
+      border: 1px solid #000;
+      margin-top: 8px;
+    }
 
-          .sisa-box div {
-            font-size: 13px;
-            margin-bottom: 5px;
-          }
+    .bapas-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px;
+      border-bottom: 1px solid #000;
+      background: #f3f3f3 !important;
+    }
 
-          .sisa-box strong {
-            font-size: 18px;
-          }
+    .bapas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 20px;
+    }
 
-        }
+    .bapas-column {
+      width: 100%;
+    }
 
-      `}</style>
+    .bapas-column .print-row {
+      grid-template-columns: 1fr 90px;
+    }
+
+    /* =========================
+       SISA GAJI
+    ========================== */
+
+    .sisa-box {
+      border: 2px solid #000;
+      margin-top: 10px;
+      padding: 10px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .sisa-box div {
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .sisa-box strong {
+      font-size: 18px;
+    }
+
+    /* =========================
+       TANGGAL & TTD
+    ========================== */
+
+    .tanggal-slip {
+      margin-top: 12px;
+      text-align: right;
+      font-size: 10px;
+    }
+
+    .ttd-slip {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .ttd-slip > div {
+      min-height: 100px;
+    }
+
+    /* Hindari pemotongan slip */
+    .slip-header,
+    .identitas-slip,
+    .slip-columns,
+    .bersih-box,
+    .bapas-section,
+    .sisa-box,
+    .ttd-slip {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+  }
+
+`}</style>
     </main>
   );
 }
