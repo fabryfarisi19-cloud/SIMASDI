@@ -50,9 +50,11 @@ setAuthorized(true);
       router.replace("/siantar/kiosk");
       return;
     }
-// Petugas boleh ke Panel Petugas, TV Apel, dan Jadwal Apel
+// Petugas boleh ke Dashboard SIMASDI,
+// Panel Petugas, TV Apel, dan Jadwal Apel
 if (
   data?.jabatan === "Petugas" &&
+  pathname !== "/dashboard" &&
   !pathname.startsWith("/siantar/petugas") &&
   !pathname.startsWith("/tv-apel") &&
   !pathname.startsWith("/jadwal-apel")
