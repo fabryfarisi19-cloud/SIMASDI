@@ -50,9 +50,13 @@ setAuthorized(true);
       router.replace("/siantar/kiosk");
       return;
     }
-
-    // Petugas hanya boleh ke /siantar/petugas
-  if (data?.jabatan === "Petugas" && !pathname.startsWith("/siantar/petugas")) {
+// Petugas boleh ke Panel Petugas, TV Apel, dan Jadwal Apel
+if (
+  data?.jabatan === "Petugas" &&
+  !pathname.startsWith("/siantar/petugas") &&
+  !pathname.startsWith("/tv-apel") &&
+  !pathname.startsWith("/jadwal-apel")
+) {
   router.replace("/siantar/petugas");
   return;
 }
