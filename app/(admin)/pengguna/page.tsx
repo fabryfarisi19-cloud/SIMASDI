@@ -229,9 +229,13 @@ gridTemplateColumns: isMobile
                 onChange={(e) => setRole(e.target.value)}
                 style={inputStyle}
               >
-                <option value="Staf">Staf</option>
-                <option value="Admin">Admin</option>
-                <option value="Pimpinan">Pimpinan</option>
+              <option value="Staf">Staf</option>
+<option value="Petugas">Petugas</option>
+<option value="Admin">Admin</option>
+<option value="Kaur umum">Kaur umum</option>
+<option value="Pimpinan">Pimpinan</option>
+<option value="Kiosk">Kiosk</option>
+<option value="Display">Display</option>
               </select>
             </div>
           </div>
