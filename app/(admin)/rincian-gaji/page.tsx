@@ -211,10 +211,11 @@ const dataGaji = (result.data || []) as Gaji[];
     }
   }
 
-  useEffect(() => {
-    loadData();
-  }, []);
+useEffect(() => {
+  if (sessionStatus === "loading") return;
 
+  loadData();
+}, [sessionStatus, session?.penggunaId]);
 function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
   e?.preventDefault();
   e?.stopPropagation();
