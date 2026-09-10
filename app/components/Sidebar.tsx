@@ -20,7 +20,7 @@ import {
   Volume2,
    Wallet,
    FileSpreadsheet,
-
+ KeyRound,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
@@ -117,7 +117,7 @@ const menu = [
     roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
-  {
+    {
     nama: "Rincian Gaji",
     href: "/rincian-gaji",
     icon: Wallet,
@@ -128,14 +128,28 @@ const menu = [
       "Staf",
       "Kaur Keuangan",
     ],
-    
   },
+
   {
-  nama: "Import Slip Gaji",
-  href: "/import-gaji",
-  icon: FileSpreadsheet,
-  roles: ["Admin"],
-},
+    nama: "Rubah Password",
+    href: "/rubah-password",
+    icon: KeyRound,
+    roles: [
+      "Admin",
+      "Kaur umum",
+      "Pimpinan",
+      "Petugas",
+      "Staf",
+      "Kaur Keuangan",
+    ],
+  },
+
+  {
+    nama: "Import Slip Gaji",
+    href: "/import-gaji",
+    icon: FileSpreadsheet,
+    roles: ["Admin"],
+  },
 ];
 
 export default function Sidebar() {
@@ -274,6 +288,7 @@ const logout = async () => {
           "/rincian-gaji",
           "/publikasi",
           "/import-gaji",
+          "/rubah-password",
         ].some(
           (path) =>
             item.href === path ||
