@@ -31,7 +31,7 @@ const menu = [
     nama: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["Admin", "Kaur umum", "Pimpinan", "Petugas"],
+  roles: ["Admin", "Kaur umum", "Pimpinan", "Petugas", "Pegawai"],
   },
 
   {
@@ -101,13 +101,14 @@ const menu = [
     nama: "Publikasi",
     href: "/publikasi",
     icon: Megaphone,
-    roles: [
-      "Admin",
-      "Kaur umum",
-      "Pimpinan",
-      "Staf",
-      "Kaur Keuangan",
-    ],
+  roles: [
+  "Admin",
+  "Kaur umum",
+  "Pimpinan",
+  "Staf",
+  "Kaur Keuangan",
+  "Pegawai",
+],
   },
 
   {
@@ -127,6 +128,7 @@ const menu = [
       "Pimpinan",
       "Staf",
       "Kaur Keuangan",
+      "Pegawai",
     ],
   },
 
@@ -134,14 +136,15 @@ const menu = [
     nama: "Rubah Password",
     href: "/rubah-password",
     icon: KeyRound,
-    roles: [
-      "Admin",
-      "Kaur umum",
-      "Pimpinan",
-      "Petugas",
-      "Staf",
-      "Kaur Keuangan",
-    ],
+   roles: [
+  "Admin",
+  "Kaur umum",
+  "Pimpinan",
+  "Petugas",
+  "Staf",
+  "Kaur Keuangan",
+  "Pegawai",
+],
   },
 
   {

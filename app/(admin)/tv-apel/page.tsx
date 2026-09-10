@@ -29,6 +29,44 @@ const [autoAnnouncement, setAutoAnnouncement] = useState(false);
 const [audioAktif, setAudioAktif] = useState(false);
 const [pengumumanTerakhir, setPengumumanTerakhir] =
   useState("");
+const [bolehAudio, setBolehAudio] = useState(false);
+  useState("");
+ 
+  useEffect(() => {
+  try {
+    const userData = localStorage.getItem("user");
+
+    if (!userData) {
+      setBolehAudio(false);
+      return;
+    }
+
+    const user = JSON.parse(userData);
+
+    const username = String(
+      user?.username ?? user?.nip ?? ""
+    ).trim();
+
+    const usernameLower = username.toLowerCase();
+
+    const diizinkan =
+      username === "198402112007031001" ||
+      usernameLower === "admin" ||
+      usernameLower === "petugas" ||
+      usernameLower === "display";
+
+    setBolehAudio(diizinkan);
+
+    if (!diizinkan) {
+      setAudioAktif(false);
+      setAutoAnnouncement(false);
+    }
+  } catch (error) {
+    console.error("Gagal mengecek hak akses audio:", error);
+    setBolehAudio(false);
+  }
+}, []);
+
   async function loadJadwal() {
     const formatter = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Jakarta",
@@ -117,6 +155,7 @@ const interval = setInterval(() => {
 // 🇮🇩 INDONESIA RAYA OTOMATIS 10.00 WIB
 // ================================
 useEffect(() => {
+  if (!bolehAudio) return;
   if (!audioAktif) return;
 
   const cekIndonesiaRaya = () => {
@@ -173,6 +212,7 @@ function getPetugas(tugas: string) {
 // ================================
 async function putarIndonesiaRaya() {
   if (typeof window === "undefined") return;
+  if (!bolehAudio) return;
   if (!audioAktif) return;
   if (indonesiaRayaLockRef.current) return;
 
@@ -273,6 +313,7 @@ async function putarIndonesiaRaya() {
 }
 function bicaraPengumuman() {
   if (typeof window === "undefined") return;
+  if (!bolehAudio) return;
 
   const audio = new Audio("/sound/pengumuman-apel.mp3");
 
@@ -296,6 +337,8 @@ function bicaraPengumuman() {
   });
 }
 async function putarTingTong() {
+  if (!bolehAudio) return;
+
   try {
   const bell =
   bellAudioRef.current ||
@@ -321,6 +364,7 @@ bell.currentTime = 0;
 }
 function bicara(teks: string, voice?: SpeechSynthesisVoice) {
   if (typeof window === "undefined") return;
+  if (!bolehAudio) return;
 
   const synth = window.speechSynthesis;
   const suara = new SpeechSynthesisUtterance(teks);
@@ -900,11 +944,15 @@ audio.volume = 1;
         </div>
 
         {/* SUARA */}
-     <div className="mt-8 flex flex-wrap justify-center gap-3 px-4">
+    {/* SUARA */}
+{bolehAudio && (
+  <>
+  <div className="mt-8 flex flex-wrap justify-center gap-3 px-4">
 <button
-  onClick={() => {
-    const audio = new Audio("/sound/pengumuman-apel.mp3");
+ onClick={() => {
+  if (!bolehAudio) return;
 
+  const audio = new Audio("/sound/pengumuman-apel.mp3");
     audio.volume = 0;
 
     audio.play()
@@ -1022,6 +1070,8 @@ onClick={async () => {
     {teksSusunanPetugas}
   </p>
 </div>
+  </>
+)}
       </section>
 
       {/* FOOTER */}

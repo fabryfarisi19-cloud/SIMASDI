@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -39,17 +40,20 @@ export default function ImportGajiPage() {
     const selectedFile = event.target.files?.[0];
 
     setHasilImport(null);
+    setPesan("");
 
     if (!selectedFile) {
       setFile(null);
       setDataExcel([]);
-      setPesan("");
       return;
     }
 
-    const nama = selectedFile.name.toLowerCase();
+    const namaFile = selectedFile.name.toLowerCase();
 
-    if (!nama.endsWith(".xlsx") && !nama.endsWith(".xls")) {
+    if (
+      !namaFile.endsWith(".xlsx") &&
+      !namaFile.endsWith(".xls")
+    ) {
       setFile(null);
       setDataExcel([]);
       setPesan(
@@ -59,7 +63,6 @@ export default function ImportGajiPage() {
     }
 
     setFile(selectedFile);
-    setPesan("");
     setDataExcel([]);
 
     const reader = new FileReader();
@@ -85,22 +88,107 @@ export default function ImportGajiPage() {
         const namaSheet = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[namaSheet];
 
-        const hasil = XLSX.utils.sheet_to_json<DataGaji>(
-          worksheet,
-          {
-            defval: "",
+        /*
+         * PENTING:
+         * Excel Bapak menggunakan header bertingkat.
+         * Karena itu kita membaca semua cell berdasarkan
+         * posisi kolom, bukan berdasarkan nama header.
+         */
+
+        const range = XLSX.utils.decode_range(
+          worksheet["!ref"] || "A1"
+        );
+
+        const semuaBaris: unknown[][] = [];
+
+        for (let r = 0; r <= range.e.r; r++) {
+          const baris: unknown[] = [];
+
+          for (let c = 0; c <= 52; c++) {
+            const alamat = XLSX.utils.encode_cell({
+              r,
+              c,
+            });
+
+            baris.push(
+              worksheet[alamat]?.v ?? ""
+            );
           }
+
+          semuaBaris.push(baris);
+        }
+
+        /*
+         * Struktur Excel:
+         *
+         * Baris 1-4 = header
+         * Baris 5 dst = data pegawai
+         *
+         * Kita gunakan baris yang memiliki NO numerik
+         * pada kolom B sebagai awal data.
+         */
+
+        const hasil: DataGaji[] = [];
+
+        for (let r = 0; r < semuaBaris.length; r++) {
+          const baris = semuaBaris[r];
+
+          const no = baris[1];
+
+          if (
+            no !== "" &&
+            no !== null &&
+            no !== undefined &&
+            !isNaN(Number(no))
+          ) {
+            const obj: DataGaji = {};
+
+            for (let c = 0; c <= 52; c++) {
+              obj[`COL_${c}`] =
+                baris[c] as string | number | null;
+            }
+
+            /*
+             * Informasi utama untuk preview
+             */
+            obj["NO"] = baris[1] as
+              | string
+              | number;
+
+            obj["Nama"] = baris[2] as
+              | string
+              | number;
+
+            obj["Pangkat/ Golongan"] =
+              baris[3] as string | number;
+
+            obj["Rekening"] = baris[4] as
+              | string
+              | number;
+
+            hasil.push(obj);
+          }
+        }
+
+        console.log(
+          "TOTAL BARIS DATA:",
+          hasil.length
+        );
+
+        console.log(
+          "DATA PERTAMA:",
+          hasil[0]
         );
 
         setDataExcel(hasil);
 
         if (hasil.length === 0) {
           setPesan(
-            "File Excel tidak memiliki data."
+            "Tidak ditemukan baris data pegawai. Pastikan kolom NO berisi nomor urut pegawai."
           );
         } else {
           setPesan(
-            `Berhasil membaca ${hasil.length} baris data dari Excel.`
+            `Berhasil membaca ${hasil.length} baris data pegawai dari Excel.`
           );
         }
       } catch (error) {
@@ -168,7 +256,7 @@ export default function ImportGajiPage() {
 
       setPesan(
         hasil.message ||
-          "Data berhasil divalidasi."
+          "Data gaji berhasil diimport."
       );
     } catch (error) {
       console.error(
@@ -184,10 +272,12 @@ export default function ImportGajiPage() {
     }
   }
 
-  const kolom =
-    dataExcel.length > 0
-      ? Object.keys(dataExcel[0])
-      : [];
+  const kolomPreview = [
+    "NO",
+    "Nama",
+    "Pangkat/ Golongan",
+    "Rekening",
+  ];
 
   return (
     <div className="p-6">
@@ -214,7 +304,7 @@ export default function ImportGajiPage() {
             </h2>
 
             <p className="text-sm text-gray-500">
-              Gunakan file Excel berisi data gaji pegawai.
+              Format Excel slip gaji Bapas.
             </p>
           </div>
         </div>
@@ -271,20 +361,22 @@ export default function ImportGajiPage() {
         {hasilImport?.success && (
           <div className="mt-4 rounded-lg bg-green-50 p-4">
             <p className="font-semibold text-green-800">
-              Validasi berhasil
+              Import berhasil
             </p>
 
             <p className="mt-1 text-sm text-green-700">
-              Total data: {hasilImport.total} baris
+              Total data: {hasilImport.total} pegawai
             </p>
 
-           <p className="text-sm text-green-700">
-  Berhasil diproses: {hasilImport.total} baris
-</p>
+            <p className="text-sm text-green-700">
+              Berhasil diproses:{" "}
+              {hasilImport.berhasilDivalidasi ??
+                hasilImport.total} pegawai
+            </p>
 
-<p className="mt-2 text-xs text-green-600">
-  Data gaji berhasil disimpan ke database.
-</p>
+            <p className="mt-2 text-xs text-green-600">
+              Data gaji berhasil disimpan ke database.
+            </p>
           </div>
         )}
 
@@ -321,34 +413,31 @@ export default function ImportGajiPage() {
 
         {dataExcel.length > 0 && (
           <div className="mt-6">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-800">
-                  Preview Data
-                </h3>
+            <div className="mb-3">
+              <h3 className="font-semibold text-gray-800">
+                Preview Data
+              </h3>
 
-                <p className="text-sm text-gray-500">
-                  {dataExcel.length} baris terbaca dari Excel
-                </p>
-              </div>
+              <p className="text-sm text-gray-500">
+                {dataExcel.length} baris pegawai
+                terbaca dari Excel.
+              </p>
             </div>
 
             <div className="overflow-x-auto rounded-lg border">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="border-b px-4 py-3 text-left">
-                      No
-                    </th>
-
-                    {kolom.map((namaKolom) => (
-                      <th
-                        key={namaKolom}
-                        className="whitespace-nowrap border-b px-4 py-3 text-left"
-                      >
-                        {namaKolom}
-                      </th>
-                    ))}
+                    {kolomPreview.map(
+                      (namaKolom) => (
+                        <th
+                          key={namaKolom}
+                          className="whitespace-nowrap border-b px-4 py-3 text-left"
+                        >
+                          {namaKolom}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
 
@@ -361,19 +450,30 @@ export default function ImportGajiPage() {
                         className="hover:bg-gray-50"
                       >
                         <td className="border-b px-4 py-3">
-                          {index + 1}
+                          {String(
+                            baris.NO ?? ""
+                          )}
                         </td>
 
-                        {kolom.map((namaKolom) => (
-                          <td
-                            key={namaKolom}
-                            className="whitespace-nowrap border-b px-4 py-3"
-                          >
-                            {String(
-                              baris[namaKolom] ?? ""
-                            )}
-                          </td>
-                        ))}
+                        <td className="border-b px-4 py-3">
+                          {String(
+                            baris.Nama ?? ""
+                          )}
+                        </td>
+
+                        <td className="border-b px-4 py-3">
+                          {String(
+                            baris[
+                              "Pangkat/ Golongan"
+                            ] ?? ""
+                          )}
+                        </td>
+
+                        <td className="border-b px-4 py-3">
+                          {String(
+                            baris.Rekening ?? ""
+                          )}
+                        </td>
                       </tr>
                     ))}
                 </tbody>
@@ -383,8 +483,7 @@ export default function ImportGajiPage() {
             {dataExcel.length > 20 && (
               <p className="mt-3 text-xs text-gray-500">
                 Preview menampilkan 20 baris pertama.
-                Total data yang terbaca:{" "}
-                {dataExcel.length} baris.
+                Total data: {dataExcel.length} pegawai.
               </p>
             )}
           </div>
@@ -406,7 +505,7 @@ export default function ImportGajiPage() {
             )}
 
             {loading
-              ? "Memvalidasi..."
+              ? "Memproses..."
               : "Import Excel"}
           </button>
         </div>
@@ -414,3 +513,4 @@ export default function ImportGajiPage() {
     </div>
   );
 }
+

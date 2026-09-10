@@ -15,16 +15,57 @@ type JadwalApel = {
 };
 
 export default function AnnouncerApel() {
+  const NIP_FABRY = "198402112007031001";
+
   const [audioAktif, setAudioAktif] = useState(false);
+  const [bolehAudio, setBolehAudio] = useState(false);
   const [jadwalHariIni, setJadwalHariIni] = useState<JadwalApel[]>([]);
 
   const sudahAnnounce = useRef(false);
   const sudahIndonesiaRaya = useRef(false);
 const indonesiaRayaRef = useRef<HTMLAudioElement | null>(null);
   // ================================
+  // CEK HAK AKSES AUDIO SIMASDI
+  // ================================
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem("user");
+
+      if (!userData) {
+        setBolehAudio(false);
+        return;
+      }
+
+      const user = JSON.parse(userData);
+
+      const username = String(
+        user?.username ?? user?.nip ?? ""
+      ).trim();
+
+      const usernameLower = username.toLowerCase();
+
+      const diizinkan =
+        username === NIP_FABRY ||
+        usernameLower === "admin" ||
+        usernameLower === "petugas" ||
+        usernameLower === "display";
+
+      setBolehAudio(diizinkan);
+
+      if (!diizinkan) {
+        setAudioAktif(false);
+      }
+    } catch (error) {
+      console.error("Gagal mengecek hak akses audio:", error);
+      setBolehAudio(false);
+      setAudioAktif(false);
+    }
+  }, []);
+  // ================================
   // AKTIFKAN AUDIO
   // ================================
- async function aktifkanAudio() {
+async function aktifkanAudio() {
+  if (!bolehAudio) return;
   try {
     const response = await fetch("/api/tts-edge", {
       method: "POST",
@@ -267,6 +308,8 @@ function bicara(
   window.speechSynthesis.speak(suara);
 }
 function putarIndonesiaRaya() {
+  if (!bolehAudio) return;
+
   const audio = indonesiaRayaRef.current;
 
   if (!audio) return;
@@ -281,10 +324,17 @@ function putarIndonesiaRaya() {
     );
   });
 }
-  // ================================
+    // ================================
   // TAMPILAN
   // ================================
-if (audioAktif) {
+
+  // Akun yang tidak diizinkan tidak mendapatkan
+  // tombol maupun status audio SIMASDI.
+  if (!bolehAudio) {
+    return null;
+  }
+
+  if (audioAktif) {
   return (
     <>
       <audio
