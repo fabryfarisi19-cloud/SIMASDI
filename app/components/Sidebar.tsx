@@ -19,99 +19,148 @@ import {
   Megaphone,
   Volume2,
    Wallet,
+   FileSpreadsheet,
 
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
 import { signOut } from "next-auth/react";
-
+import { useSession } from "next-auth/react";
 const menu = [
   {
     nama: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["Admin", "Kaur umum", "Pimpinan", "Petugas"],
   },
 
   {
     nama: "Surat Masuk",
     href: "/surat-masuk",
     icon: Inbox,
+    roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
   {
     nama: "Surat Keluar",
     href: "/surat-keluar",
     icon: Send,
+    roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
   {
     nama: "Disposisi",
     href: "/disposisi",
     icon: FileText,
+    roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
   {
     nama: "Arsip Digital",
     href: "/arsip",
     icon: Archive,
+    roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
   {
     nama: "SIMSTOK BMN",
     href: "/simstok/dashboard",
     icon: Boxes,
+    roles: ["Admin", "Kaur umum"],
   },
 
   {
     nama: "SIAP",
     href: "/siantar",
     icon: Ticket,
+    roles: ["Admin", "Kaur umum", "Petugas"],
   },
-
-  // =========================
-  // APEL
-  // =========================
 
   {
     nama: "Jadwal Petugas Apel",
     href: "/jadwal-apel",
     icon: CalendarDays,
+    roles: ["Admin", "Kaur umum", "Petugas"],
   },
 
   {
     nama: "TV Apel",
     href: "/tv-apel",
     icon: Volume2,
+    roles: ["Admin", "Kaur umum", "Petugas"],
   },
 
   {
     nama: "Pengguna",
     href: "/pengguna",
     icon: Users,
+    roles: ["Admin", "Kaur umum"],
   },
 
   {
     nama: "Publikasi",
     href: "/publikasi",
     icon: Megaphone,
+    roles: [
+      "Admin",
+      "Kaur umum",
+      "Pimpinan",
+      "Staf",
+      "Kaur Keuangan",
+    ],
   },
 
-   {
+  {
     nama: "Agenda Kegiatan",
     href: "/agenda",
     icon: CalendarDays,
+    roles: ["Admin", "Kaur umum", "Pimpinan"],
   },
 
   {
     nama: "Rincian Gaji",
     href: "/rincian-gaji",
     icon: Wallet,
+    roles: [
+      "Admin",
+      "Kaur umum",
+      "Pimpinan",
+      "Staf",
+      "Kaur Keuangan",
+    ],
+    
   },
+  {
+  nama: "Import Slip Gaji",
+  href: "/import-gaji",
+  icon: FileSpreadsheet,
+  roles: ["Admin"],
+},
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+const { data: session } = useSession();
+const role = (session as any)?.role || "";
+const username = (session as any)?.username || "";
+console.log(
+  "MENU TERFILTER =",
+  JSON.stringify(
+menu.filter((item) => {
+  if (!item.roles.includes(role)) {
+    return false;
+  }
+
+  if (item.href === "/import-gaji") {
+    return username === "199408232017121004";
+  }
+
+  return true;
+})
+  )
+);
+console.log("SIDEBAR ROLE =", role);
   const [bukaMenu, setBukaMenu] = useState(false); 
 const [nama, setNama] = useState("Pengguna");
 const [jabatan, setJabatan] = useState("");
@@ -216,9 +265,30 @@ const logout = async () => {
     <X size={26} />
   </button>
 </div>
+<nav className="sidebar-menu">
+  {menu
+    .filter((item) => {
+      // KHUSUS RIO ANDARA
+      if (username === "199408232017121004") {
+        return [
+          "/rincian-gaji",
+          "/publikasi",
+          "/import-gaji",
+        ].some(
+          (path) =>
+            item.href === path ||
+            item.href.startsWith(path + "/")
+        );
+      }
 
-        <nav className="sidebar-menu">
-          {menu.map((item) => {
+      // USER LAIN: berdasarkan role
+      if (!item.roles.includes(role)) {
+        return false;
+      }
+
+      return true;
+    })
+  .map((item) => {
             const Icon = item.icon;
             const aktif =
               pathname === item.href ||
