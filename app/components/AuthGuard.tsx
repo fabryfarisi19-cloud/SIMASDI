@@ -1,7 +1,9 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+
 export default function AuthGuard({
   children,
 }: {
@@ -9,63 +11,74 @@ export default function AuthGuard({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-const { data: session, status } = useSession();
-const [authorized, setAuthorized] = useState(false);
+
+  const { data: session, status } = useSession();
+  const [authorized, setAuthorized] = useState(false);
+
   useEffect(() => {
-   const user = localStorage.getItem("user");
+    if (status === "loading") {
+      return;
+    }
 
-// Jika masih mengecek session Google
-if (status === "loading") return;
+    // Belum login
+    if (!session?.user) {
+      setAuthorized(false);
+      router.replace("/login");
+      return;
+    }
 
-// Tidak ada login lokal DAN tidak ada session Google
-if (!user && !session) {
-  setAuthorized(false);
-  router.replace("/login");
-  return;
-}
-
-// Kalau login memakai Google, biarkan lanjut
-if (!user && session) {
-  setAuthorized(true);
-  return;
-}const data = user ? JSON.parse(user) : null;
-
-if (!data && !session) {
-  setAuthorized(false);
-  router.replace("/login");
-  return;
-}
-
-setAuthorized(true);
-    console.log("Role:", data?.jabatan);
+    // Ambil role dari NextAuth
+    const role = (session as any)?.role;
+const username = (session as any)?.username || "";
+    console.log("=== AUTH GUARD ===");
     console.log("Path:", pathname);
-    // Display hanya boleh ke /display
-    if (data?.jabatan === "Display" && pathname !== "/display") {
-      router.replace("/display");
-      return;
-    }
+    console.log("Role:", role);
+    console.log("==================");
+if (username === "199408232017121004") {
+  const aksesRio = [
+    "/import-gaji",
+    "/rincian-gaji",
+    "/publikasi",
+  ];
 
-    // Kiosk hanya boleh ke /siantar/kiosk
-    if (data?.jabatan === "Kiosk" && !pathname.startsWith("/siantar/kiosk")) {
-      router.replace("/siantar/kiosk");
-      return;
-    }
-// Petugas boleh ke Dashboard SIMASDI,
-// Panel Petugas, TV Apel, dan Jadwal Apel
-if (
-  data?.jabatan === "Petugas" &&
-  pathname !== "/dashboard" &&
-  !pathname.startsWith("/siantar/petugas") &&
-  !pathname.startsWith("/tv-apel") &&
-  !pathname.startsWith("/jadwal-apel")
-) {
-  router.replace("/siantar/petugas");
+  const bolehAkses = aksesRio.some(
+    (path) =>
+      pathname === path ||
+      pathname.startsWith(path + "/")
+  );
+
+  if (!bolehAkses) {
+    setAuthorized(false);
+    router.replace("/rincian-gaji");
+    return;
+  }
+} 
+// Petugas tidak boleh membuka halaman Pengguna
+if (pathname === "/pengguna" && role === "Petugas") {
+  setAuthorized(false);
+  router.replace("/dashboard");
   return;
 }
-  }, [pathname, router, session, status]);
-if (!authorized) {
-  return null; // atau bisa diganti spinner/loading nanti
+
+// Kaur Keuangan hanya boleh membuka Publikasi dan Rincian Gaji
+if (
+  role === "Kaur Keuangan" &&
+  !pathname.startsWith("/publikasi") &&
+  !pathname.startsWith("/rincian-gaji")
+) {
+  setAuthorized(false);
+  router.replace("/publikasi");
+  return;
 }
 
-return <>{children}</>;
+setAuthorized(true); 
+
+
+  }, [pathname, router, session, status]);
+
+  if (status === "loading" || !authorized) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
