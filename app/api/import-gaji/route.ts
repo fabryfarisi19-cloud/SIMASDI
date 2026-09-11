@@ -238,6 +238,7 @@ const POSISI = {
   PANGKAT: 3,
   REKENING: 4,
 
+  // PENGHASILAN
   GAJI_POKOK: 5,
   T_ISTRI_SUAMI: 6,
   T_ANAK: 7,
@@ -253,17 +254,24 @@ const POSISI = {
 
   JUMLAH_PENGHASILAN: 17,
 
-  PADA_APLIKASI_GAJI: 19,
-  POT_BERAS: 20,
-  IWP: 21,
-  BPJS: 22,
-  POT_PPH: 23,
-  SEWA_RUMAH: 24,
-  TUNGGAKAN: 25,
-  UTANG_LEBIH: 26,
-  POTONGAN_LAIN: 27,
-  TAPERUM: 28,
+  // POTONGAN
+  POT_BERAS: 18,
+  IWP: 19,
+  BPJS: 20,
+  POT_PPH: 21,
+  SEWA_RUMAH: 22,
+  TUNGGAKAN: 23,
+  UTANG_LEBIH: 24,
+  POTONGAN_LAIN: 25,
+  TAPERUM: 26,
 
+  // 27 = kolom pemisah
+
+  // TOTAL POTONGAN / GAJI SETELAH PAYROLL
+  TOTAL_POTONGAN_PAYROLL: 28,
+  GAJI_SETELAH_PAYROLL: 29,
+
+  // POTONGAN BAPAS
   IURAN_DANSOS: 30,
   IURAN_DW: 31,
   KOPERASI: 32,
@@ -272,23 +280,20 @@ const POSISI = {
   BJB: 35,
   BAPOR: 36,
   ARISAN_BAPAS: 37,
-  PERPISAHAN_AZIZ: 38,
+  PERPISAHAN_PEGAWAI: 38,
   ANAK_ASUH: 39,
-  IURAN_DW_PIPAS: 40,
+  IURAN_PIPAS: 40,
   ARISAN_PIPAS: 41,
-  INKOPASNIDO: 42,
-  JAHIT_BAJU_PIPAS_1: 43,
+  INKOPASINDO: 42,
+  BATIK_DWP_NASIONAL_KE_1: 43,
   KACAMATA_KE_2: 44,
 
-  GAJI_BERSIH: 45,
+  // 45 = kolom pemisah
 
-  TAMBAHAN_46: 46,
-  TAMBAHAN_47: 47,
-  TAMBAHAN_48: 48,
-  TAMBAHAN_49: 49,
-  TAMBAHAN_50: 50,
-  TAMBAHAN_51: 51,
-  TAMBAHAN_52: 52,
+  TOTAL_BAPAS: 46,
+
+  // UANG TUNAI / GAJI BERSIH YANG DITERIMA
+  GAJI_BERSIH: 47,
 } as const;
 
 export async function POST(
@@ -345,13 +350,10 @@ export async function POST(
           penggunaIdSession
         )
         .maybeSingle();
-
-    if (
-      !penggunaLogin ||
-      penggunaLogin.role !== "Admin" ||
-      penggunaLogin.username !==
-        "199408232017121004"
-    ) {
+if (
+  !penggunaLogin ||
+  penggunaLogin.role !== "Admin Keuangan"
+) {
       return NextResponse.json(
         {
           error:
@@ -453,6 +455,7 @@ export async function POST(
     }> = [];
 
    const dataSiap: Array<{
+  [key: string]: number | string;
   pengguna_id: number;
   bulan: number;
   tahun: number;
@@ -639,315 +642,214 @@ export async function POST(
             POSISI.T_PAJAK
           )
         );
+const tunjanganKeluarga =
+  tIstriSuami + tAnak;
 
+const tunjanganJabatan =
+  tStruktural + tFungsional;
+
+const tunjanganLainnya =
+  tUmum +
+  tPapua +
+  tTerpencil +
+  lainLain +
+  pembulatan +
+  tBeras +
+  tPajak;
       /*
-       * Total penghasilan.
-       */
-      const totalPendapatan =
-        angka(
-          kolom(
-            row,
-            POSISI.JUMLAH_PENGHASILAN
-          )
-        );
-
       /*
-       * Potongan.
-       */
-      const padaAplikasiGaji =
-        angka(
-          kolom(
-            row,
-            POSISI.PADA_APLIKASI_GAJI
-          )
-        );
+ * Total penghasilan.
+ */
+const totalPendapatan =
+  angka(
+    kolom(
+      row,
+      POSISI.JUMLAH_PENGHASILAN
+    )
+  );
 
-      const potBeras =
-        angka(
-          kolom(
-            row,
-            POSISI.POT_BERAS
-          )
-        );
+/*
+ * Potongan.
+ */
+const padaAplikasiGaji = 0;
 
-      const iwp =
-        angka(
-          kolom(
-            row,
-            POSISI.IWP
-          )
-        );
+const potBeras =
+  angka(
+    kolom(
+      row,
+      POSISI.POT_BERAS
+    )
+  );
 
-      const bpjs =
-        angka(
-          kolom(
-            row,
-            POSISI.BPJS
-          )
-        );
+const iwp =
+  angka(
+    kolom(
+      row,
+      POSISI.IWP
+    )
+  );
 
-      const potPph =
-        angka(
-          kolom(
-            row,
-            POSISI.POT_PPH
-          )
-        );
+const bpjs =
+  angka(
+    kolom(
+      row,
+      POSISI.BPJS
+    )
+  );
 
-      const sewaRumah =
-        angka(
-          kolom(
-            row,
-            POSISI.SEWA_RUMAH
-          )
-        );
+const potPph =
+  angka(
+    kolom(
+      row,
+      POSISI.POT_PPH
+    )
+  );
 
-      const tunggakan =
-        angka(
-          kolom(
-            row,
-            POSISI.TUNGGAKAN
-          )
-        );
+const sewaRumah =
+  angka(
+    kolom(
+      row,
+      POSISI.SEWA_RUMAH
+    )
+  );
 
-      const utangLebih =
-        angka(
-          kolom(
-            row,
-            POSISI.UTANG_LEBIH
-          )
-        );
+const tunggakan =
+  angka(
+    kolom(
+      row,
+      POSISI.TUNGGAKAN
+    )
+  );
 
-      const potonganLain =
-        angka(
-          kolom(
-            row,
-            POSISI.POTONGAN_LAIN
-          )
-        );
+const utangLebih =
+  angka(
+    kolom(
+      row,
+      POSISI.UTANG_LEBIH
+    )
+  );
 
-      const taperum =
-        angka(
-          kolom(
-            row,
-            POSISI.TAPERUM
-          )
-        );
+const potonganLain =
+  angka(
+    kolom(
+      row,
+      POSISI.POTONGAN_LAIN
+    )
+  );
 
-      /*
-       * Potongan BAPAS.
-       */
-      const iuranDansos =
-        angka(
-          kolom(
-            row,
-            POSISI.IURAN_DANSOS
-          )
-        );
+const taperum =
+  angka(
+    kolom(
+      row,
+      POSISI.TAPERUM
+    )
+  );
+const iuranDansos = angka(kolom(row, POSISI.IURAN_DANSOS));
+const iuranDw = angka(kolom(row, POSISI.IURAN_DW));
+const koperasi = angka(kolom(row, POSISI.KOPERASI));
+const ipkemindo = angka(kolom(row, POSISI.IPKEMINDO));
+const bri = angka(kolom(row, POSISI.BRI));
+const bjb = angka(kolom(row, POSISI.BJB));
+const bapor = angka(kolom(row, POSISI.BAPOR));
+const arisanBapas = angka(kolom(row, POSISI.ARISAN_BAPAS));
+const perpisahanPegawai = angka(kolom(row, POSISI.PERPISAHAN_PEGAWAI));
+const anakAsuh = angka(kolom(row, POSISI.ANAK_ASUH));
+const iuranDwPipas = angka(kolom(row, POSISI.IURAN_PIPAS));
+const arisanPipas = angka(kolom(row, POSISI.ARISAN_PIPAS));
+const inkopasindo = angka(kolom(row, POSISI.INKOPASINDO));
+const batikDwpNasionalKe1 = angka(
+  kolom(row, POSISI.BATIK_DWP_NASIONAL_KE_1)
+);
+const kacamataKe2 = angka(
+  kolom(row, POSISI.KACAMATA_KE_2)
+);
+/*
+ * Gaji bersih.
+ */
+const gajiBersih =
+  angka(
+    kolom(
+      row,
+      POSISI.GAJI_BERSIH
+    )
+  );
 
-      const iuranDw =
-        angka(
-          kolom(
-            row,
-            POSISI.IURAN_DW
-          )
-        );
-
-      const koperasi =
-        angka(
-          kolom(
-            row,
-            POSISI.KOPERASI
-          )
-        );
-
-      const ipkemindo =
-        angka(
-          kolom(
-            row,
-            POSISI.IPKEMINDO
-          )
-        );
-
-      const bri =
-        angka(
-          kolom(
-            row,
-            POSISI.BRI
-          )
-        );
-
-      const bjb =
-        angka(
-          kolom(
-            row,
-            POSISI.BJB
-          )
-        );
-
-      const bapor =
-        angka(
-          kolom(
-            row,
-            POSISI.BAPOR
-          )
-        );
-
-      const arisanBapas =
-        angka(
-          kolom(
-            row,
-            POSISI.ARISAN_BAPAS
-          )
-        );
-
-      const perpisahanAziz =
-        angka(
-          kolom(
-            row,
-            POSISI.PERPISAHAN_AZIZ
-          )
-        );
-
-      const anakAsuh =
-        angka(
-          kolom(
-            row,
-            POSISI.ANAK_ASUH
-          )
-        );
-
-      const iuranDwPipas =
-        angka(
-          kolom(
-            row,
-            POSISI.IURAN_DW_PIPAS
-          )
-        );
-
-      const arisanPipas =
-        angka(
-          kolom(
-            row,
-            POSISI.ARISAN_PIPAS
-          )
-        );
-
-      const inkopasnido =
-        angka(
-          kolom(
-            row,
-            POSISI.INKOPASNIDO
-          )
-        );
-
-      const jahitBajuPipas1 =
-        angka(
-          kolom(
-            row,
-            POSISI.JAHIT_BAJU_PIPAS_1
-          )
-        );
-
-      const kacamataKe2 =
-        angka(
-          kolom(
-            row,
-            POSISI.KACAMATA_KE_2
-          )
-        );
-
-      /*
-       * Gaji bersih.
-       */
-      const gajiBersih =
-        angka(
-          kolom(
-            row,
-            POSISI.GAJI_BERSIH
-          )
-        );
-
-      /*
-       * Total potongan aplikasi gaji.
-       *
-       * Mengikuti angka "Gaji Bersih"
-       * dan komponen potongan dari Excel.
-       */
-      const totalPotongan =
-        padaAplikasiGaji +
-        potBeras +
-        iwp +
-        bpjs +
-        potPph +
-        sewaRumah +
-        tunggakan +
-        utangLebih +
-        potonganLain +
-        taperum;
-
-      /*
-       * Tunjangan lama untuk kompatibilitas
-       * dengan tampilan Rincian Gaji lama.
-       */
-      const tunjanganKeluarga =
-        tIstriSuami + tAnak;
-
-      const tunjanganJabatan =
-        tStruktural;
-
-      const tunjanganLainnya =
-        tUmum +
-        tPapua +
-        tTerpencil +
-        tFungsional +
-        lainLain +
-        pembulatan +
-        tBeras +
-        tPajak;
-
+/*
+ * Total potongan.
+ *
+ * Mengikuti selisih antara
+ * jumlah penghasilan dan gaji bersih.
+ *
+ * Ini mencakup seluruh kelompok
+ * potongan pada Excel.
+ */
+const totalPotongan =
+  totalPendapatan - gajiBersih;
 dataSiap.push({
   pengguna_id: penggunaId,
   bulan,
   tahun,
 
+  // PENGHASILAN
   gaji_pokok: gajiPokok,
+  tunjangan_keluarga: tunjanganKeluarga,
+  tunjangan_jabatan: tunjanganJabatan,
+  tunjangan_lainnya: tunjanganLainnya,
 
-  tunjangan_keluarga:
-    tunjanganKeluarga,
+  t_istri_suami: tIstriSuami,
+  t_anak: tAnak,
+  t_umum: tUmum,
+  t_papua: tPapua,
+  t_terpencil: tTerpencil,
+  t_struktural: tStruktural,
+  t_fungsional: tFungsional,
+  lain_lain: lainLain,
+  pembulatan,
+  t_beras: tBeras,
+  t_pajak: tPajak,
 
-  tunjangan_jabatan:
-    tunjanganJabatan,
+  total_penghasilan: totalPendapatan,
+  total_pendapatan: totalPendapatan,
 
-  tunjangan_lainnya:
-    tunjanganLainnya,
+  // POTONGAN APLIKASI GAJI
+  pot_beras: potBeras,
+  iwp,
+  bpjs,
+  pot_pph: potPph,
+  sewa_rumah: sewaRumah,
+  tunggakan,
+  utang_lebih: utangLebih,
+  potongan_lain: potonganLain,
+  taperum,
 
-  potongan_pajak:
-    potPph,
+  // FIELD LAMA / KOMPATIBILITAS
+  potongan_pajak: potPph,
+  potongan_bpjs: bpjs,
+  potongan_pensiun: iwp,
+  potongan_koperasi: koperasi,
+  potongan_arisan_dw: iuranDw,
+  potongan_lainnya: potonganLain,
 
-  potongan_bpjs:
-    bpjs,
+  // POTONGAN BAPAS
+  iuran_dansos: iuranDansos,
+  iuran_dw: iuranDw,
+  koperasi,
+  ipkemindo,
+  bri,
+  bjb,
+  bapor,
+  arisan_bapas: arisanBapas,
+  perpisahan: perpisahanPegawai,
+  anak_asuh: anakAsuh,
+  iuran_pipas: iuranDwPipas,
+  arisan_pipas: arisanPipas,
+  inkopasindo: inkopasindo,
+  batik_dwp_nasional: batikDwpNasionalKe1,
+  kacamata_ke_2: kacamataKe2,
 
-  potongan_pensiun:
-    iwp,
-
-  potongan_koperasi:
-    koperasi,
-
-  potongan_arisan_dw:
-    iuranDw,
-
-  potongan_lainnya:
-    potonganLain,
-
-  total_pendapatan:
-    totalPendapatan,
-
-  total_potongan:
-    totalPotongan,
-
-  gaji_bersih:
-    gajiBersih,
+  // TOTAL
+  total_potongan: totalPotongan,
+  gaji_bersih: gajiBersih,
 
   keterangan:
     "Import Excel September 2026",
