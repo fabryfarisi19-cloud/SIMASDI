@@ -159,8 +159,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 const { data: session } = useSession();
-const role = (session as any)?.user?.role || "";
-const username = (session as any)?.user?.username || "";
+const role =
+  (session as any)?.user?.role ||
+  (session as any)?.user?.jabatan ||
+  "";
+
+const username =
+  (session as any)?.user?.username ||
+  "";
 console.log("SIDEBAR SESSION =", session);
 console.log("SIDEBAR ROLE =", role);
 console.log("SIDEBAR USERNAME =", username);
