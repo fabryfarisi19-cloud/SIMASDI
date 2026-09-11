@@ -161,6 +161,9 @@ export default function Sidebar() {
 const { data: session } = useSession();
 const role = (session as any)?.user?.role || "";
 const username = (session as any)?.user?.username || "";
+console.log("SIDEBAR SESSION =", session);
+console.log("SIDEBAR ROLE =", role);
+console.log("SIDEBAR USERNAME =", username);
 console.log(
   "MENU TERFILTER =",
   JSON.stringify(
