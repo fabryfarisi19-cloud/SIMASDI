@@ -159,8 +159,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 const { data: session } = useSession();
-const role = (session as any)?.role || "";
-const username = (session as any)?.username || "";
+const role = (session as any)?.user?.role || "";
+const username = (session as any)?.user?.username || "";
 console.log(
   "MENU TERFILTER =",
   JSON.stringify(
