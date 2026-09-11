@@ -157,12 +157,12 @@ export const authOptions: NextAuthOptions = {
       (session as any).role = token.role;
       (session as any).accessToken = token.accessToken;
 
-      if (token.name) {
-        session.user = {
-          ...session.user,
-          name: token.name,
-        };
-      }
+  session.user = {
+  ...session.user,
+  name: token.name,
+  username: token.username,
+  role: token.role,
+};
 
       return session;
     },

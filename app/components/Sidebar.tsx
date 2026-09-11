@@ -31,70 +31,70 @@ const menu = [
     nama: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-  roles: ["Admin", "Kaur umum", "Pimpinan", "Petugas", "Pegawai"],
+  roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas", "Petugas", "Kasubag TU"],
   },
 
   {
     nama: "Surat Masuk",
     href: "/surat-masuk",
     icon: Inbox,
-    roles: ["Admin", "Kaur umum", "Pimpinan"],
+    roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas","Kasubag TU"],
   },
 
   {
     nama: "Surat Keluar",
     href: "/surat-keluar",
     icon: Send,
-    roles: ["Admin", "Kaur umum", "Pimpinan"],
+    roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas","Kasubag TU"],
   },
 
   {
     nama: "Disposisi",
     href: "/disposisi",
     icon: FileText,
-    roles: ["Admin", "Kaur umum", "Pimpinan"],
+    roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas","Kasubag TU"],
   },
 
   {
     nama: "Arsip Digital",
     href: "/arsip",
     icon: Archive,
-    roles: ["Admin", "Kaur umum", "Pimpinan"],
+    roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas","Kasubag TU"],
   },
 
   {
     nama: "SIMSTOK BMN",
     href: "/simstok/dashboard",
     icon: Boxes,
-    roles: ["Admin", "Kaur umum"],
+    roles: ["Admin Umum", "Kaur Umum", "Admin", "Kabapas","Kasubag TU"],
   },
 
   {
     nama: "SIAP",
     href: "/siantar",
     icon: Ticket,
-    roles: ["Admin", "Kaur umum", "Petugas"],
+    roles: [ "Kaur Umum", "Kabapas","Kasubag TU", "Petugas"],
   },
 
   {
     nama: "Jadwal Petugas Apel",
     href: "/jadwal-apel",
     icon: CalendarDays,
-    roles: ["Admin", "Kaur umum", "Petugas"],
+    roles: ["Kaur Umum", "Kabapas","Kasubag TU", "Petugas"],
   },
 
   {
     nama: "TV Apel",
     href: "/tv-apel",
     icon: Volume2,
-    roles: ["Admin", "Kaur umum", "Petugas"],
+    roles: ["Kaur Umum", "Kabapas","Kasubag TU", "Petugas"],
   },
 
   {
     nama: "Pengguna",
     href: "/pengguna",
     icon: Users,
-    roles: ["Admin", "Kaur umum"],
+    roles: ["Admin", "Kaur Umum"],
   },
 
   {
@@ -103,11 +103,27 @@ const menu = [
     icon: Megaphone,
   roles: [
   "Admin",
-  "Kaur umum",
-  "Pimpinan",
-  "Staf",
+  "Admin Umum",
+  "Kabapas",
   "Kaur Keuangan",
+  "Kasubag TU",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kasubsi Bimker Anak",
+  "Kasubsi Bimker Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimkemas Anak",
+   "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Anak",
+  "Kaur Kepegawaian",
+  "Kaur Umum",
+  "admin Keuangan",
+  "Staf",
   "Pegawai",
+  "PK Madya",
+  "PK Muda",
+  "PK Pertama",
+   "Arsiparis",
 ],
   },
 
@@ -115,7 +131,7 @@ const menu = [
     nama: "Agenda Kegiatan",
     href: "/agenda",
     icon: CalendarDays,
-    roles: ["Admin", "Kaur umum", "Pimpinan"],
+    roles: ["Admin Umum", "Admin", "Kaur Umum", "Kabapas", "Kasubag TU"],
   },
 
     {
@@ -123,12 +139,28 @@ const menu = [
     href: "/rincian-gaji",
     icon: Wallet,
     roles: [
-      "Admin",
-      "Kaur umum",
-      "Pimpinan",
-      "Staf",
-      "Kaur Keuangan",
-      "Pegawai",
+      "Kabapas",
+  "Kaur Keuangan",
+  "Kasubag TU",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kasubsi Bimker Anak",
+  "Kasubsi Bimker Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimkemas Anak",
+   "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Anak",
+  "Kaur Kepegawaian",
+  "Kaur Umum",
+  "Admin Umum",
+  "Admin Keuangan",
+  "Staf",
+  "Pegawai",
+  "PK Madya",
+  "PK Muda",
+  "PK Pertama",
+  "admin Keuangan",
+   "Arsiparis",
     ],
   },
 
@@ -137,13 +169,28 @@ const menu = [
     href: "/rubah-password",
     icon: KeyRound,
    roles: [
-  "Admin",
-  "Kaur umum",
-  "Pimpinan",
-  "Petugas",
-  "Staf",
+   "Kabapas",
   "Kaur Keuangan",
+  "Kasubag TU",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kasubsi Bimker Anak",
+  "Kasubsi Bimker Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimkemas Anak",
+   "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Anak",
+  "Kaur Kepegawaian",
+  "Kaur Umum",
+  "Admin Umum",
+  "Staf",
   "Pegawai",
+  "admin Keuangan",
+  "PK Madya",
+  "PK Muda",
+  "PK Pertama",
+  "Arsiparis",
+  "Admin",
 ],
   },
 
@@ -151,7 +198,7 @@ const menu = [
     nama: "Import Slip Gaji",
     href: "/import-gaji",
     icon: FileSpreadsheet,
-    roles: ["Admin"],
+    roles: ["admin Keuangan"],
   },
 ];
 
@@ -159,12 +206,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 const { data: session } = useSession();
-const role =
+const roleRaw =
+  (session as any)?.role ||
   (session as any)?.user?.role ||
   (session as any)?.user?.jabatan ||
   "";
-
+const role = String(roleRaw).trim();
 const username =
+  (session as any)?.username ||
   (session as any)?.user?.username ||
   "";
 console.log("SIDEBAR SESSION =", session);
@@ -299,7 +348,6 @@ const logout = async () => {
         return [
           "/rincian-gaji",
           "/publikasi",
-          "/import-gaji",
           "/rubah-password",
         ].some(
           (path) =>
