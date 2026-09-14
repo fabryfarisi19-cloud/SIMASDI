@@ -250,7 +250,20 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
 
   const penghasilanBersih = angka(gaji?.gaji_bersih);
 const potonganBapas =
+  angka(gaji?.iuran_dansos) +
+  angka(gaji?.iuran_dw) +
+  angka(gaji?.koperasi) +
+  angka(gaji?.ipkemindo) +
+  angka(gaji?.bri) +
+  angka(gaji?.bjb) +
+  angka(gaji?.bapor) +
   angka(gaji?.arisan_bapas) +
+  angka(gaji?.perpisahan) +
+  angka(gaji?.anak_asuh) +
+  angka(gaji?.iuran_pipas) +
+  angka(gaji?.arisan_pipas) +
+  angka(gaji?.inkopasindo) +
+  angka(gaji?.batik_dwp_nasional) +
   angka(gaji?.kacamata_ke_2);
 
   return (
