@@ -16,16 +16,26 @@ import {
 } from "lucide-react";
 
 type Gaji = {
+
   id: number;
+
   pengguna_id: number;
+
   bulan: number;
+
   tahun: number;
 
   gaji_pokok: number;
 
   tunjangan_keluarga: number;
+
   tunjangan_jabatan: number;
+
   tunjangan_lainnya: number;
+
+  bpjs?: number;
+
+  potongan_lain?: number;
 
   potongan_pajak: number;
   potongan_bpjs: number;
@@ -41,20 +51,21 @@ type Gaji = {
   keterangan: string | null;
 
   // Field tambahan slip gaji baru
-  tunjangan_istri_suami?: number;
-  tunjangan_anak?: number;
-  tunjangan_umum?: number;
-  tunjangan_papua?: number;
-  tunjangan_terpencil?: number;
-  tunjangan_struktural?: number;
-  tunjangan_fungsional?: number;
-  lain_lain?: number;
-  pembulatan?: number;
-  tunjangan_beras?: number;
-  tunjangan_pajak?: number;
+t_istri_suami?: number;
+t_anak?: number;
+t_umum?: number;
+t_papua?: number;
+t_terpencil?: number;
+t_struktural?: number;
+t_fungsional?: number;
+lain_lain?: number;
+pembulatan?: number;
+t_beras?: number;
+t_pajak?: number;
 
   pada_aplikasi_gaji?: number;
   pot_beras?: number;
+  pot_pph?: number;
   iwp?: number;
   sewa_rumah?: number;
   tunggakan?: number;
@@ -62,21 +73,21 @@ type Gaji = {
   taperum?: number;
 
   // Potongan BAPAS
-  iuran_dansos?: number;
-  iuran_dw?: number;
-  koperasi?: number;
-  ipkemindo?: number;
-  bri?: number;
-  bjb?: number;
-  bapor?: number;
-  arisan_bapas?: number;
-  perpisahan_aziz?: number;
-  anak_asuh?: number;
-  iuran_dw_pipas?: number;
-  arisan_pipas?: number;
-  inkopasnido?: number;
-  jahit_baju_pipas_1?: number;
-  kacamata_ke_2?: number;
+iuran_dansos?: number;
+iuran_dw?: number;
+koperasi?: number;
+ipkemindo?: number;
+bri?: number;
+bjb?: number;
+bapor?: number;
+arisan_bapas?: number;
+perpisahan?: number;
+anak_asuh?: number;
+iuran_pipas?: number;
+arisan_pipas?: number;
+inkopasindo?: number;
+batik_dwp_nasional?: number;
+kacamata_ke_2?: number;
 };
 
 type UserData = {
@@ -242,25 +253,9 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
       : "";
 
   const penghasilanBersih = angka(gaji?.gaji_bersih);
-
-  const potonganBapas =
-    angka(gaji?.iuran_dansos) +
-    angka(gaji?.iuran_dw) +
-    angka(gaji?.koperasi) +
-    angka(gaji?.ipkemindo) +
-    angka(gaji?.bri) +
-    angka(gaji?.bjb) +
-    angka(gaji?.bapor) +
-    angka(gaji?.arisan_bapas) +
-    angka(gaji?.perpisahan_aziz) +
-    angka(gaji?.anak_asuh) +
-    angka(gaji?.iuran_dw_pipas) +
-    angka(gaji?.arisan_pipas) +
-    angka(gaji?.inkopasnido) +
-    angka(gaji?.jahit_baju_pipas_1) +
-    angka(gaji?.kacamata_ke_2);
-
-  const sisaGaji = penghasilanBersih - potonganBapas;
+const potonganBapas =
+  angka(gaji?.arisan_bapas) +
+  angka(gaji?.kacamata_ke_2);
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 md:p-8 print:bg-white print:p-0">
@@ -296,6 +291,7 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
               <div className="flex gap-2">
 
                 <button
+
                   onClick={loadData}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-3 font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
                 >
@@ -410,100 +406,127 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
 
               </div>
 
-              {/* DETAIL LAMA */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* DETAIL GAJI SESUAI EXCEL */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+  {/* PENGHASILAN */}
+  <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
 
-                  <div className="border-b border-slate-200 px-6 py-5">
-                    <h2 className="text-lg font-bold text-slate-900">
-                      Pendapatan
-                    </h2>
-                  </div>
+    <div className="border-b border-slate-200 px-6 py-5">
+      <h2 className="text-lg font-bold text-slate-900">
+        Penghasilan
+      </h2>
+    </div>
 
-                  <div className="p-6 space-y-4">
+    <div className="p-6 space-y-4">
 
-                    <Row label="Gaji Pokok" value={gaji.gaji_pokok} />
+      <Row label="Gaji Pokok" value={angka(gaji?.gaji_pokok)} />
+      <Row label="T. Istri/Suami" value={angka(gaji?.t_istri_suami)} />
+      <Row label="T. Anak" value={angka(gaji?.t_anak)} />
+      <Row label="T. Umum" value={angka(gaji?.t_umum)} />
+      <Row label="T. Papua" value={angka(gaji?.t_papua)} />
+      <Row label="T. Terpencil" value={angka(gaji?.t_terpencil)} />
+      <Row label="T. Struktural" value={angka(gaji?.t_struktural)} />
+      <Row label="T. Fungsional" value={angka(gaji?.t_fungsional)} />
+      <Row label="Lain-Lain" value={angka(gaji?.lain_lain)} />
+      <Row label="Pembulatan" value={angka(gaji?.pembulatan)} />
+      <Row label="T. Beras" value={angka(gaji?.t_beras)} />
+      <Row label="T. Pajak" value={angka(gaji?.t_pajak)} />
 
-                    <Row
-                      label="Tunjangan Keluarga"
-                      value={gaji.tunjangan_keluarga}
-                    />
+      <div className="border-t border-slate-200 pt-4">
+        <Row
+          label="Jumlah Penghasilan"
+          value={angka(gaji?.total_pendapatan)}
+          bold
+        />
+      </div>
 
-                    <Row
-                      label="Tunjangan Jabatan"
-                      value={gaji.tunjangan_jabatan}
-                    />
+    </div>
+  </section>
 
-                    <Row
-                      label="Tunjangan Lainnya"
-                      value={gaji.tunjangan_lainnya}
-                    />
 
-                    <div className="border-t border-slate-200 pt-4">
-                      <Row
-                        label="Total Pendapatan"
-                        value={gaji.total_pendapatan}
-                        bold
-                      />
-                    </div>
+  {/* POTONGAN */}
+  <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
 
-                  </div>
-                </section>
+    <div className="border-b border-slate-200 px-6 py-5">
+      <h2 className="text-lg font-bold text-slate-900">
+        Potongan
+      </h2>
+    </div>
 
-                <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+    <div className="p-6 space-y-4">
 
-                  <div className="border-b border-slate-200 px-6 py-5">
-                    <h2 className="text-lg font-bold text-slate-900">
-                      Potongan
-                    </h2>
-                  </div>
+      <Row
+        label="Pot. Beras"
+        value={angka(gaji?.pot_beras)}
+      />
 
-                  <div className="p-6 space-y-4">
+      <Row
+        label="IWP"
+        value={angka(gaji?.iwp)}
+      />
 
-                    <Row
-                      label="Pajak"
-                      value={gaji.potongan_pajak}
-                    />
+      <Row
+        label="BPJS"
+        value={angka(gaji?.bpjs)}
+      />
 
-                    <Row
-                      label="BPJS"
-                      value={gaji.potongan_bpjs}
-                    />
+      <Row
+        label="Pot. PPh"
+        value={angka(gaji?.pot_pph)}
+      />
 
-                    <Row
-                      label="Pensiun"
-                      value={gaji.potongan_pensiun}
-                    />
+      <Row
+        label="Sewa Rumah"
+        value={angka(gaji?.sewa_rumah)}
+      />
 
-                    <Row
-                      label="Koperasi"
-                      value={gaji.potongan_koperasi}
-                    />
+      <Row
+        label="Tunggakan"
+        value={angka(gaji?.tunggakan)}
+      />
 
-                    <Row
-                      label="Arisan DW"
-                      value={gaji.potongan_arisan_dw}
-                    />
+      <Row
+        label="Utang Lebih"
+        value={angka(gaji?.utang_lebih)}
+      />
 
-                    <Row
-                      label="Potongan Lainnya"
-                      value={gaji.potongan_lainnya}
-                    />
+      <Row
+        label="Potongan Lain"
+        value={angka(gaji?.potongan_lain)}
+      />
 
-                    <div className="border-t border-slate-200 pt-4">
-                      <Row
-                        label="Total Potongan"
-                        value={gaji.total_potongan}
-                        bold
-                      />
-                    </div>
+      <Row
+        label="Taperum"
+        value={angka(gaji?.taperum)}
+      />
 
-                  </div>
-                </section>
+      <div className="border-t border-slate-200 pt-4">
+        <Row
+          label="Jumlah Potongan"
+          value={angka(gaji?.total_potongan)}
+          bold
+        />
+      </div>
 
-              </div>
+      <div className="border-t border-blue-200 pt-4">
+        <Row
+          label="Gaji Bersih"
+          value={angka(gaji?.gaji_bersih)}
+          bold
+        />
+      </div>
+<div className="border-t border-slate-200 pt-4">
+  <Row
+    label="Potongan BAPAS"
+    value={potonganBapas}
+    bold
+  />
+</div>
+    </div>
+  </section>
 
+</div>
               {/* KETERANGAN */}
               {gaji.keterangan && (
                 <div className="mt-6 rounded-2xl bg-blue-50 border border-blue-100 p-5">
@@ -622,29 +645,50 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
       <div className="slip-box-title">PENGHASILAN</div>
 
       <PrintRow label="Gaji Pokok" value={gaji?.gaji_pokok} />
-      <PrintRow
-        label="T. Istri/Suami"
-        value={gaji?.tunjangan_istri_suami ?? gaji?.tunjangan_keluarga}
-      />
-      <PrintRow label="T. Anak" value={gaji?.tunjangan_anak} />
-      <PrintRow label="T. Umum" value={gaji?.tunjangan_umum} />
-      <PrintRow label="T. Papua" value={gaji?.tunjangan_papua} />
-      <PrintRow label="T. Terpencil" value={gaji?.tunjangan_terpencil} />
-      <PrintRow
-        label="T. Struktural"
-        value={gaji?.tunjangan_struktural ?? gaji?.tunjangan_jabatan}
-      />
-      <PrintRow label="T. Fungsional" value={gaji?.tunjangan_fungsional} />
-      <PrintRow
-        label="Lain-Lain"
-        value={gaji?.lain_lain ?? gaji?.tunjangan_lainnya}
-      />
-      <PrintRow label="Pembulatan" value={gaji?.pembulatan} />
-      <PrintRow label="T. Beras" value={gaji?.tunjangan_beras} />
-      <PrintRow
-        label="T. Pajak"
-        value={gaji?.tunjangan_pajak ?? gaji?.potongan_pajak}
-      />
+   <PrintRow
+  label="T. Istri/Suami"
+  value={gaji?.t_istri_suami}
+/>
+<PrintRow
+  label="T. Anak"
+  value={gaji?.t_anak}
+/>
+<PrintRow
+  label="T. Umum"
+  value={gaji?.t_umum}
+/>
+<PrintRow
+  label="T. Papua"
+  value={gaji?.t_papua}
+/>
+<PrintRow
+  label="T. Terpencil"
+  value={gaji?.t_terpencil}
+/>
+<PrintRow
+  label="T. Struktural"
+  value={gaji?.t_struktural}
+/>
+<PrintRow
+  label="T. Fungsional"
+  value={gaji?.t_fungsional}
+/>
+<PrintRow
+  label="Lain-Lain"
+  value={gaji?.lain_lain}
+/>
+<PrintRow
+  label="Pembulatan"
+  value={gaji?.pembulatan}
+/>
+<PrintRow
+  label="T. Beras"
+  value={gaji?.t_beras}
+/>
+<PrintRow
+  label="T. Pajak"
+  value={gaji?.t_pajak}
+/>
 
       <div className="print-total">
         <span>Jml Penghasilan</span>
@@ -652,29 +696,31 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
       </div>
     </div>
 
-    {/* ================= POTONGAN ================= */}
-    <div className="slip-box">
-      <div className="slip-box-title">POTONGAN</div>
+ {/* ================= POTONGAN ================= */}
+<div className="slip-box">
+  <div className="slip-box-title">POTONGAN</div>
 
-      <PrintRow label="Pada Aplikasi Gaji" value={gaji?.pada_aplikasi_gaji} />
-      <PrintRow label="Pot. Beras" value={gaji?.pot_beras} />
-      <PrintRow
-        label="IWP"
-        value={gaji?.iwp ?? gaji?.potongan_pensiun}
-      />
-      <PrintRow label="BPJS" value={gaji?.potongan_bpjs} />
-      <PrintRow label="Pot. PPh" value={gaji?.potongan_pajak} />
-      <PrintRow label="Sewa Rumah" value={gaji?.sewa_rumah} />
-      <PrintRow label="Tunggakan" value={gaji?.tunggakan} />
-      <PrintRow label="Utang Lebih" value={gaji?.utang_lebih} />
-      <PrintRow label="Potongan Lain" value={gaji?.potongan_lainnya} />
-      <PrintRow label="Taperum" value={gaji?.taperum} />
+  <PrintRow label="PADA APLIKASI GAJI" value={gaji?.pada_aplikasi_gaji} />
+  <PrintRow label="POT. BERAS" value={gaji?.pot_beras} />
+  <PrintRow label="IWP" value={gaji?.iwp} />
+  <PrintRow label="BPJS" value={gaji?.bpjs} />
+  <PrintRow label="POT. PPh" value={gaji?.pot_pph} />
+  <PrintRow label="SEWA RUMAH" value={gaji?.sewa_rumah} />
+  <PrintRow label="TUNGGAKAN" value={gaji?.tunggakan} />
+  <PrintRow label="UTANG LEBIH" value={gaji?.utang_lebih} />
+  <PrintRow label="POTONGAN LAIN" value={gaji?.potongan_lain} />
+  <PrintRow label="TAPERUM" value={gaji?.taperum} />
 
-      <div className="print-total">
-        <span>Jml Potongan</span>
-        <strong>{rupiah(gaji?.total_potongan)}</strong>
-      </div>
-    </div>
+  <div className="print-total">
+    <span>Jml Potongan</span>
+    <strong>{rupiah(gaji?.total_potongan)}</strong>
+  </div>
+
+  <div className="print-total">
+    <span>Gaji Bersih</span>
+    <strong>{rupiah(gaji?.gaji_bersih)}</strong>
+  </div>
+</div>
 
   </div>
 
@@ -704,14 +750,35 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
         <PrintRow label="ARISAN BAPAS" value={gaji?.arisan_bapas} />
       </div>
 
-      <div className="bapas-column">
-        <PrintRow label="PERPISAHAN AZIZ" value={gaji?.perpisahan_aziz} />
-        <PrintRow label="ANAK ASUH" value={gaji?.anak_asuh} />
-        <PrintRow label="IURAN DW PIPAS" value={gaji?.iuran_dw_pipas} />
-        <PrintRow label="ARISAN PIPAS" value={gaji?.arisan_pipas} />
-        <PrintRow label="INKOPASNIDO" value={gaji?.inkopasnido} />
-        <PrintRow label="JAHIT BAJU PIPAS 1" value={gaji?.jahit_baju_pipas_1} />
-        <PrintRow label="KACAMATA KE 2" value={gaji?.kacamata_ke_2} />
+<div className="bapas-column">
+  <PrintRow
+    label="PERPISAHAN PEGAWAI"
+    value={gaji?.perpisahan}
+  />
+  <PrintRow
+    label="ANAK ASUH"
+    value={gaji?.anak_asuh}
+  />
+  <PrintRow
+    label="IURAN PIPAS"
+    value={gaji?.iuran_pipas}
+  />
+  <PrintRow
+    label="ARISAN PIPAS"
+    value={gaji?.arisan_pipas}
+  />
+  <PrintRow
+    label="INKOPASINDO"
+    value={gaji?.inkopasindo}
+  />
+  <PrintRow
+    label="BATIK DWP NASIONAL KE 1"
+    value={gaji?.batik_dwp_nasional}
+  />
+  <PrintRow
+    label="KACAMATA KE 2"
+    value={gaji?.kacamata_ke_2}
+  />
 
         <div className="print-total">
           <span>Jml Potongan</span>
@@ -723,10 +790,10 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
   </div>
 
   {/* ================= SISA GAJI ================= */}
-  <div className="sisa-box">
-    <div>SISA GAJI (GAJI YANG DITERIMA)</div>
-    <strong>{rupiah(sisaGaji)}</strong>
-  </div>
+ <div className="sisa-box">
+  <div>GAJI YANG DITERIMA</div>
+  <strong>{rupiah(penghasilanBersih)}</strong>
+</div>
 
   <div className="tanggal-slip">
     Jakarta Barat, {tanggalCetak}

@@ -251,10 +251,9 @@ const POSISI = {
   PEMBULATAN: 14,
   T_BERAS: 15,
   T_PAJAK: 16,
-
   JUMLAH_PENGHASILAN: 17,
 
-  // POTONGAN
+  // POTONGAN APLIKASI GAJI
   POT_BERAS: 18,
   IWP: 19,
   BPJS: 20,
@@ -265,11 +264,12 @@ const POSISI = {
   POTONGAN_LAIN: 25,
   TAPERUM: 26,
 
-  // 27 = kolom pemisah
+  // HASIL APLIKASI GAJI
+  TOTAL_POTONGAN_PAYROLL: 27,
+  GAJI_SETELAH_PAYROLL: 28,
 
-  // TOTAL POTONGAN / GAJI SETELAH PAYROLL
-  TOTAL_POTONGAN_PAYROLL: 28,
-  GAJI_SETELAH_PAYROLL: 29,
+  // KANTOR BAPAS
+  KANTOR_BAPAS: 29,
 
   // POTONGAN BAPAS
   IURAN_DANSOS: 30,
@@ -288,14 +288,9 @@ const POSISI = {
   BATIK_DWP_NASIONAL_KE_1: 43,
   KACAMATA_KE_2: 44,
 
-  // 45 = kolom pemisah
-
-  TOTAL_BAPAS: 46,
-
-  // UANG TUNAI / GAJI BERSIH YANG DITERIMA
-  GAJI_BERSIH: 47,
+  // UANG TUNAI / GAJI BERSIH
+  GAJI_BERSIH: 45,
 } as const;
-
 export async function POST(
   request: Request
 ) {
@@ -773,18 +768,67 @@ const gajiBersih =
       POSISI.GAJI_BERSIH
     )
   );
+console.log("=== CEK GAJI BERSIH IMPORT ===");
+console.log("Nama:", kolom(row, POSISI.NAMA));
+console.log("POSISI.GAJI_BERSIH:", POSISI.GAJI_BERSIH);
+console.log("RAW COL_45:", kolom(row, 45));
+console.log("HASIL gajiBersih:", gajiBersih);
+const totalPotongan = angka(
+  kolom(
+    row,
+    POSISI.TOTAL_POTONGAN_PAYROLL
+  )
+);
 
-/*
- * Total potongan.
- *
- * Mengikuti selisih antara
- * jumlah penghasilan dan gaji bersih.
- *
- * Ini mencakup seluruh kelompok
- * potongan pada Excel.
- */
-const totalPotongan =
-  totalPendapatan - gajiBersih;
+if (
+  String(
+    kolom(row, POSISI.NAMA)
+  ).trim() === "Lulu Od'hiyani"
+) {
+  console.log("=== DEBUG LULU ===");
+  console.log("Nama:", kolom(row, POSISI.NAMA));
+  console.log("Gaji Pokok:", gajiPokok);
+  console.log("T. Istri/Suami:", tIstriSuami);
+  console.log("T. Anak:", tAnak);
+  console.log("T. Fungsional:", tFungsional);
+  console.log("Pembulatan:", pembulatan);
+  console.log("T. Beras:", tBeras);
+  console.log("T. Pajak:", tPajak);
+  console.log("Jumlah Penghasilan:", totalPendapatan);
+  console.log("Total Potongan Payroll:", totalPotongan);
+  console.log("Gaji Setelah Payroll:", angka(
+    kolom(row, POSISI.GAJI_SETELAH_PAYROLL)
+  ));
+  console.log("Kantor Bapas:", angka(
+    kolom(row, POSISI.KANTOR_BAPAS)
+  ));
+  console.log("Kacamata:", kacamataKe2);
+  console.log("Gaji Bersih:", gajiBersih);
+  console.log("=== POTONGAN BAPAS LULU ===");
+console.log("Iuran Dansos:", iuranDansos);
+console.log("Iuran DW:", iuranDw);
+console.log("Koperasi:", koperasi);
+console.log("IPKEMINDO:", ipkemindo);
+console.log("BRI:", bri);
+console.log("BJB:", bjb);
+console.log("BAPOR:", bapor);
+console.log("Arisan Bapas:", arisanBapas);
+console.log("Perpisahan:", perpisahanPegawai);
+console.log("Anak Asuh:", anakAsuh);
+console.log("Iuran PIPAS:", iuranDwPipas);
+console.log("Arisan PIPAS:", arisanPipas);
+console.log("INKOPASINDO:", inkopasindo);
+console.log("Batik DWP:", batikDwpNasionalKe1);
+console.log("Kacamata:", kacamataKe2);
+console.log("=== RAW COL LULU 29-45 ===");
+
+for (let i = 29; i <= 45; i++) {
+  console.log(
+    `COL_${i}:`,
+    kolom(row, i)
+  );
+}
+}
 dataSiap.push({
   pengguna_id: penggunaId,
   bulan,
@@ -872,6 +916,7 @@ dataSiap.push({
           kesalahan,
         },
         { status: 400 }
+        
       );
     }
 
