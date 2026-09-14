@@ -160,11 +160,7 @@ export default function RincianGajiPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-const tanggalCetak = new Date().toLocaleDateString("id-ID", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+
   async function loadData() {
     try {
       setLoading(true);
@@ -795,24 +791,6 @@ const potonganBapas =
   <strong>{rupiah(penghasilanBersih)}</strong>
 </div>
 
-  <div className="tanggal-slip">
-    Jakarta Barat, {tanggalCetak}
-  </div>
-
-  <div className="ttd-slip">
-    <div>
-      Mengetahui,<br />
-      Pejabat Penanggung Jawab
-      <br /><br /><br /><br />
-      <b>____________________________</b>
-    </div>
-
-    <div>
-      Pegawai yang Bersangkutan
-      <br /><br /><br /><br /><br />
-      <b>{nama || "-"}</b>
-    </div>
-  </div>
 </div>
 
 
@@ -1052,36 +1030,14 @@ const potonganBapas =
       font-size: 18px;
     }
 
-    /* =========================
-       TANGGAL & TTD
-    ========================== */
-
-    .tanggal-slip {
-      margin-top: 12px;
-      text-align: right;
-      font-size: 10px;
-    }
-
-    .ttd-slip {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      margin-top: 10px;
-      text-align: center;
-      font-size: 10px;
-    }
-
-    .ttd-slip > div {
-      min-height: 100px;
-    }
-
+  
     /* Hindari pemotongan slip */
     .slip-header,
     .identitas-slip,
     .slip-columns,
     .bersih-box,
     .bapas-section,
-    .sisa-box,
-    .ttd-slip {
+    .sisa-box {
       break-inside: avoid;
       page-break-inside: avoid;
     }
