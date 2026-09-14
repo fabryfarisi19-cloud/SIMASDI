@@ -249,6 +249,16 @@ function cetakSlip(e?: React.MouseEvent<HTMLButtonElement>) {
       : "";
 
   const penghasilanBersih = angka(gaji?.gaji_bersih);
+  const totalPotonganPayroll =
+  angka(gaji?.pot_beras) +
+  angka(gaji?.iwp) +
+  angka(gaji?.bpjs) +
+  angka(gaji?.pot_pph) +
+  angka(gaji?.sewa_rumah) +
+  angka(gaji?.tunggakan) +
+  angka(gaji?.utang_lebih) +
+  angka(gaji?.potongan_lain) +
+  angka(gaji?.taperum);
 const potonganBapas =
   angka(gaji?.iuran_dansos) +
   angka(gaji?.iuran_dw) +
@@ -265,7 +275,8 @@ const potonganBapas =
   angka(gaji?.inkopasindo) +
   angka(gaji?.batik_dwp_nasional) +
   angka(gaji?.kacamata_ke_2);
-
+const totalSeluruhPotongan =
+  totalPotonganPayroll + potonganBapas;
   return (
     <main className="min-h-screen bg-slate-50 p-4 md:p-8 print:bg-white print:p-0">
       <div className="mx-auto max-w-6xl print:max-w-none">
@@ -390,12 +401,12 @@ const potonganBapas =
                   color="green"
                 />
 
-                <SummaryCard
-                  icon={<TrendingDown size={22} />}
-                  title="Total Potongan"
-                  value={gaji.total_potongan}
-                  color="red"
-                />
+               <SummaryCard
+  icon={<TrendingDown size={22} />}
+  title="Total Potongan"
+  value={totalSeluruhPotongan}
+  color="red"
+/>
 
                 <div className="rounded-2xl bg-blue-700 p-6 shadow-lg text-white">
                   <div className="flex items-center gap-3 mb-4">
@@ -513,18 +524,12 @@ const potonganBapas =
       <div className="border-t border-slate-200 pt-4">
         <Row
           label="Jumlah Potongan"
-          value={angka(gaji?.total_potongan)}
+         value={totalPotonganPayroll}
           bold
         />
       </div>
 
-      <div className="border-t border-blue-200 pt-4">
-        <Row
-          label="Gaji Bersih"
-          value={angka(gaji?.gaji_bersih)}
-          bold
-        />
-      </div>
+  
 <div className="border-t border-slate-200 pt-4">
   <Row
     label="Potongan BAPAS"
@@ -532,6 +537,20 @@ const potonganBapas =
     bold
   />
 </div>
+<div className="border-t border-red-200 pt-4">
+  <Row
+    label="Total Seluruh Potongan"
+    value={totalSeluruhPotongan}
+    bold
+  />
+</div>
+    <div className="border-t border-blue-200 pt-4">
+        <Row
+          label="Gaji Bersih"
+          value={angka(gaji?.gaji_bersih)}
+          bold
+        />
+      </div>
     </div>
   </section>
 
@@ -583,6 +602,9 @@ const potonganBapas =
                         <th className="text-right px-6 py-4 font-semibold text-slate-600">
                           Gaji Bersih
                         </th>
+                        <th className="text-center px-6 py-4 font-semibold text-slate-600">
+  Aksi
+</th>
                       </tr>
                     </thead>
 
@@ -604,9 +626,43 @@ const potonganBapas =
                             {rupiah(item.total_potongan)}
                           </td>
 
-                          <td className="px-6 py-4 text-right font-bold text-blue-700">
-                            {rupiah(item.gaji_bersih)}
-                          </td>
+                      <td className="px-6 py-4 text-right font-bold text-blue-700">
+  {rupiah(item.gaji_bersih)}
+</td>
+
+<td className="px-6 py-4">
+  <div className="flex items-center justify-center gap-2">
+  <button
+  type="button"
+  onClick={() => {
+    setGaji(item);
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 100);
+  }}
+  className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+>
+  Lihat Rincian
+</button>
+    <button
+      type="button"
+      onClick={() => {
+        setGaji(item);
+
+        setTimeout(() => {
+          window.print();
+        }, 150);
+      }}
+      className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+    >
+      Cetak Slip
+    </button>
+  </div>
+</td>
                         </tr>
                       ))}
                     </tbody>
@@ -722,7 +778,7 @@ const potonganBapas =
 
   <div className="print-total">
     <span>Jml Potongan</span>
-    <strong>{rupiah(gaji?.total_potongan)}</strong>
+    <strong>{rupiah(totalPotonganPayroll)}</strong>
   </div>
 
   <div className="print-total">

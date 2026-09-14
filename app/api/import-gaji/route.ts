@@ -238,7 +238,9 @@ const POSISI = {
   PANGKAT: 3,
   REKENING: 4,
 
+  // =========================
   // PENGHASILAN
+  // =========================
   GAJI_POKOK: 5,
   T_ISTRI_SUAMI: 6,
   T_ANAK: 7,
@@ -251,9 +253,12 @@ const POSISI = {
   PEMBULATAN: 14,
   T_BERAS: 15,
   T_PAJAK: 16,
+
   JUMLAH_PENGHASILAN: 17,
 
+  // =========================
   // POTONGAN APLIKASI GAJI
+  // =========================
   POT_BERAS: 18,
   IWP: 19,
   BPJS: 20,
@@ -264,31 +269,34 @@ const POSISI = {
   POTONGAN_LAIN: 25,
   TAPERUM: 26,
 
-  // HASIL APLIKASI GAJI
   TOTAL_POTONGAN_PAYROLL: 27,
   GAJI_SETELAH_PAYROLL: 28,
 
-  // KANTOR BAPAS
-  KANTOR_BAPAS: 29,
-
+  // =========================
   // POTONGAN BAPAS
- IURAN_DANSOS: 29,
-IURAN_DW: 30,
-KOPERASI: 31,
-IPKEMINDO: 32,
-BRI: 33,
-BJB: 34,
-BAPOR: 35,
-ARISAN_BAPAS: 36,
-PERPISAHAN_PEGAWAI: 37,
-ANAK_ASUH: 38,
-IURAN_PIPAS: 39,
-ARISAN_PIPAS: 40,
-INKOPASINDO: 41,
-BATIK_DWP_NASIONAL_KE_1: 42,
-KACAMATA_KE_2: 43,
+  // =========================
+  IURAN_DANSOS: 29,
+  IURAN_DW: 30,
+  KOPERASI: 31,
+  IPKEMINDO: 32,
+  BRI: 33,
+  BJB: 34,
+  BAPOR: 35,
+  ARISAN_BAPAS: 36,
+  PERPISAHAN_PEGAWAI: 37,
+  ANAK_ASUH: 38,
+  IURAN_PIPAS: 39,
+  ARISAN_PIPAS: 40,
+  INKOPASINDO: 41,
+  BATIK_DWP_NASIONAL_KE_1: 42,
+  KACAMATA_KE_2: 43,
 
-GAJI_BERSIH: 45,
+  TOTAL_POTONGAN_BAPAS: 44,
+
+  // =========================
+  // HASIL AKHIR
+  // =========================
+  GAJI_BERSIH: 45,
 } as const;
 export async function POST(
   request: Request
@@ -797,9 +805,6 @@ if (
   console.log("Total Potongan Payroll:", totalPotongan);
   console.log("Gaji Setelah Payroll:", angka(
     kolom(row, POSISI.GAJI_SETELAH_PAYROLL)
-  ));
-  console.log("Kantor Bapas:", angka(
-    kolom(row, POSISI.KANTOR_BAPAS)
   ));
   console.log("Kacamata:", kacamataKe2);
   console.log("Gaji Bersih:", gajiBersih);
