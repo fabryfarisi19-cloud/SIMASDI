@@ -925,34 +925,26 @@ dataSiap.push({
      * Kunci:
      * pengguna_id + bulan + tahun
      */
-    for (const item of dataSiap) {
-      const { error } =
-        await supabaseAdmin
-          .from("rincian_gaji")
-          .upsert(
-            item,
-            {
-              onConflict:
-                "pengguna_id,bulan,tahun",
-            }
-          );
+   const { error } = await supabaseAdmin
+  .from("rincian_gaji")
+  .upsert(dataSiap, {
+    onConflict: "pengguna_id,bulan,tahun",
+  });
 
-      if (error) {
-        console.error(
-          "Gagal menyimpan rincian gaji:",
-          error
-        );
+if (error) {
+  console.error(
+    "Gagal menyimpan rincian gaji:",
+    error
+  );
 
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              `Gagal menyimpan data gaji untuk pengguna ID ${item.pengguna_id}: ${error.message}`,
-          },
-          { status: 500 }
-        );
-      }
-    }
+  return NextResponse.json(
+    {
+      success: false,
+      error: `Gagal menyimpan data gaji: ${error.message}`,
+    },
+    { status: 500 }
+  );
+}
 
     return NextResponse.json({
       success: true,
