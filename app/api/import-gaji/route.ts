@@ -780,12 +780,37 @@ console.log("Nama:", kolom(row, POSISI.NAMA));
 console.log("POSISI.GAJI_BERSIH:", POSISI.GAJI_BERSIH);
 console.log("RAW COL_45:", kolom(row, 45));
 console.log("HASIL gajiBersih:", gajiBersih);
-const totalPotongan = angka(
-  kolom(
-    row,
-    POSISI.TOTAL_POTONGAN_PAYROLL
-  )
-);
+const totalPotonganPayroll =
+  potBeras +
+  iwp +
+  bpjs +
+  potPph +
+  sewaRumah +
+  tunggakan +
+  utangLebih +
+  potonganLain +
+  taperum;
+
+const totalPotonganBapas =
+  iuranDansos +
+  iuranDw +
+  koperasi +
+  ipkemindo +
+  bri +
+  bjb +
+  bapor +
+  arisanBapas +
+  perpisahanPegawai +
+  anakAsuh +
+  iuranDwPipas +
+  arisanPipas +
+  inkopasindo +
+  batikDwpNasionalKe1 +
+  kacamataKe2;
+
+const totalPotongan =
+  totalPotonganPayroll +
+  totalPotonganBapas;
 
 if (
   String(
