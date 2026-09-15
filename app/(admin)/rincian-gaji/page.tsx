@@ -427,134 +427,131 @@ const totalSeluruhPotongan =
               </div>
 
             {/* DETAIL GAJI SESUAI EXCEL */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-  {/* PENGHASILAN */}
-  <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              {/* PENGHASILAN */}
+              <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
 
-    <div className="border-b border-slate-200 px-6 py-5">
-      <h2 className="text-lg font-bold text-slate-900">
-        Penghasilan
-      </h2>
-    </div>
+                <div className="border-b border-slate-200 px-6 py-5">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Penghasilan
+                  </h2>
+                </div>
 
-    <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4">
+                  <Row label="Gaji Pokok" value={angka(gaji?.gaji_pokok)} />
+                  <Row label="T. Istri/Suami" value={angka(gaji?.t_istri_suami)} />
+                  <Row label="T. Anak" value={angka(gaji?.t_anak)} />
+                  <Row label="T. Umum" value={angka(gaji?.t_umum)} />
+                  <Row label="T. Papua" value={angka(gaji?.t_papua)} />
+                  <Row label="T. Terpencil" value={angka(gaji?.t_terpencil)} />
+                  <Row label="T. Struktural" value={angka(gaji?.t_struktural)} />
+                  <Row label="T. Fungsional" value={angka(gaji?.t_fungsional)} />
+                  <Row label="Lain-Lain" value={angka(gaji?.lain_lain)} />
+                  <Row label="Pembulatan" value={angka(gaji?.pembulatan)} />
+                  <Row label="T. Beras" value={angka(gaji?.t_beras)} />
+                  <Row label="T. Pajak" value={angka(gaji?.t_pajak)} />
 
-      <Row label="Gaji Pokok" value={angka(gaji?.gaji_pokok)} />
-      <Row label="T. Istri/Suami" value={angka(gaji?.t_istri_suami)} />
-      <Row label="T. Anak" value={angka(gaji?.t_anak)} />
-      <Row label="T. Umum" value={angka(gaji?.t_umum)} />
-      <Row label="T. Papua" value={angka(gaji?.t_papua)} />
-      <Row label="T. Terpencil" value={angka(gaji?.t_terpencil)} />
-      <Row label="T. Struktural" value={angka(gaji?.t_struktural)} />
-      <Row label="T. Fungsional" value={angka(gaji?.t_fungsional)} />
-      <Row label="Lain-Lain" value={angka(gaji?.lain_lain)} />
-      <Row label="Pembulatan" value={angka(gaji?.pembulatan)} />
-      <Row label="T. Beras" value={angka(gaji?.t_beras)} />
-      <Row label="T. Pajak" value={angka(gaji?.t_pajak)} />
+                  <div className="border-t border-slate-200 pt-4">
+                    <Row
+                      label="Jumlah Penghasilan"
+                      value={angka(gaji?.total_pendapatan)}
+                      bold
+                    />
+                  </div>
+                </div>
+              </section>
 
-      <div className="border-t border-slate-200 pt-4">
-        <Row
-          label="Jumlah Penghasilan"
-          value={angka(gaji?.total_pendapatan)}
-          bold
-        />
-      </div>
+              {/* POTONGAN */}
+              <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
 
-    </div>
-  </section>
+                <div className="border-b border-slate-200 px-6 py-5">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Potongan
+                  </h2>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  {/* POTONGAN PAYROLL */}
+                  <p className="font-bold text-slate-900">
+                    Potongan Payroll
+                  </p>
+
+                  <div className="space-y-3">
+                    <Row label="Pot. Beras" value={angka(gaji?.pot_beras)} />
+                    <Row label="IWP" value={angka(gaji?.iwp)} />
+                    <Row label="BPJS" value={angka(gaji?.bpjs)} />
+                    <Row label="Pot. PPh" value={angka(gaji?.pot_pph)} />
+                    <Row label="Sewa Rumah" value={angka(gaji?.sewa_rumah)} />
+                    <Row label="Tunggakan" value={angka(gaji?.tunggakan)} />
+                    <Row label="Utang Lebih" value={angka(gaji?.utang_lebih)} />
+                    <Row label="Potongan Lain" value={angka(gaji?.potongan_lain)} />
+                    <Row label="Taperum" value={angka(gaji?.taperum)} />
+                  </div>
+
+                  <div className="border-t border-slate-200 pt-4">
+                    <Row
+                      label="Jumlah Potongan Payroll"
+                      value={totalPotonganPayroll}
+                      bold
+                    />
+                  </div>
+
+                  {/* POTONGAN BAPAS */}
+                  <div className="border-t border-slate-200 pt-5">
+                    <p className="font-bold text-slate-900 mb-4">
+                      Potongan BAPAS
+                    </p>
+
+                    <div className="space-y-3">
+                      <Row label="Iuran Dansos" value={angka(gaji?.iuran_dansos)} />
+                      <Row label="Iuran DW" value={angka(gaji?.iuran_dw)} />
+                      <Row label="Koperasi" value={angka(gaji?.koperasi)} />
+                      <Row label="IPKEMINDO" value={angka(gaji?.ipkemindo)} />
+                      <Row label="BRI" value={angka(gaji?.bri)} />
+                      <Row label="BJB" value={angka(gaji?.bjb)} />
+                      <Row label="BAPOR" value={angka(gaji?.bapor)} />
+                      <Row label="Arisan BAPAS" value={angka(gaji?.arisan_bapas)} />
+                      <Row label="Perpisahan Pegawai" value={angka(gaji?.perpisahan)} />
+                      <Row label="Anak Asuh" value={angka(gaji?.anak_asuh)} />
+                      <Row label="Iuran PIPAS" value={angka(gaji?.iuran_pipas)} />
+                      <Row label="Arisan PIPAS" value={angka(gaji?.arisan_pipas)} />
+                      <Row label="INKOPASINDO" value={angka(gaji?.inkopasindo)} />
+                      <Row label="Batik DWP Nasional ke-1" value={angka(gaji?.batik_dwp_nasional)} />
+                      <Row label="Kacamata ke-2" value={angka(gaji?.kacamata_ke_2)} />
+                    </div>
+
+                    <div className="border-t border-red-200 mt-4 pt-4">
+                      <Row
+                        label="Jumlah Potongan BAPAS"
+                        value={potonganBapas}
+                        bold
+                      />
+                    </div>
+                  </div>
+
+                  {/* TOTAL */}
+                  <div className="border-t border-red-200 pt-4">
+                    <Row
+                      label="Total Seluruh Potongan"
+                      value={totalSeluruhPotongan}
+                      bold
+                    />
+                  </div>
+
+                  {/* GAJI BERSIH */}
+                  <div className="border-t border-blue-200 pt-4">
+                    <Row
+                      label="Gaji Bersih"
+                      value={angka(gaji?.gaji_bersih)}
+                      bold
+                    />
+                  </div>
+                </div>
+              </section>
+            </div>
 
 
-  {/* POTONGAN */}
-  <section className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-
-    <div className="border-b border-slate-200 px-6 py-5">
-      <h2 className="text-lg font-bold text-slate-900">
-        Potongan
-      </h2>
-    </div>
-
-    <div className="p-6 space-y-4">
-
-      <Row
-        label="Pot. Beras"
-        value={angka(gaji?.pot_beras)}
-      />
-
-      <Row
-        label="IWP"
-        value={angka(gaji?.iwp)}
-      />
-
-      <Row
-        label="BPJS"
-        value={angka(gaji?.bpjs)}
-      />
-
-      <Row
-        label="Pot. PPh"
-        value={angka(gaji?.pot_pph)}
-      />
-
-      <Row
-        label="Sewa Rumah"
-        value={angka(gaji?.sewa_rumah)}
-      />
-
-      <Row
-        label="Tunggakan"
-        value={angka(gaji?.tunggakan)}
-      />
-
-      <Row
-        label="Utang Lebih"
-        value={angka(gaji?.utang_lebih)}
-      />
-
-      <Row
-        label="Potongan Lain"
-        value={angka(gaji?.potongan_lain)}
-      />
-
-      <Row
-        label="Taperum"
-        value={angka(gaji?.taperum)}
-      />
-
-      <div className="border-t border-slate-200 pt-4">
-        <Row
-          label="Jumlah Potongan"
-         value={totalPotonganPayroll}
-          bold
-        />
-      </div>
-
-  
-<div className="border-t border-slate-200 pt-4">
-  <Row
-    label="Potongan BAPAS"
-    value={potonganBapas}
-    bold
-  />
-</div>
-<div className="border-t border-red-200 pt-4">
-  <Row
-    label="Total Seluruh Potongan"
-    value={totalSeluruhPotongan}
-    bold
-  />
-</div>
-    <div className="border-t border-blue-200 pt-4">
-        <Row
-          label="Gaji Bersih"
-          value={angka(gaji?.gaji_bersih)}
-          bold
-        />
-      </div>
-    </div>
-  </section>
-
-</div>
               {/* KETERANGAN */}
               {gaji.keterangan && (
                 <div className="mt-6 rounded-2xl bg-blue-50 border border-blue-100 p-5">
@@ -622,9 +619,34 @@ const totalSeluruhPotongan =
                             {rupiah(item.total_pendapatan)}
                           </td>
 
-                          <td className="px-6 py-4 text-right text-red-700">
-                            {rupiah(item.total_potongan)}
-                          </td>
+                         <td className="px-6 py-4 text-right text-red-700">
+  {rupiah(
+    angka(item.pot_beras) +
+    angka(item.iwp) +
+    angka(item.bpjs) +
+    angka(item.pot_pph) +
+    angka(item.sewa_rumah) +
+    angka(item.tunggakan) +
+    angka(item.utang_lebih) +
+    angka(item.potongan_lain) +
+    angka(item.taperum) +
+    angka(item.iuran_dansos) +
+    angka(item.iuran_dw) +
+    angka(item.koperasi) +
+    angka(item.ipkemindo) +
+    angka(item.bri) +
+    angka(item.bjb) +
+    angka(item.bapor) +
+    angka(item.arisan_bapas) +
+    angka(item.perpisahan) +
+    angka(item.anak_asuh) +
+    angka(item.iuran_pipas) +
+    angka(item.arisan_pipas) +
+    angka(item.inkopasindo) +
+    angka(item.batik_dwp_nasional) +
+    angka(item.kacamata_ke_2)
+  )}
+</td>
 
                       <td className="px-6 py-4 text-right font-bold text-blue-700">
   {rupiah(item.gaji_bersih)}
