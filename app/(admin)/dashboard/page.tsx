@@ -51,7 +51,11 @@ const [showDetail, setShowDetail] = useState(false);
 const [showPreview, setShowPreview] = useState(false);
 const router = useRouter();
 const [user, setUser] = useState<any>(null);
-
+  const [userLoaded, setUserLoaded] = useState(false);
+const [jadwalApelHariIni, setJadwalApelHariIni] = useState<any[]>([]);
+const [jadwalApelBesok, setJadwalApelBesok] = useState<any[]>([]);
+const [jadwalPelayananHariIni, setJadwalPelayananHariIni] = useState<any>(null);
+const [jadwalPelayananBesok, setJadwalPelayananBesok] = useState<any>(null);
   const updateJam = () => {
     const now = new Date();
 
@@ -188,21 +192,139 @@ const [user, setUser] = useState<any>(null);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    setUserLoaded(true);
   };
 
   const refreshData = async () => {
     try {
-      await Promise.all([
-        loadGrafik(),
-        loadDashboard(),
-        loadAgenda(),
-        loadSuratTerbaru(),
-      ]);
+     await Promise.all([
+  loadGrafik(),
+  loadDashboard(),
+  loadAgenda(),
+  loadSuratTerbaru(),
+  loadJadwalApel(),
+  loadJadwalPelayanan(),
+]);
     } catch (error) {
       console.error("Gagal memperbarui data:", error);
     }
   };
+const loadJadwalApel = async () => {
+  const hariIniDate = new Date();
 
+  const formatTanggal = (date: Date) => {
+    const tahun = date.getFullYear();
+    const bulan = String(date.getMonth() + 1).padStart(2, "0");
+    const hari = String(date.getDate()).padStart(2, "0");
+
+    return `${tahun}-${bulan}-${hari}`;
+  };
+
+  const tanggalHariIni = formatTanggal(hariIniDate);
+
+  const besokDate = new Date(hariIniDate);
+  besokDate.setDate(besokDate.getDate() + 1);
+
+  const tanggalBesok = formatTanggal(besokDate);
+
+  const { data: dataHariIni, error: errorHariIni } = await supabase
+    .from("jadwal_apel")
+    .select("*")
+    .eq("tanggal", tanggalHariIni)
+    .order("id");
+
+  if (errorHariIni) {
+    console.error(
+      "Gagal mengambil jadwal apel hari ini:",
+      errorHariIni
+    );
+  }
+
+  const { data: dataBesok, error: errorBesok } = await supabase
+    .from("jadwal_apel")
+    .select("*")
+    .eq("tanggal", tanggalBesok)
+    .order("id");
+
+  if (errorBesok) {
+    console.error(
+      "Gagal mengambil jadwal apel besok:",
+      errorBesok
+    );
+  }
+
+  setJadwalApelHariIni(dataHariIni || []);
+  setJadwalApelBesok(dataBesok || []);
+};
+const loadJadwalPelayanan = async () => {
+  const hariIniDate = new Date();
+
+  const formatTanggal = (date: Date) => {
+    const tahun = date.getFullYear();
+    const bulan = String(date.getMonth() + 1).padStart(2, "0");
+    const hari = String(date.getDate()).padStart(2, "0");
+
+    return `${tahun}-${bulan}-${hari}`;
+  };
+
+  const tanggalHariIni = formatTanggal(hariIniDate);
+
+  const besokDate = new Date(hariIniDate);
+  besokDate.setDate(besokDate.getDate() + 1);
+
+  const tanggalBesok = formatTanggal(besokDate);
+
+  const { data: dataHariIni, error: errorHariIni } = await supabase
+    .from("jadwal_pelayanan_publik")
+    .select("*")
+    .eq("tanggal", tanggalHariIni)
+    .eq("aktif", true)
+    .maybeSingle();
+
+  if (errorHariIni) {
+    console.error(
+      "Gagal mengambil jadwal pelayanan publik hari ini:",
+      errorHariIni
+    );
+  }
+
+  const { data: dataBesok, error: errorBesok } = await supabase
+    .from("jadwal_pelayanan_publik")
+    .select("*")
+    .eq("tanggal", tanggalBesok)
+    .eq("aktif", true)
+    .maybeSingle();
+
+  if (errorBesok) {
+    console.error(
+      "Gagal mengambil jadwal pelayanan publik besok:",
+      errorBesok
+    );
+  }
+setJadwalPelayananHariIni(
+  dataHariIni
+    ? {
+        dutaLayanan: dataHariIni.duta_layanan,
+        pelayananPublik: dataHariIni.pelayanan_publik,
+        maganghub: dataHariIni.maganghub,
+        pengawas: dataHariIni.pengawas,
+        koordinator: dataHariIni.koordinator,
+      }
+    : null
+);
+
+setJadwalPelayananBesok(
+  dataBesok
+    ? {
+        dutaLayanan: dataBesok.duta_layanan,
+        pelayananPublik: dataBesok.pelayanan_publik,
+        maganghub: dataBesok.maganghub,
+        pengawas: dataBesok.pengawas,
+        koordinator: dataBesok.koordinator,
+      }
+    : null
+);
+};
  const cetakPDF = () => {
   const doc = new jsPDF();
 
@@ -407,12 +529,14 @@ const [user, setUser] = useState<any>(null);
       )
       .subscribe();
 
-    updateJam();
-    loadGrafik();
-    loadDashboard();
-    loadAgenda();
-    loadSuratTerbaru();
-    loadUser();
+  updateJam();
+loadGrafik();
+loadDashboard();
+loadAgenda();
+loadSuratTerbaru();
+loadUser();
+loadJadwalApel();
+loadJadwalPelayanan();
 
     const interval = setInterval(updateJam, 1000);
 
@@ -421,6 +545,275 @@ const [user, setUser] = useState<any>(null);
       supabase.removeChannel(channel);
     };
   }, []);
+
+  if (!userLoaded) return null;
+
+  const role = String(user?.role || "").trim().toLowerCase();
+  type PelayananPublik = {
+  dutaLayanan: string;
+  pelayananPublik: string;
+  maganghub: string;
+  pengawas: string;
+  koordinator: string;
+};
+
+  // ============================================================
+  // DASHBOARD NON-ADMIN
+  // Hanya menampilkan Pengumuman: Jadwal Petugas Apel
+  // hari ini dan besok.
+  // Sumber jadwal: Nota Dinas Jadwal Piket Petugas Apel
+  // September 2026 Bapas Kelas I Jakarta Barat.
+  // ============================================================
+ const roleDenganPengumumanJadwal = [
+  "kabapas",
+  "kaur keuangan",
+  "kasubag tu",
+  "kasi bka",
+  "kasi bkd",
+  "kasubsi bimker anak",
+  "kasubsi bimker dewasa",
+  "kasubsi registrasi dewasa",
+  "kasubsi bimkemas anak",
+  "kasubsi bimkemas dewasa",
+  "kasubsi registrasi anak",
+  "kaur kepegawaian",
+  "kaur umum",
+  "admin umum",
+  "admin keuangan",
+  "staf",
+  "pegawai",
+  "pk madya",
+  "pk muda",
+  "pk pertama",
+  "arsiparis",
+  "ppnpn",
+];
+
+if (roleDenganPengumumanJadwal.includes(role)) {
+    const tanggalHariIni = new Date();
+    const tanggalBesok = new Date(tanggalHariIni);
+    tanggalBesok.setDate(tanggalBesok.getDate() + 1);
+
+    const formatTanggal = (d: Date) =>
+      d.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+    const keyTanggal = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+
+   
+    type PelayananPublik = {
+      dutaLayanan: string;
+      pelayananPublik: string;
+      maganghub: string;
+      pengawas: string;
+      koordinator: string;
+    };
+
+
+  const tampilJadwal = (
+  data: any[],
+  tanggal: Date
+) => {
+  if (!data || data.length === 0) {
+    return (
+      <p className="text-sm text-slate-400">
+        Tidak ada jadwal petugas apel pada tanggal ini.
+      </p>
+    );
+  }
+
+  const jamApel = data[0]?.jam_apel || "08:00";
+
+  return (
+    <div className="space-y-2">
+      <div className="rounded-2xl bg-orange-100 px-4 py-3 mb-3">
+        <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">
+          Waktu Apel
+        </p>
+
+        <p className="text-lg font-black text-orange-900">
+          {jamApel} WIB
+        </p>
+      </div>
+
+      {data.map((item) => (
+        <div
+          key={item.id}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-xl bg-white border border-orange-100 px-4 py-3"
+        >
+          <div>
+            <span className="text-sm font-semibold text-slate-500">
+              {item.tugas}
+            </span>
+
+            {item.jabatan && (
+              <p className="text-xs text-slate-400 mt-1">
+                {item.jabatan}
+              </p>
+            )}
+          </div>
+
+          <span className="text-sm font-bold text-slate-800 sm:text-right">
+            {item.nama_petugas}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+  const KartuApel = ({
+  data,
+  label,
+  tanggal,
+}: {
+  data: any[];
+  label: string;
+  tanggal: Date;
+}) => (
+      <div className="rounded-3xl border border-orange-100 bg-orange-50/70 p-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-orange-600">
+          {label}
+        </p>
+        <p className="font-bold text-slate-800 mb-4">
+          {formatTanggal(tanggal)}
+        </p>
+        {tampilJadwal(data, tanggal)}
+      </div>
+    );
+
+    const KartuPelayanan = ({
+      data,
+      label,
+      tanggal,
+    }: {
+      data: PelayananPublik | undefined;
+      label: string;
+      tanggal: Date;
+    }) => (
+      <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 p-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+          {label}
+        </p>
+        <p className="font-bold text-slate-800 mb-4">
+          {formatTanggal(tanggal)}
+        </p>
+        {data ? (
+          <div className="space-y-2">
+            {[
+              ["Duta Layanan", data.dutaLayanan],
+              ["Pelayanan Publik", data.pelayananPublik],
+              ["Maganghub", data.maganghub],
+              ["Pengawas", data.pengawas],
+              ["Koordinator", data.koordinator],
+            ].map(([jabatan, nama]) => (
+              <div key={jabatan} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-xl bg-white border border-emerald-100 px-4 py-3">
+                <span className="text-sm font-semibold text-slate-500">{jabatan}</span>
+                <span className="text-sm font-bold text-slate-800 sm:text-right">{nama}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">Tidak ada jadwal pelayanan publik pada tanggal ini.</p>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-[#0B2E78] via-[#1D4ED8] to-[#3B82F6] px-8 py-6 text-white">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/logoimipas.png"
+                alt="Logo"
+                width={65}
+                height={70}
+              />
+              <div>
+                <h1 className="text-3xl font-black">SIMASDI</h1>
+                <p className="text-blue-100 text-sm">
+                  Sistem Informasi Manajemen Arsip Digital
+                </p>
+                <p className="text-blue-100 text-sm">
+                  Balai Pemasyarakatan Kelas I Jakarta Barat
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-8 py-5 flex flex-col md:flex-row md:justify-between gap-3">
+            <div>
+              <p className="text-sm text-slate-500">Selamat Datang</p>
+              <h2 className="text-2xl font-black text-blue-700">
+                {user?.nama || "Pengguna"}
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {user?.role || "Pengguna"}
+              </p>
+            </div>
+            <div className="md:text-right">
+              <p className="font-semibold text-blue-700">{jam}</p>
+              <p className="text-sm text-slate-500">{tanggal}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Bell className="text-blue-600" size={28} />
+            <div>
+              <h2 className="text-2xl font-black text-slate-800">
+                Pengumuman
+              </h2>
+              <p className="text-sm text-slate-500">
+                Informasi jadwal petugas apel
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-lg font-black text-orange-700 mb-3">Jadwal Petugas Apel</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <KartuApel
+  data={jadwalApelHariIni}
+  label="Hari Ini"
+  tanggal={tanggalHariIni}
+/>
+
+<KartuApel
+  data={jadwalApelBesok}
+  label="Besok"
+  tanggal={tanggalBesok}
+/>
+          </div>
+
+          <h3 className="text-lg font-black text-emerald-700 mt-8 mb-3">Jadwal Pelayanan Publik</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+         <KartuPelayanan
+  data={jadwalPelayananHariIni}
+  label="Hari Ini"
+  tanggal={tanggalHariIni}
+/>
+
+<KartuPelayanan
+  data={jadwalPelayananBesok}
+  label="Besok"
+  tanggal={tanggalBesok}
+/>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
  return (
 <div className="space-y-6">

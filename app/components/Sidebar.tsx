@@ -12,15 +12,16 @@ import {
   Archive,
   Users,
   BookOpen,
-  CalendarDays,
-  LogOut,
-  Menu,
-  X,
-  Megaphone,
-  Volume2,
-   Wallet,
-   FileSpreadsheet,
- KeyRound,
+ CalendarDays,
+CalendarRange,
+LogOut,
+Menu,
+X,
+Megaphone,
+Volume2,
+Wallet,
+FileSpreadsheet,
+KeyRound,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
@@ -82,6 +83,12 @@ const menu = [
     icon: CalendarDays,
     roles: ["Kaur Umum", "Kabapas","Kasubag TU", "Petugas"],
   },
+  {
+  nama: "Manajemen Jadwal",
+  href: "/manajemen-jadwal",
+  icon: CalendarRange,
+  roles: ["Admin"],
+},
 
   {
     nama: "TV Apel",
