@@ -35,11 +35,12 @@ const username = (session as any)?.username || "";
     console.log("Role:", role);
     console.log("==================");
 if (username === "199408232017121004") {
-  const aksesRio = [
-    "/rubah-password",
-    "/rincian-gaji",
-    "/publikasi",
-  ];
+ const aksesRio = [
+  "/dashboard",
+  "/rubah-password",
+  "/rincian-gaji",
+  "/publikasi",
+];
 
   const bolehAkses = aksesRio.some(
     (path) =>
@@ -60,15 +61,17 @@ if (pathname === "/pengguna" && role === "Petugas") {
   return;
 }
 
-// Kaur Keuangan hanya boleh membuka Publikasi, Rincian Gaji, dan Rubah Password
+// Kaur Keuangan hanya boleh membuka Dashboard, Publikasi,
+// Rincian Gaji, dan Rubah Password
 if (
   role === "Kaur Keuangan" &&
+  !pathname.startsWith("/dashboard") &&
   !pathname.startsWith("/publikasi") &&
   !pathname.startsWith("/rincian-gaji") &&
   !pathname.startsWith("/rubah-password")
 ) {
   setAuthorized(false);
-  router.replace("/publikasi");
+  router.replace("/dashboard");
   return;
 }
 

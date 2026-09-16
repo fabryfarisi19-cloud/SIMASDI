@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Eye } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -50,8 +51,22 @@ const [detailSurat, setDetailSurat] = useState<any>(null);
 const [showDetail, setShowDetail] = useState(false);
 const [showPreview, setShowPreview] = useState(false);
 const router = useRouter();
-const [user, setUser] = useState<any>(null);
-  const [userLoaded, setUserLoaded] = useState(false);
+const { data: session, status } = useSession();
+
+const sessionData = session as any;
+const user = sessionData?.user as any;
+
+const roleAsli =
+  sessionData?.role ||
+  user?.role ||
+  user?.jabatan ||
+  "";
+
+const namaUser =
+  user?.name ||
+  user?.nama ||
+  "Pengguna";
+
 const [jadwalApelHariIni, setJadwalApelHariIni] = useState<any[]>([]);
 const [jadwalApelBesok, setJadwalApelBesok] = useState<any[]>([]);
 const [jadwalPelayananHariIni, setJadwalPelayananHariIni] = useState<any>(null);
@@ -115,38 +130,75 @@ const [jadwalPelayananBesok, setJadwalPelayananBesok] = useState<any>(null);
     );
   };
 
-  const loadDashboard = async () => {
-    const hariIni = new Date().toISOString().split("T")[0];
+ const loadDashboard = async () => {
+  const hariIni = new Date().toISOString().split("T")[0];
 
+  try {
+    // =========================
+    // SURAT MASUK
+    // =========================
     const suratMasuk = await supabase
       .from("surat_masuk")
       .select("*", { count: "exact", head: true })
       .eq("tanggal", hariIni);
 
+    if (suratMasuk.error) {
+      console.error(
+        "Gagal menghitung surat masuk:",
+        suratMasuk.error
+      );
+    }
+
     setTotalSuratMasuk(suratMasuk.count ?? 0);
 
+    // =========================
+    // SURAT KELUAR
+    // =========================
     const suratKeluar = await supabase
       .from("surat_keluar")
       .select("*", { count: "exact", head: true })
       .eq("tanggal", hariIni);
 
+    if (suratKeluar.error) {
+      console.error(
+        "Gagal menghitung surat keluar:",
+        suratKeluar.error
+      );
+    }
+
     setTotalSuratKeluar(suratKeluar.count ?? 0);
 
-    const disposisi = await supabase
-      .from("surat")
-      .select("*", { count: "exact", head: true })
-      .eq("tanggal", hariIni);
+    // =========================
+    // DISPOSISI
+    // =========================
+    // Sementara tidak mengambil tabel "surat"
+    // karena query tanggal menyebabkan HTTP 400.
+    setTotalDisposisi(0);
 
-    setTotalDisposisi(disposisi.count ?? 0);
-
+    // =========================
+    // ARSIP DIGITAL
+    // =========================
     const arsip = await supabase
       .from("surat_masuk")
       .select("*", { count: "exact", head: true })
       .eq("tanggal", hariIni);
 
-    setTotalArsip(arsip.count ?? 0);
-  };
+    if (arsip.error) {
+      console.error(
+        "Gagal menghitung arsip:",
+        arsip.error
+      );
+    }
 
+    setTotalArsip(arsip.count ?? 0);
+
+  } catch (error) {
+    console.error(
+      "Gagal memuat dashboard:",
+      error
+    );
+  }
+};
   const loadAgenda = async () => {
     const hariIni = new Date().toISOString().split("T")[0];
 
@@ -186,15 +238,7 @@ const [jadwalPelayananBesok, setJadwalPelayananBesok] = useState<any>(null);
     setSuratTerbaru(data || []);
   };
 
-  const loadUser = () => {
-    const storedUser = localStorage.getItem("user");
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setUserLoaded(true);
-  };
-
+  
   const refreshData = async () => {
     try {
      await Promise.all([
@@ -255,6 +299,8 @@ const loadJadwalApel = async () => {
 
   setJadwalApelHariIni(dataHariIni || []);
   setJadwalApelBesok(dataBesok || []);
+  console.log("JADWAL APEL HARI INI =", dataHariIni);
+console.log("JADWAL APEL BESOK =", dataBesok);
 };
 const loadJadwalPelayanan = async () => {
   const hariIniDate = new Date();
@@ -534,7 +580,6 @@ loadGrafik();
 loadDashboard();
 loadAgenda();
 loadSuratTerbaru();
-loadUser();
 loadJadwalApel();
 loadJadwalPelayanan();
 
@@ -546,9 +591,9 @@ loadJadwalPelayanan();
     };
   }, []);
 
-  if (!userLoaded) return null;
+ if (status === "loading") return null;
 
-  const role = String(user?.role || "").trim().toLowerCase();
+
   type PelayananPublik = {
   dutaLayanan: string;
   pelayananPublik: string;
@@ -564,7 +609,11 @@ loadJadwalPelayanan();
   // Sumber jadwal: Nota Dinas Jadwal Piket Petugas Apel
   // September 2026 Bapas Kelas I Jakarta Barat.
   // ============================================================
- const roleDenganPengumumanJadwal = [
+const role = String(roleAsli).trim().toLowerCase();
+
+const roleDenganPengumumanJadwal = [
+  "petugas",
+  "apk",
   "kabapas",
   "kaur keuangan",
   "kasubag tu",
@@ -589,6 +638,14 @@ loadJadwalPelayanan();
   "ppnpn",
 ];
 
+console.log("DASHBOARD USER =", user);
+console.log("DASHBOARD ROLE ASLI =", user?.role);
+console.log("DASHBOARD ROLE NORMAL =", role);
+console.log(
+  "TAMPILKAN PENGUMUMAN =",
+  roleDenganPengumumanJadwal.includes(role)
+);
+console.log("AKAN RENDER PENGUMUMAN =", roleDenganPengumumanJadwal.includes(role));
 if (roleDenganPengumumanJadwal.includes(role)) {
     const tanggalHariIni = new Date();
     const tanggalBesok = new Date(tanggalHariIni);
@@ -609,14 +666,7 @@ if (roleDenganPengumumanJadwal.includes(role)) {
       return `${y}-${m}-${day}`;
     };
 
-   
-    type PelayananPublik = {
-      dutaLayanan: string;
-      pelayananPublik: string;
-      maganghub: string;
-      pengawas: string;
-      koordinator: string;
-    };
+  
 
 
   const tampilJadwal = (
@@ -755,10 +805,10 @@ if (roleDenganPengumumanJadwal.includes(role)) {
             <div>
               <p className="text-sm text-slate-500">Selamat Datang</p>
               <h2 className="text-2xl font-black text-blue-700">
-                {user?.nama || "Pengguna"}
+               {namaUser}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                {user?.role || "Pengguna"}
+             {roleAsli || "Pengguna"}
               </p>
             </div>
             <div className="md:text-right">
