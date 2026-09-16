@@ -262,19 +262,16 @@ useEffect(() => {
     )
     .join(". ");
 
-  if (!petugas) {
-    putarIndonesiaRaya();
-    return;
-  }
+ if (!petugas) {
+  return;
+}
 
   const suaraPetugas =
     "Adapun petugas apel hari ini adalah. " +
     petugas +
     ".";
 
-bicara(suaraPetugas, () => {
-  putarIndonesiaRaya();
-});
+bicara(suaraPetugas);
 }, 9000);
   }
 

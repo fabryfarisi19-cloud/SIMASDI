@@ -148,34 +148,7 @@ const interval = setInterval(() => {
 
     return () => clearInterval(timer);
   }, []);
-// ================================
-// INDONESIA RAYA OTOMATIS 10.00 WIB
-// ================================
-// ================================
-// 🇮🇩 INDONESIA RAYA OTOMATIS 10.00 WIB
-// ================================
-useEffect(() => {
-  if (!bolehAudio) return;
-  if (!audioAktif) return;
 
-  const cekIndonesiaRaya = () => {
-    const sekarang = new Date();
-
-    const waktuJakarta = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Jakarta",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(sekarang);
-
-    if (waktuJakarta === "10:00") {
-      putarIndonesiaRaya();
-    }
-  };
-
-  const timer = setInterval(cekIndonesiaRaya, 1000);
-
-  return () => clearInterval(timer);
-}, [audioAktif]);
   function formatTanggal(tgl: string) {
     if (!tgl) return "";
 
