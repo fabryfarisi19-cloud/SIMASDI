@@ -29,55 +29,62 @@ export default function AuthGuard({
 
     // Ambil role dari NextAuth
     const role = (session as any)?.role;
-const username = (session as any)?.username || "";
+    const username = (session as any)?.username || "";
+
     console.log("=== AUTH GUARD ===");
     console.log("Path:", pathname);
     console.log("Role:", role);
     console.log("==================");
-if (username === "199408232017121004") {
- const aksesRio = [
-  "/dashboard",
-  "/rubah-password",
-  "/rincian-gaji",
-  "/publikasi",
-];
 
-  const bolehAkses = aksesRio.some(
-    (path) =>
-      pathname === path ||
-      pathname.startsWith(path + "/")
-  );
+    // KHUSUS RIO ANDARA
+    if (username === "199408232017121004") {
+      const aksesRio = [
+        "/dashboard",
+        "/rubah-password",
+        "/rincian-gaji",
+        "/publikasi",
+      ];
 
-  if (!bolehAkses) {
-    setAuthorized(false);
-    router.replace("/rincian-gaji");
-    return;
-  }
-} 
-// Petugas tidak boleh membuka halaman Pengguna
-if (pathname === "/pengguna" && role === "Petugas") {
-  setAuthorized(false);
-  router.replace("/dashboard");
-  return;
-}
+      const bolehAkses = aksesRio.some(
+        (path) =>
+          pathname === path ||
+          pathname.startsWith(path + "/")
+      );
 
-// Kaur Keuangan hanya boleh membuka Dashboard, Publikasi,
-// Rincian Gaji, dan Rubah Password
-if (
-  role === "Kaur Keuangan" &&
-  !pathname.startsWith("/dashboard") &&
-  !pathname.startsWith("/publikasi") &&
-  !pathname.startsWith("/rincian-gaji") &&
-  !pathname.startsWith("/rubah-password")
-) {
-  setAuthorized(false);
-  router.replace("/dashboard");
-  return;
-}
+      if (!bolehAkses) {
+        setAuthorized(false);
+        router.replace("/rincian-gaji");
+        return;
+      }
+    }
 
-setAuthorized(true); 
+    // Petugas tidak boleh membuka halaman Pengguna
+    if (
+      pathname === "/pengguna" &&
+      role === "Petugas"
+    ) {
+      setAuthorized(false);
+      router.replace("/dashboard");
+      return;
+    }
 
+    // Kaur Keuangan boleh membuka:
+    // Dashboard, Publikasi, Rincian Gaji,
+    // Rubah Password, dan Import Slip Gaji
+    if (
+      role === "Kaur Keuangan" &&
+      !pathname.startsWith("/dashboard") &&
+      !pathname.startsWith("/publikasi") &&
+      !pathname.startsWith("/rincian-gaji") &&
+      !pathname.startsWith("/rubah-password") &&
+      !pathname.startsWith("/import-gaji")
+    ) {
+      setAuthorized(false);
+      router.replace("/dashboard");
+      return;
+    }
 
+    setAuthorized(true);
   }, [pathname, router, session, status]);
 
   if (status === "loading" || !authorized) {

@@ -211,7 +211,7 @@ const menu = [
     nama: "Import Slip Gaji",
     href: "/import-gaji",
     icon: FileSpreadsheet,
-    roles: ["Admin Keuangan"],
+    roles: ["Admin Keuangan", "Kaur Keuangan",],
   },
 ];
 

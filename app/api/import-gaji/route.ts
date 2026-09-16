@@ -352,19 +352,23 @@ export async function POST(
           penggunaIdSession
         )
         .maybeSingle();
+const roleLogin = String(
+  penggunaLogin?.role || ""
+).trim().toLowerCase();
+
+
 if (
   !penggunaLogin ||
-  penggunaLogin.role !== "Admin Keuangan"
+  !["admin keuangan", "kaur keuangan"].includes(roleLogin)
 ) {
-      return NextResponse.json(
-        {
-          error:
-            "Hanya Admin yang berwenang melakukan import data gaji.",
-        },
-        { status: 403 }
-      );
-    }
-
+  return NextResponse.json(
+    {
+      error:
+        "Anda tidak berwenang melakukan import data gaji.",
+    },
+    { status: 403 }
+  );
+}
     const body =
       await request.json();
 
