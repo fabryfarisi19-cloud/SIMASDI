@@ -257,3 +257,199 @@ export async function GET(req: Request) {
     );
   }
 }
+export async function DELETE(req: Request) {
+  try {
+    // ==========================================
+    // 1. CEK LOGIN
+    // ==========================================
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Anda harus login terlebih dahulu.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const username = String(
+      (session.user as any).username ?? ""
+    ).trim();
+
+    const role = String(
+      (session.user as any).role ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!username) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Username/NIP tidak ditemukan pada session.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const isAdminKepegawaian =
+      ROLE_ADMIN_KEPEGAWAIAN.includes(role);
+
+    // ==========================================
+    // 2. AMBIL ID ARSIP
+    // ==========================================
+    const { searchParams } = new URL(req.url);
+
+    const id = String(
+      searchParams.get("id") ?? ""
+    ).trim();
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "ID arsip tidak ditemukan.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ==========================================
+    // 3. CARI DATA ARSIP
+    // ==========================================
+    const {
+      data: arsip,
+      error: arsipError,
+    } = await supabaseAdmin
+      .from("arsip_kepegawaian")
+      .select(`
+        id,
+        nip,
+        nama_file,
+        file_path,
+        uploaded_by
+      `)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (arsipError) {
+      console.error(
+        "Gagal mencari arsip:",
+        arsipError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Gagal mencari data arsip.",
+          detail: arsipError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!arsip) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Dokumen arsip tidak ditemukan.",
+        },
+        { status: 404 }
+      );
+    }
+
+    // ==========================================
+    // 4. KEAMANAN
+    // ==========================================
+    // Pegawai biasa hanya boleh menghapus
+    // arsip miliknya sendiri.
+    if (!isAdminKepegawaian && arsip.nip !== username) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Anda tidak memiliki izin untuk menghapus dokumen ini.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // ==========================================
+    // 5. HAPUS FILE DARI STORAGE
+    // ==========================================
+    if (arsip.file_path) {
+      const {
+        error: storageError,
+      } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .remove([arsip.file_path]);
+
+      if (storageError) {
+        console.error(
+          "Gagal menghapus file storage:",
+          storageError
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: "File gagal dihapus dari Storage.",
+            detail: storageError.message,
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // ==========================================
+    // 6. HAPUS METADATA DATABASE
+    // ==========================================
+    const {
+      error: deleteError,
+    } = await supabaseAdmin
+      .from("arsip_kepegawaian")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error(
+        "Gagal menghapus metadata arsip:",
+        deleteError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "File sudah dihapus dari Storage, tetapi metadata gagal dihapus.",
+          detail: deleteError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    // ==========================================
+    // 7. RESPONSE
+    // ==========================================
+    return NextResponse.json({
+      success: true,
+      message: "Dokumen berhasil dihapus.",
+    });
+  } catch (error) {
+    console.error(
+      "ERROR API DELETE ARSIP KEPEGAWAIAN:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Terjadi kesalahan pada server saat menghapus dokumen.",
+      },
+      { status: 500 }
+    );
+  }
+}

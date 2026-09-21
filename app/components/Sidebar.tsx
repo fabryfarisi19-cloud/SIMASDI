@@ -113,6 +113,26 @@ const menu = [
   "Kaur Kepegawaian",
   "Admin Kepegawaian",
   "Pengelola Kepegawaian",
+   "Kabapas",
+  "Kaur Keuangan",
+  "Kasubag TU",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kasubsi Bimker Anak",
+  "Kasubsi Bimker Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimkemas Anak",
+   "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Anak",
+  "Kaur Umum",
+  "Admin Keuangan",
+  "Staf",
+  "PK Madya",
+  "PK Muda",
+  "PK Pertama",
+  "APK",
+   "Arsiparis",
+   "PPNPN",
 ],
   },
   {
@@ -370,18 +390,7 @@ const logout = async () => {
 <nav className="sidebar-menu">
   {menu
     .filter((item) => {
-      // KHUSUS RIO ANDARA
-      if (username === "199408232017121004") {
-        return [
-          "/rincian-gaji",
-          "/publikasi",
-          "/rubah-password",
-        ].some(
-          (path) =>
-            item.href === path ||
-            item.href.startsWith(path + "/")
-        );
-      }
+      
 
       // USER LAIN: berdasarkan role
       if (!item.roles.includes(role)) {

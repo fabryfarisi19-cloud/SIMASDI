@@ -256,7 +256,7 @@ const nipAktif = isAdminKepegawaian
     ambilDaftarPegawai();
   }, [isAdminKepegawaian]);
 useEffect(() => {
-  if (status === "loading") return;
+  if (status !== "authenticated") return;
 
   const nipTarget = isAdminKepegawaian
     ? nipDipilih
@@ -289,10 +289,7 @@ useEffect(() => {
         return;
       }
 
-      console.log(
-        "ARSIP PEGAWAI:",
-        result.data
-      );
+    console.log("ARSIP PEGAWAI JSON:", JSON.stringify(result.data, null, 2));
 
       setArsipPegawai(
         result.data ?? []
@@ -588,260 +585,67 @@ onClick={() => {
                       ⬇ Download
                     </a>
 
+
+<button
+  type="button"
+  onClick={async () => {
+    const yakin = window.confirm(
+      `Yakin ingin menghapus dokumen "${item.nama_dokumen || item.nama_file}"?`
+    );
+
+    if (!yakin) return;
+
+    try {
+      const response = await fetch(
+        `/api/arsip-kepegawaian?id=${encodeURIComponent(item.id)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        alert(
+          result.message ||
+            "Dokumen gagal dihapus."
+        );
+        return;
+      }
+
+      alert("Dokumen berhasil dihapus.");
+
+      // Hapus langsung dari tampilan
+      setArsipPegawai((prev) =>
+        prev.filter(
+          (arsip) => arsip.id !== item.id
+        )
+      );
+    } catch (error) {
+      console.error(
+        "ERROR HAPUS DOKUMEN:",
+        error
+      );
+
+      alert(
+        "Terjadi kesalahan saat menghapus dokumen."
+      );
+    }
+  }}
+  className="btn-hapus"
+>
+  🗑 Hapus
+</button>
                   </div>
                 )}
               </div>
             ))}
+            
           </div>
         );
       })()
     )}
-
-  </section>
-)}
-      {/* ============================= */}
-      {/* ADMIN / KAUR KEPEGAWAIAN */}
-      {/* ============================= */}
-{isAdminKepegawaian && nipDipilih && (
-  <section className="admin-box">
-    <div className="admin-icon">
-      <FolderArchive size={30} />
-    </div>
-
-    <div>
-      <span className="label">
-        Arsip Pegawai
-      </span>
-
-      <h2>
-        {daftarPegawai.find(
-          (pegawai) =>
-            String(pegawai.username) ===
-            String(nipDipilih)
-        )?.nama || "Pegawai Terpilih"}
-      </h2>
-
-      <p>
-        NIP / Username: {nipDipilih}
-      </p>
-    </div>
-  </section>
-)}
-      {/* KATEGORI ARSIP PEGAWAI YANG DIPILIH */}
-      {isAdminKepegawaian && nipDipilih && (
-        <>
-          <section className="section-title">
-            <h2>Dokumen Kepegawaian</h2>
-
-            <p>
-              Pilih kategori untuk melihat dan mengelola
-              dokumen pegawai tersebut.
-            </p>
-          </section>
-
-          <div className="kategori-grid">
-            {kategoriArsip.map((item) => {
-              const Icon = item.icon;
-
-              return (
-    <button
-  key={item.nama}
-  type="button"
-  className="kategori-card"
-  onClick={() => {
-    setKategoriDipilih(item.nama);
-  }}
->
-                  <div className="kategori-icon">
-                    <Icon size={24} />
-                  </div>
-
-                  <div className="kategori-text">
-                    <h3>{item.nama}</h3>
-
-                    <p>
-                      {item.deskripsi}
-                    </p>
-                  </div>
-
-                  <ChevronRight
-                    size={20}
-                    className="kategori-arrow"
-                  />
-                </button>
-              );
-            })}
-          </div>
-                    {kategoriDipilih && (
-            <section className="dokumen-box">
-           <div className="section-title">
-  <div>
-    <h2>{kategoriDipilih}</h2>
-
-    <p>
-      Dokumen {kategoriDipilih} untuk pegawai yang dipilih.
-    </p>
-  </div>
-
-<button
-  type="button"
-  onClick={() => {
-    setShowUpload(true);
-  }}
-  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
->
-  + Upload Dokumen
-</button>
-</div>
-
-             {arsipPegawai.filter(
-  (item) =>
-    String(item.kategori ?? "").trim().toUpperCase() ===
-    kategoriDipilih.trim().toUpperCase()
-).length === 0 ? (
-  <div className="empty-box">
-    Belum ada dokumen pada kategori {kategoriDipilih}.
-  </div>
-) : (
-  <div
-    style={{
-      marginTop: "20px",
-      display: "grid",
-      gap: "12px",
-    }}
-  >
-    {arsipPegawai
-      .filter(
-        (item) =>
-          String(item.kategori ?? "").trim().toUpperCase() ===
-          kategoriDipilih.trim().toUpperCase()
-      )
-      .map((item) => (
-        <div
-          key={item.id}
-          style={{
-            padding: "16px",
-            border: "1px solid #e2e8f0",
-            borderRadius: "14px",
-            background: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "15px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: "250px" }}>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 800,
-                color: "#0f172a",
-                marginBottom: "5px",
-              }}
-            >
-              📄 {item.nama_dokumen || item.nama_file}
-            </div>
-
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#64748b",
-                lineHeight: 1.7,
-              }}
-            >
-              {item.nama_file && (
-                <div>
-                  File: {item.nama_file}
-                </div>
-              )}
-
-              {item.nomor_dokumen && (
-                <div>
-                  Nomor: {item.nomor_dokumen}
-                </div>
-              )}
-
-              {item.tanggal_dokumen && (
-                <div>
-                  Tanggal:{" "}
-                  {new Date(
-                    item.tanggal_dokumen
-                  ).toLocaleDateString("id-ID")}
-                </div>
-              )}
-
-              {item.tahun && (
-                <div>
-                  Tahun: {item.tahun}
-                </div>
-              )}
-
-              {item.keterangan && (
-                <div>
-                  Keterangan: {item.keterangan}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              alignItems: "center",
-            }}
-          >
-           {item.file_url && (
-  <>
-    {/* Tombol Lihat */}
-    <a
-      href={item.file_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "9px 14px",
-        borderRadius: "9px",
-        background: "#2563eb",
-        color: "white",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: 700,
-      }}
-    >
-      👁 Lihat
-    </a>
-
-    {/* Tombol Download */}
-    <a
-      href={item.file_url}
-      download={item.nama_file || "dokumen"}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "9px 14px",
-        borderRadius: "9px",
-        background: "#16a34a",
-        color: "white",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: 700,
-      }}
-    >
-      ⬇ Download
-    </a>
-  </>
-)}
-          </div>
-        </div>
-      ))}
-  </div>
-)}
-              {showUpload && (
+  {showUpload && kategoriDipilih && (
   <div
     style={{
       marginTop: "20px",
@@ -1144,7 +948,7 @@ if (!nipUpload) {
   "nip",
   nipUpload
 );
-
+console.log("KATEGORI YANG DIPILIH:", kategoriDipilih);
               formData.append(
                 "kategori",
                 kategoriDipilih
@@ -1266,6 +1070,313 @@ if (!nipUpload) {
     </div>
   </div>
 )}
+  </section>
+)}
+      {/* ============================= */}
+      {/* ADMIN / KAUR KEPEGAWAIAN */}
+      {/* ============================= */}
+{isAdminKepegawaian && nipDipilih && (
+  <section className="admin-box">
+    <div className="admin-icon">
+      <FolderArchive size={30} />
+    </div>
+
+    <div>
+      <span className="label">
+        Arsip Pegawai
+      </span>
+
+      <h2>
+        {daftarPegawai.find(
+          (pegawai) =>
+            String(pegawai.username) ===
+            String(nipDipilih)
+        )?.nama || "Pegawai Terpilih"}
+      </h2>
+
+      <p>
+        NIP / Username: {nipDipilih}
+      </p>
+    </div>
+  </section>
+)}
+      {/* KATEGORI ARSIP PEGAWAI YANG DIPILIH */}
+      {isAdminKepegawaian && nipDipilih && (
+        <>
+          <section className="section-title">
+            <h2>Dokumen Kepegawaian</h2>
+
+            <p>
+              Pilih kategori untuk melihat dan mengelola
+              dokumen pegawai tersebut.
+            </p>
+          </section>
+
+          <div className="kategori-grid">
+            {kategoriArsip.map((item) => {
+              const Icon = item.icon;
+
+              return (
+    <button
+  key={item.nama}
+  type="button"
+  className="kategori-card"
+  onClick={() => {
+    setKategoriDipilih(item.nama);
+  }}
+>
+                  <div className="kategori-icon">
+                    <Icon size={24} />
+                  </div>
+
+                  <div className="kategori-text">
+                    <h3>{item.nama}</h3>
+
+                    <p>
+                      {item.deskripsi}
+                    </p>
+                  </div>
+
+                  <ChevronRight
+                    size={20}
+                    className="kategori-arrow"
+                  />
+                </button>
+              );
+            })}
+          </div>
+                    {kategoriDipilih && (
+            <section className="dokumen-box">
+           <div className="section-title">
+  <div>
+    <h2>{kategoriDipilih}</h2>
+
+    <p>
+      Dokumen {kategoriDipilih} untuk pegawai yang dipilih.
+    </p>
+  </div>
+
+<button
+  type="button"
+  onClick={() => {
+    setShowUpload(true);
+  }}
+  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+>
+  + Upload Dokumen
+</button>
+</div>
+
+             {arsipPegawai.filter(
+  (item) =>
+    String(item.kategori ?? "").trim().toUpperCase() ===
+    kategoriDipilih.trim().toUpperCase()
+).length === 0 ? (
+  <div className="empty-box">
+    Belum ada dokumen pada kategori {kategoriDipilih}.
+  </div>
+) : (
+  <div
+    style={{
+      marginTop: "20px",
+      display: "grid",
+      gap: "12px",
+    }}
+  >
+    {arsipPegawai
+      .filter(
+        (item) =>
+          String(item.kategori ?? "").trim().toUpperCase() ===
+          kategoriDipilih.trim().toUpperCase()
+      )
+      .map((item) => (
+        <div
+          key={item.id}
+          style={{
+            padding: "16px",
+            border: "1px solid #e2e8f0",
+            borderRadius: "14px",
+            background: "white",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "15px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: "250px" }}>
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: 800,
+                color: "#0f172a",
+                marginBottom: "5px",
+              }}
+            >
+              📄 {item.nama_dokumen || item.nama_file}
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#64748b",
+                lineHeight: 1.7,
+              }}
+            >
+              {item.nama_file && (
+                <div>
+                  File: {item.nama_file}
+                </div>
+              )}
+
+              {item.nomor_dokumen && (
+                <div>
+                  Nomor: {item.nomor_dokumen}
+                </div>
+              )}
+
+              {item.tanggal_dokumen && (
+                <div>
+                  Tanggal:{" "}
+                  {new Date(
+                    item.tanggal_dokumen
+                  ).toLocaleDateString("id-ID")}
+                </div>
+              )}
+
+              {item.tahun && (
+                <div>
+                  Tahun: {item.tahun}
+                </div>
+              )}
+
+              {item.keterangan && (
+                <div>
+                  Keterangan: {item.keterangan}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+            }}
+          >
+           {item.file_url && (
+  <>
+    {/* Tombol Lihat */}
+    <a
+      href={item.file_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "9px 14px",
+        borderRadius: "9px",
+        background: "#2563eb",
+        color: "white",
+        textDecoration: "none",
+        fontSize: "13px",
+        fontWeight: 700,
+      }}
+    >
+      👁 Lihat
+    </a>
+
+    {/* Tombol Download */}
+    <a
+      href={item.file_url}
+      download={item.nama_file || "dokumen"}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "9px 14px",
+        borderRadius: "9px",
+        background: "#16a34a",
+        color: "white",
+        textDecoration: "none",
+        fontSize: "13px",
+        fontWeight: 700,
+      }}
+    >
+      ⬇ Download
+    </a>
+      {/* Tombol Hapus */}
+    <button
+      type="button"
+      onClick={async () => {
+        const yakin = window.confirm(
+          `Yakin ingin menghapus dokumen "${item.nama_dokumen || item.nama_file}"?`
+        );
+
+        if (!yakin) return;
+
+        try {
+          const response = await fetch(
+            `/api/arsip-kepegawaian?id=${encodeURIComponent(item.id)}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            alert(
+              result.message || "Dokumen gagal dihapus."
+            );
+            return;
+          }
+
+          alert("Dokumen berhasil dihapus.");
+
+          setArsipPegawai((prev) =>
+            prev.filter(
+              (arsip) => arsip.id !== item.id
+            )
+          );
+        } catch (error) {
+          console.error(
+            "ERROR HAPUS DOKUMEN:",
+            error
+          );
+
+          alert(
+            "Terjadi kesalahan saat menghapus dokumen."
+          );
+        }
+      }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "9px 14px",
+        borderRadius: "9px",
+        background: "#dc2626",
+        color: "white",
+        border: "none",
+        fontSize: "13px",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      🗑 Hapus
+    </button>
+  </>
+)}
+
+          </div>
+        </div>
+      ))}
+  </div>
+)}
+       
             </section>
           )}
         </>
@@ -1856,7 +1967,23 @@ if (!nipUpload) {
 .btn-download:hover {
   background: #15803d;
 }
+.btn-hapus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
+.btn-hapus:hover {
+  background: #b91c1c;
+}
 @media (max-width: 700px) {
   .dokumen-card {
     flex-direction: column;
