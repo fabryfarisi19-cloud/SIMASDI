@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const LOKASI_APEL =
   "Halaman Ghriya Abhipraya Bapas Kelas I Jakarta Barat";
@@ -29,6 +29,38 @@ const daftarHari = [
   "Jumat",
   "Sabtu",
   "Minggu",
+];
+
+const daftarTugas = [
+  "Pembina Apel",
+  "Komandan Apel",
+  "Pembaca Doa",
+  "Pengucap Tri Dharma PAS",
+  "Pengucap Ikrar Petugas",
+  "Operator Lagu Apel",
+  "Laporan Atensi",
+  "Cadangan Petugas",
+  "Humas",
+];
+
+const daftarJabatan = [
+  "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimker Anak",
+  "Kasubbag Tata Usaha",
+  "Pengelola Lay. Pengadaan",
+  "Pengolah Data dan Inform.",
+  "Penata Layanan Op.",
+  "Pengadministrasi Perkant.",
+  "Arsiparis Pertama",
+  "Petugas Jaga",
+  "PK Pertama",
+  "PK Muda",
+  "PK Madya",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kabapas",
+  "Kaur Umum",
 ];
 
 function bersihkanTeks(teks: string) {
@@ -62,109 +94,69 @@ function parseTanggal(baris: string) {
 
   const [, tanggal, namaBulan, tahun] = match;
 
-  const bulan = daftarBulan[namaBulan];
+  const namaBulanNormal = Object.keys(daftarBulan).find(
+    (bulan) =>
+      bulan.toLowerCase() === namaBulan.toLowerCase()
+  );
 
-  if (!bulan) return null;
+  if (!namaBulanNormal) return null;
+
+  const bulan = daftarBulan[namaBulanNormal];
 
   return `${tahun}-${bulan}-${tanggal.padStart(2, "0")}`;
 }
 
-/**
- * Memisahkan baris petugas.
- *
- * Format PDF:
- *
- * 1. Nama Jabatan Keterangan
- *
- * Karena jabatan dapat terdiri dari beberapa kata,
- * kita mengenali tugas dari daftar tugas yang sudah pasti.
- */
-function parsePetugas(baris: string) {
+function parseBarisPetugas(baris: string) {
   const teks = bersihkanTeks(baris);
 
- const matchNomor = teks.match(/^(\d+)\.?\s+(.+)$/);
+  const matchNomor = teks.match(/^(\d+)\.\s+(.+)$/);
 
   if (!matchNomor) return null;
 
   const nomor = Number(matchNomor[1]);
-  let isi = matchNomor[2].trim();
 
-  const daftarTugas = [
-    "Pembina Apel",
-    "Komandan Apel",
-    "Pembaca Doa",
-    "Pengucap Tri Dharma PAS",
-    "Pengucap Ikrar Petugas",
-    "Operator Lagu Apel",
-    "Laporan Atensi",
-    "Cadangan Petugas",
-    "Humas",
-  ];
+  // Hanya membaca nomor 1 sampai 9 sebagai baris petugas.
+  if (nomor < 1 || nomor > 9) return null;
+
+  let isi = matchNomor[2].trim();
 
   let tugas: string | null = null;
 
   for (const kandidat of daftarTugas) {
     if (isi.endsWith(kandidat)) {
       tugas = kandidat;
+
       isi = isi
         .slice(0, isi.length - kandidat.length)
         .trim();
+
       break;
     }
   }
 
-  if (!tugas) {
-    return null;
-  }
-
-  /*
-   * Untuk sementara kita pisahkan Nama dan Jabatan
-   * menggunakan data jabatan yang umum muncul pada PDF.
-   */
-  const jabatanKhusus = [
-    "PK Madya",
-    "PK Muda",
-    "PK Pertama",
-    "Kasi BKA",
-    "Kasi BKD",
-    "Kabapas",
-    "Kaur Umum",
-    "Kasubbag Tata Usaha",
-    "Kasubsi Registrasi Dewasa",
-    "Kasubsi Bimker Anak",
-    "Kasubsi Bimkemas Dewasa",
-    "Petugas Jaga",
-    "Pengadministrasi Perkant.",
-    "Pengolah Data dan Inform.",
-    "Penata Layanan Op.",
-    "Pengelola Lay. Pengadaan",
-    "Arsiparis Pertama",
-  ];
+  if (!tugas) return null;
 
   let jabatan = "";
   let nama = isi;
 
-  /*
-   * Cari jabatan yang berada di akhir bagian
-   * sebelum tugas.
-   */
-  for (const kandidat of jabatanKhusus) {
+  // Jabatan yang lebih panjang dicoba terlebih dahulu.
+  const jabatanTerurut = [...daftarJabatan].sort(
+    (a, b) => b.length - a.length
+  );
+
+  for (const kandidat of jabatanTerurut) {
     if (isi.endsWith(kandidat)) {
       jabatan = kandidat;
+
       nama = isi
         .slice(0, isi.length - kandidat.length)
         .trim();
+
       break;
     }
   }
 
-  /*
-   * Jika jabatan tidak ditemukan, kita tetap simpan
-   * seluruh isi sebagai nama agar data tidak hilang.
-   */
-  if (!nama) {
-    nama = isi;
-  }
+  if (!nama) return null;
 
   return {
     nomor,
@@ -203,10 +195,14 @@ function ekstrakJadwal(teks: string) {
     if (!tanggalAktif) {
       continue;
     }
-
-    /*
-     * Lewati header tabel.
-     */
+// Berhenti ketika sudah masuk bagian catatan/footer PDF.
+if (
+  /^\*?Catatan\s*:?\s*$/i.test(barisSekarang) ||
+  /^Format Laporan Atensi Apel$/i.test(barisSekarang)
+) {
+  break;
+}
+    // Header tabel
     if (
       /^No\.\s+Nama\s+Jabatan\s+Keterangan$/i.test(
         barisSekarang
@@ -215,23 +211,25 @@ function ekstrakJadwal(teks: string) {
       continue;
     }
 
-    /*
-     * Lewati bagian footer/dokumen.
-     */
+    // Footer / tanda tangan elektronik
     if (
       barisSekarang.includes(
         "Dokumen ini telah ditandatangani"
       ) ||
       barisSekarang.includes("sertifikat elektronik") ||
-      barisSekarang.includes("Balai Besar Sertifikasi Elektronik") ||
-      barisSekarang.includes("Badan Siber dan Sandi Negara") ||
+      barisSekarang.includes(
+        "Balai Besar Sertifikasi Elektronik"
+      ) ||
+      barisSekarang.includes(
+        "Badan Siber dan Sandi Negara"
+      ) ||
       barisSekarang.includes("A - DINAS") ||
       barisSekarang.startsWith("Nomor :")
     ) {
       continue;
     }
 
-    const petugas = parsePetugas(barisSekarang);
+    const petugas = parseBarisPetugas(barisSekarang);
 
     if (!petugas) {
       continue;
@@ -269,6 +267,11 @@ export async function POST(request: NextRequest) {
 
     const hasil = ekstrakJadwal(teks);
 
+    console.log(
+      "IMPORT JADWAL APEL - jumlah data:",
+      hasil.length
+    );
+
     if (hasil.length === 0) {
       return NextResponse.json(
         {
@@ -280,23 +283,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*
-     * Hapus jadwal lama untuk tanggal yang sama,
-     * sehingga upload ulang tidak menghasilkan duplikasi.
-     */
+    // September 2026:
+    // 22 tanggal x 9 petugas = 198 data.
+    if (hasil.length !== 198) {
+      console.error(
+        `JUMLAH DATA TIDAK SESUAI: ${hasil.length}`
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Hasil pembacaan PDF adalah ${hasil.length} data, seharusnya 198 data.`,
+          jumlah: hasil.length,
+        },
+        { status: 400 }
+      );
+    }
+
     const tanggalUnik = [
-      ...new Set(hasil.map((item) => item.tanggal)),
+      ...new Set(
+        hasil.map((item) => item.tanggal)
+      ),
     ];
 
+    // Hapus data lama untuk tanggal yang akan di-import.
     for (const tanggal of tanggalUnik) {
-      const { error: deleteError } = await supabase
-        .from("jadwal_apel")
-        .delete()
-        .eq("tanggal", tanggal);
+      console.log(
+        "HAPUS DATA LAMA UNTUK TANGGAL:",
+        tanggal
+      );
+
+      const { error: deleteError } =
+        await supabaseAdmin
+          .from("jadwal_apel")
+          .delete()
+          .eq("tanggal", tanggal)
+          .select("id");
 
       if (deleteError) {
         console.error(
-          "Gagal menghapus jadwal lama:",
+          "ERROR DELETE JADWAL APEL:",
           deleteError
         );
 
@@ -306,21 +332,37 @@ export async function POST(request: NextRequest) {
             message:
               "Gagal membersihkan jadwal lama.",
             error: deleteError.message,
+            detail: deleteError.details,
+            hint: deleteError.hint,
+            code: deleteError.code,
           },
           { status: 500 }
         );
       }
     }
 
-    const { data, error } = await supabase
+    console.log(
+      "AKAN INSERT JADWAL APEL:",
+      hasil.length
+    );
+
+    console.log(
+      "CONTOH DATA INSERT:",
+      hasil[0]
+    );
+
+    const {
+      data,
+      error: insertError,
+    } = await supabaseAdmin
       .from("jadwal_apel")
       .insert(hasil)
       .select();
 
-    if (error) {
+    if (insertError) {
       console.error(
-        "Gagal insert jadwal apel:",
-        error
+        "ERROR INSERT JADWAL APEL:",
+        insertError
       );
 
       return NextResponse.json(
@@ -328,26 +370,44 @@ export async function POST(request: NextRequest) {
           success: false,
           message:
             "Gagal menyimpan jadwal apel ke database.",
-          error: error.message,
+          error: insertError.message,
+          detail: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code,
         },
         { status: 500 }
       );
     }
 
+    console.log(
+      "BERHASIL INSERT JADWAL APEL:",
+      data?.length ?? 0
+    );
+
     return NextResponse.json({
       success: true,
-      message: `Berhasil mengimpor ${hasil.length} data jadwal apel.`,
-      jumlah: hasil.length,
+      message:
+        `Berhasil mengimpor ${hasil.length} data jadwal apel.`,
+      jumlah: data?.length ?? 0,
       tanggal: tanggalUnik.length,
       data,
     });
   } catch (error) {
-    console.error("IMPORT JADWAL APEL ERROR:", error);
+    console.error(
+      "IMPORT JADWAL APEL ERROR:",
+      error
+    );
+
+    const pesanError =
+      error instanceof Error
+        ? error.message
+        : String(error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan saat import jadwal apel.",
+        message: pesanError,
+        error: pesanError,
       },
       { status: 500 }
     );

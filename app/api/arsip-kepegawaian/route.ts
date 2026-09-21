@@ -1,0 +1,259 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/lib/auth-options";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+const BUCKET = "arsip-kepegawaian";
+
+const ROLE_ADMIN_KEPEGAWAIAN = [
+  "pengelola kepegawaian",
+  "kaur kepegawaian",
+  "admin kepegawaian",
+  "admin",
+];
+
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Anda harus login terlebih dahulu.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const username = String(
+      (session.user as any).username ?? ""
+    ).trim();
+
+    const role = String(
+      (session.user as any).role ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!username) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Username/NIP tidak ditemukan pada session.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const isAdminKepegawaian =
+      ROLE_ADMIN_KEPEGAWAIAN.includes(role);
+
+    const { searchParams } = new URL(req.url);
+
+    const nipParameter = String(
+      searchParams.get("nip") ?? ""
+    ).trim();
+
+    const kategori = String(
+      searchParams.get("kategori") ?? ""
+    ).trim();
+
+    const jenisDokumen = String(
+      searchParams.get("jenis_dokumen") ?? ""
+    ).trim();
+
+    const mode = String(
+      searchParams.get("mode") ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    // ==========================================
+    // DAFTAR SELURUH PEGAWAI
+    // KHUSUS PENGELOLA KEPEGAWAIAN
+    // ==========================================
+
+    if (mode === "pegawai") {
+      if (!isAdminKepegawaian) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Anda tidak memiliki akses.",
+          },
+          { status: 403 }
+        );
+      }
+
+      const {
+        data: pegawai,
+        error: pegawaiError,
+      } = await supabaseAdmin
+        .from("pengguna")
+        .select(`
+          id,
+          nama,
+          username,
+          role,
+          status
+        `)
+        .order("nama", {
+          ascending: true,
+        });
+
+      if (pegawaiError) {
+        console.error(
+          "Gagal mengambil daftar pegawai:",
+          pegawaiError
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Gagal mengambil daftar pegawai.",
+            detail: pegawaiError.message,
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        jumlah: pegawai?.length ?? 0,
+        data: pegawai ?? [],
+      });
+    }
+
+    // ==========================================
+    // TENTUKAN NIP YANG BOLEH DILIHAT
+    // ==========================================
+
+    let nipTarget = username;
+
+    if (isAdminKepegawaian && nipParameter) {
+      nipTarget = nipParameter;
+    }
+
+    // ==========================================
+    // QUERY ARSIP
+    // ==========================================
+
+    let query = supabaseAdmin
+      .from("arsip_kepegawaian")
+      .select(`
+        id,
+        pengguna_id,
+        nip,
+        nama_pegawai,
+        kategori,
+        jenis_dokumen,
+        nama_dokumen,
+        nomor_dokumen,
+        tanggal_dokumen,
+        tahun,
+        nama_file,
+        file_path,
+        keterangan,
+        uploaded_by,
+        created_at,
+        updated_at
+      `)
+      .eq("nip", nipTarget)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (kategori) {
+      query = query.eq(
+        "kategori",
+        kategori.toUpperCase()
+      );
+    }
+
+    if (jenisDokumen) {
+      query = query.eq(
+        "jenis_dokumen",
+        jenisDokumen
+      );
+    }
+
+    const {
+      data: arsip,
+      error: arsipError,
+    } = await query;
+
+    if (arsipError) {
+      console.error(
+        "Gagal mengambil arsip:",
+        arsipError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Gagal mengambil data arsip.",
+          detail: arsipError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    const arsipDenganUrl = await Promise.all(
+      (arsip ?? []).map(async (item) => {
+        const {
+          data: signedUrlData,
+          error: signedUrlError,
+        } = await supabaseAdmin.storage
+          .from(BUCKET)
+          .createSignedUrl(
+            item.file_path,
+            300
+          );
+
+        if (signedUrlError) {
+          console.error(
+            "Gagal membuat signed URL:",
+            signedUrlError
+          );
+        }
+
+        return {
+          ...item,
+          file_url:
+            signedUrlData?.signedUrl ?? null,
+        };
+      })
+    );
+
+    return NextResponse.json({
+      success: true,
+
+      pemilik: {
+        nip: nipTarget,
+        mode: isAdminKepegawaian
+          ? nipParameter
+            ? "admin-melihat-pegawai"
+            : "admin-sendiri"
+          : "pegawai-sendiri",
+      },
+
+      jumlah: arsipDenganUrl.length,
+
+      data: arsipDenganUrl,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR API ARSIP KEPEGAWAIAN:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Terjadi kesalahan pada server.",
+      },
+      { status: 500 }
+    );
+  }
+}

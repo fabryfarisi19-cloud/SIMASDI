@@ -22,6 +22,7 @@ Volume2,
 Wallet,
 FileSpreadsheet,
 KeyRound,
+FolderArchive,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
@@ -103,7 +104,17 @@ const menu = [
     icon: Users,
     roles: ["Admin", "Kaur Umum"],
   },
-
+  {
+    nama: "Arsip Kepegawaian",
+    href: "/arsip-kepegawaian",
+    icon: FolderArchive,
+  roles: [
+  "Pegawai",
+  "Kaur Kepegawaian",
+  "Admin Kepegawaian",
+  "Pengelola Kepegawaian",
+],
+  },
   {
     nama: "Publikasi",
     href: "/publikasi",
@@ -132,6 +143,7 @@ const menu = [
   "PK Pertama",
   "APK",
    "Arsiparis",
+   "Pengelola Kepegawaian",
    "PPNPN",
 ],
   },
@@ -171,6 +183,7 @@ const menu = [
   "APK",
   "Admin Keuangan",
    "Arsiparis",
+   "Pengelola Kepegawaian",
    "PPNPN",
     ],
   },
@@ -203,6 +216,7 @@ const menu = [
   "APK",
   "Arsiparis",
   "Admin",
+  "Pengelola Kepegawaian",
   "PPNPN",
 ],
   },

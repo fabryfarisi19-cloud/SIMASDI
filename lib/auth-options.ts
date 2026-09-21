@@ -29,6 +29,8 @@ export const authOptions: NextAuthOptions = {
         const username = credentials.username.trim();
         const password = credentials.password;
 
+console.log("Username login:", username);
+console.log("Password terisi:", Boolean(password));
         /**
          * Query dilakukan DI SERVER menggunakan service role.
          *
@@ -38,20 +40,36 @@ export const authOptions: NextAuthOptions = {
          *
          * HASH PASSWORD akan kita kerjakan pada tahap berikutnya.
          */
-       const { data, error } = await supabaseAdmin
+   const { data, error } = await supabaseAdmin
   .from("pengguna")
-  .select(
-    "id, nama, username, role, status"
-  )
+  .select("id, nama, username, role, status")
   .eq("username", username)
   .eq("password", password)
   .maybeSingle();
 
+if (error) {
+  console.error(
+    "Gagal mencari akun SIMASDI:",
+    error
+  );
+
+  return null;
+}
+
+
+if (!data) {
+  return null;
+
+}
+
+if (data.status === "Nonaktif") {
+  return null;
+}
 
         if (error) {
           console.error(
             "Gagal memeriksa login SIMASDI:",
-            error.message
+            error
           );
 
           return null;
@@ -78,7 +96,7 @@ export const authOptions: NextAuthOptions = {
         if (updateError) {
           console.error(
             "Gagal memperbarui terakhir_login:",
-            updateError.message
+            updateError
           );
         }
 

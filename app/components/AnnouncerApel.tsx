@@ -20,10 +20,9 @@ export default function AnnouncerApel() {
   const [audioAktif, setAudioAktif] = useState(false);
   const [bolehAudio, setBolehAudio] = useState(false);
   const [jadwalHariIni, setJadwalHariIni] = useState<JadwalApel[]>([]);
+const sudahAnnounce = useRef(false);
 
-  const sudahAnnounce = useRef(false);
-  const sudahIndonesiaRaya = useRef(false);
-const indonesiaRayaRef = useRef<HTMLAudioElement | null>(null);
+
   // ================================
   // CEK HAK AKSES AUDIO SIMASDI
   // ================================
@@ -153,89 +152,8 @@ async function aktifkanAudio() {
     };
   }, []);
 
-  // ================================
-  // CEK JAM APEL
-  // ================================
-  useEffect(() => {
-    if (!audioAktif) return;
-    if (jadwalHariIni.length === 0) return;
 
-    const cekJadwal = () => {
-      const sekarang = new Date();
 
-      const jamSekarang = String(
-        sekarang.getHours()
-      ).padStart(2, "0");
-
-      const menitSekarang = String(
-        sekarang.getMinutes()
-      ).padStart(2, "0");
-
-      const waktuSekarang =
-        `${jamSekarang}:${menitSekarang}`;
-
-      const jadwal = jadwalHariIni.find(
-        (item) =>
-          item.jam_apel?.slice(0, 5) ===
-          waktuSekarang
-      );
-
-      if (!jadwal) return;
-
-      if (sudahAnnounce.current) return;
-
-      sudahAnnounce.current = true;
-
-      announceApel();
-
-      setTimeout(() => {
-        sudahAnnounce.current = false;
-      }, 60 * 1000);
-    };
-
-    const interval = setInterval(
-      cekJadwal,
-      1000
-    );
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [audioAktif, jadwalHariIni]);
-// ================================
-// INDONESIA RAYA OTOMATIS JAM 10.00
-// ================================
-useEffect(() => {
-  if (!audioAktif) return;
-
-  const cekIndonesiaRaya = () => {
-    const sekarang = new Date();
-
-    const jam = sekarang.getHours();
-    const menit = sekarang.getMinutes();
-
-    if (jam !== 10 || menit !== 0) return;
-
-    if (sudahIndonesiaRaya.current) return;
-
-    sudahIndonesiaRaya.current = true;
-
-    putarIndonesiaRaya();
-
-    setTimeout(() => {
-      sudahIndonesiaRaya.current = false;
-    }, 60 * 1000);
-  };
-
-  const interval = setInterval(
-    cekIndonesiaRaya,
-    1000
-  );
-
-  return () => {
-    clearInterval(interval);
-  };
-}, [audioAktif]);
   // ================================
   // ANNOUNCE APEL
   // ================================
@@ -251,16 +169,11 @@ useEffect(() => {
 
   setTimeout(() => {
   const petugas = jadwalHariIni
-    .map(
-      (item) =>
-        `${item.tugas}, ${item.nama_petugas}` +
-        `${
-          item.jabatan
-            ? `, ${item.jabatan}`
-            : ""
-        }`
-    )
-    .join(". ");
+  .map(
+    (item) =>
+      `${item.tugas}, ${item.nama_petugas}`
+  )
+  .join(". ");
 
  if (!petugas) {
   return;
@@ -304,23 +217,7 @@ function bicara(
 
   window.speechSynthesis.speak(suara);
 }
-function putarIndonesiaRaya() {
-  if (!bolehAudio) return;
 
-  const audio = indonesiaRayaRef.current;
-
-  if (!audio) return;
-
-  audio.currentTime = 0;
-  audio.volume = 1;
-
-  audio.play().catch((error) => {
-    console.error(
-      "Gagal memutar Indonesia Raya:",
-      error
-    );
-  });
-}
     // ================================
   // TAMPILAN
   // ================================
@@ -334,11 +231,7 @@ function putarIndonesiaRaya() {
   if (audioAktif) {
   return (
     <>
-      <audio
-        ref={indonesiaRayaRef}
-        src="/audio/indonesia-raya.mp3"
-        preload="auto"
-      />
+
 
       <div className="fixed bottom-4 right-4 z-[9999]">
         <div className="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">

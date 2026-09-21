@@ -57,7 +57,7 @@ export default function LoginPage() {
       const session = await sessionResponse.json();
 
       const role = session?.role;
-
+console.log("ROLE LOGIN =", role);
       /**
        * Untuk kompatibilitas dengan modul SIMASDI
        * yang saat ini masih membaca localStorage,
@@ -79,35 +79,66 @@ export default function LoginPage() {
       /**
        * Arahkan sesuai role.
        */
-      switch (role) {
-        case "Admin":
-        case "Kaur umum":
-          router.push("/dashboard");
-          break;
+   switch (role) {
+  // ==========================================
+  // ROLE YANG MASUK DASHBOARD PENGUMUMAN
+  // ==========================================
+  case "kaur Keuangan":
+  case "apk":
+  case "Kasubsi Registrasi Anak":
+  case "Kasubsi Registrasi Dewasa":
+  case "Kasubsi Bimker Anak":
+  case "Kasubsi Bimker Dewasa":
+  case "Kasubsi Bimkemas Anak":
+  case "Kasubsi Bimkemas Dewasa":
+  case "Kasi BKA":
+  case "Kasi BKD":
+  case "Kaur Kepegawaian":
+  case "Staf":
+  case "Pegawai":
+  case "PK Madya":
+  case "PK Muda":
+  case "PK Pertama":
+  case "Arsiparis":
+  case "PPNPN":
+  case "Petugas":
+    router.push("/dashboard");
+    break;
 
-        case "Petugas":
-          router.push("/siantar/petugas");
-          break;
+  // ==========================================
+  // ROLE ADMIN
+  // ==========================================
+  case "Admin":
+  case "Admin Umum":
+  case "Kaur umum":
+  case "Kabapas":
+  case "Kasubag TU":
+  case "Admin Keuangan":
+    router.push("/dashboard");
+    break;
 
-        case "Kiosk":
-          router.push("/siantar/kiosk");
-          break;
+  // ==========================================
+  // MODUL KHUSUS
+  // ==========================================
+  case "Kiosk":
+    router.push("/siantar/kiosk");
+    break;
 
-        case "Display":
-          router.push("/display");
-          break;
+  case "Display":
+    router.push("/display");
+    break;
 
-        default:
-          router.push("/dashboard");
-          break;
+  default:
+    router.push("/dashboard");
+    break;
+}
+      } catch (error) {
+        console.error("Login gagal:", error);
+        alert("Terjadi kesalahan saat login.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("Terjadi kesalahan saat login.");
-    } finally {
-      setLoading(false);
     }
-  }
 
   return (
     <main className="min-h-screen bg-[#061a48] flex items-center justify-center p-4 md:p-8">
