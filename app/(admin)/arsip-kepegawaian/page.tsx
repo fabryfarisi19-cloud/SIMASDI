@@ -1,628 +1,836 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
-  FolderArchive,
-  User,
-  Users,
+  Archive,
+  ArrowLeft,
+  BookOpen,
+  BriefcaseBusiness,
+  CalendarDays,
   Camera,
-  CreditCard,
-  HeartPulse,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleUserRound,
+  ClipboardCheck,
+  Download,
+  Eye,
+  FileArchive,
+  FileBadge,
+  FileCheck,
   FileText,
   GraduationCap,
-  Award,
-  FileCheck,
-  CalendarDays,
+  Heart,
+  IdCard,
+  KeyRound,
+  Landmark,
+  Loader2,
+  Lock,
+  Mail,
+  Medal,
+  Pencil,
+  Plus,
+  Printer,
+  RefreshCw,
   Search,
-  ChevronRight,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  User,
+  Users,
+  WalletCards,
+  X,
 } from "lucide-react";
 
-type ArsipKategori = {
+type SubKategori = {
   nama: string;
   deskripsi: string;
   icon: any;
+
+  /**
+   * Nilai kategori yang disimpan ke database
+   * Jika tidak diisi maka menggunakan nama.
+   */
+  kategoriSimpan?: string;
+
+  /**
+   * Kategori lama yang tetap dianggap cocok.
+   */
+  aliases?: string[];
+
+  /**
+   * Arsip lama hanya ditampilkan jika memang ada.
+   */
+  legacyOnly?: boolean;
 };
 
-const kategoriArsip: ArsipKategori[] = [
+type KategoriArsip = {
+  nama: string;
+  deskripsi: string;
+  icon: any;
+  items: SubKategori[];
+};
+
+type Arsip = {
+  id: string;
+  pengguna_id?: string | null;
+  nip: string;
+  nama_pegawai?: string | null;
+  kategori?: string | null;
+  jenis_dokumen?: string | null;
+  nama_dokumen?: string | null;
+  nomor_dokumen?: string | null;
+  tanggal_dokumen?: string | null;
+  tahun?: string | number | null;
+  nama_file?: string | null;
+  file_path?: string | null;
+  keterangan?: string | null;
+  uploaded_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  file_url?: string | null;
+  file_tersedia?: boolean;
+  signed_url_berhasil?: boolean;
+};
+
+type Pegawai = {
+  id: string;
+  nama: string;
+  username: string;
+  role?: string | null;
+  status?: string | null;
+};
+
+const ROLE_ADMIN_KEPEGAWAIAN = [
+  "pengelola kepegawaian",
+  "kaur kepegawaian",
+  "admin kepegawaian",
+  "admin",
+];
+
+function normalizeKategori(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
+}
+
+function normalizeText(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function formatTanggal(value: string | null | undefined) {
+  if (!value) return "-";
+
+  try {
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function getKategoriValue(item: SubKategori) {
+  return item.kategoriSimpan ?? item.nama;
+}
+
+/**
+ * Pengecekan kategori.
+ *
+ * Kompatibel dengan:
+ * - kategori baru
+ * - kategori lama
+ * - beberapa kategori legacy yang dahulu dipakai Google Form.
+ */
+function kategoriCocok(
+  arsip: Arsip,
+  item: SubKategori
+): boolean {
+  const kategori = normalizeKategori(
+    arsip.kategori
+  );
+
+  const namaDokumen = normalizeText(
+    arsip.nama_dokumen
+  );
+
+  const jenisDokumen = normalizeText(
+    arsip.jenis_dokumen
+  );
+
+  const namaFile = normalizeText(
+    arsip.nama_file
+  );
+
+  const namaItem = normalizeKategori(
+    item.nama
+  );
+
+  const teks = `
+    ${namaDokumen}
+    ${jenisDokumen}
+    ${namaFile}
+  `.toLowerCase();
+
+  /*
+   * =========================================================
+   * 1. PANGKAT
+   * =========================================================
+   *
+   * Arsip lama menggunakan:
+   * - SK PANGKAT/GOLONGAN
+   * - SK PANGKAT//GOLONGAN
+   *
+   * Keduanya ditampilkan pada kartu "Pangkat".
+   */
+if (namaItem === "PANGKAT") {
+  if (
+    kategori !== "SK PANGKAT/GOLONGAN" &&
+    kategori !== "SK PANGKAT//GOLONGAN"
+  ) {
+    return false;
+  }
+
+  // Jangan tampilkan SK PNS / SK CPNS
+  // pada kartu Pangkat.
+  if (
+    teks.includes("sk pangkat pns") ||
+    teks.includes("sk pangkat cpns") ||
+    teks.includes("pangkat pns") ||
+    teks.includes("pangkat cpns")
+  ) {
+    return false;
+  }
+
+  // Hanya pangkat/golongan
+  if (
+    teks.includes("sk iib") ||
+    teks.includes("sk iic") ||
+    teks.includes("sk iiia") ||
+    teks.includes("sk iiib") ||
+    teks.includes("sk iiic")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+  /*
+   * =========================================================
+   * 2. SK CPNS
+   * =========================================================
+   */
+ if (namaItem === "SK CPNS") {
+  /*
+   * SK CPNS dapat berasal dari:
+   * - kategori SK CPNS
+   * - kategori SK
+   * - kategori SK PANGKAT/GOLONGAN
+   *
+   * Yang menentukan adalah isi dokumennya.
+   */
+
+  if (
+    kategori === "SK CPNS" ||
+    kategori === "SK" ||
+    kategori === "SK PANGKAT/GOLONGAN"
+  ) {
+    return (
+      teks.includes("sk cpns") ||
+      teks.includes("pangkat cpns")
+    );
+  }
+
+  return false;
+}
+  /*
+   * =========================================================
+   * 3. SK PNS
+   * =========================================================
+   */
+  if (namaItem === "SK PNS") {
+  /*
+   * SK PNS dapat berasal dari:
+   * - kategori SK PNS
+   * - kategori SK
+   * - kategori SK PANGKAT/GOLONGAN
+   *
+   * Yang menentukan adalah isi dokumennya.
+   */
+
+  if (
+    kategori === "SK PNS" ||
+    kategori === "SK" ||
+    kategori === "SK PANGKAT/GOLONGAN"
+  ) {
+    /*
+     * Jangan mengambil dokumen CPNS.
+     */
+    if (
+      teks.includes("sk cpns") ||
+      teks.includes("pangkat cpns")
+    ) {
+      return false;
+    }
+
+    return (
+      teks.includes("sk pns") ||
+      teks.includes("pangkat pns") ||
+      teks.includes("pengangkatan pns")
+    );
+  }
+
+  return false;
+}
+  /*
+   * =========================================================
+   * 4. SK JABATAN
+   * =========================================================
+   */
+  if (namaItem === "SK JABATAN") {
+    if (kategori === "SK JABATAN") {
+      return true;
+    }
+
+    if (kategori === "SK") {
+      return teks.includes("jabatan");
+    }
+
+    return false;
+  }
+
+  /*
+   * =========================================================
+   * 5. KATEGORI NORMAL
+   * =========================================================
+   *
+   * Cocokkan kategori database dengan:
+   * - nama kategori
+   * - kategoriSimpan
+   * - aliases
+   */
+  const values = [
+    getKategoriValue(item),
+    item.nama,
+    ...(item.aliases ?? []),
+  ]
+    .filter(Boolean)
+    .map(normalizeKategori);
+
+  if (values.includes(kategori)) {
+    return true;
+  }
+
+  /*
+   * =========================================================
+   * 6. KATEGORI LEGACY TERTENTU
+   * =========================================================
+   *
+   * Jika kategori database "SK", cocokkan berdasarkan
+   * nama/jenis/file hanya untuk kategori yang memang
+   * sudah ditentukan di atas.
+   *
+   * Jangan menggunakan pencarian teks secara umum di sini
+   * karena dapat membuat dokumen masuk ke kategori yang salah.
+   */
+
+  return false;
+}
+/**
+ * Untuk arsip legacy yang tidak punya kategori baru.
+ */
+function arsipLegacyCocok(
+  arsip: Arsip,
+  kategoriLegacy: string
+) {
+  return (
+    normalizeKategori(arsip.kategori) ===
+    normalizeKategori(kategoriLegacy)
+  );
+}
+
+const kategoriArsip: KategoriArsip[] = [
   {
-    nama: "DRH",
-    deskripsi: "Dokumen dan data administrasi kepegawaian",
-    icon: User,
+    nama: "Dasar",
+    deskripsi: "Dokumen identitas dasar pegawai",
+    icon: IdCard,
+    items: [
+      {
+        nama: "Pas Foto",
+        deskripsi: "Pas foto pegawai",
+        icon: Camera,
+      },
+      {
+        nama: "Akta Lahir",
+        deskripsi: "Dokumen akta kelahiran pegawai",
+        icon: FileBadge,
+      },
+        {
+        nama: "Kartu Keluarga",
+        deskripsi: "Kartu Keluarga",
+        icon: Users,
+        aliases: ["KK"],
+      },
+      {
+        nama: "KTP",
+        deskripsi: "Kartu Tanda Penduduk",
+        icon: IdCard,
+      },
+      {
+        nama: "BPJS",
+        deskripsi: "Dokumen BPJS",
+        icon: ShieldCheck,
+      },
+    ],
   },
-  {
-     nama: "DRP",
-    deskripsi: "Dokumen dan data administrasi kepegawaian",
-    icon: User,  
-  },
-  {
-     nama: "KGB",
-    deskripsi: "Dokumen dan data administrasi kepegawaian",
-    icon: User,
-  },
-  {
-    nama: "Pas Foto",
-    deskripsi: "Pas foto pegawai",
-    icon: Camera,
-  },
-  {
-    nama: "KTP",
-    deskripsi: "Kartu Tanda Penduduk",
-    icon: CreditCard,
-  },
-  {
-    nama: "KK",
-    deskripsi: "Kartu Keluarga",
-    icon: Users,
-  },
-  {
-    nama: "BPJS",
-    deskripsi: "Dokumen BPJS",
-    icon: HeartPulse,
-  },
-  {
-    nama: "NPWP",
-    deskripsi: "Dokumen NPWP",
-    icon: FileText,
-  },
-  {
-    nama: "Buku Nikah",
-    deskripsi: "Dokumen buku nikah",
-    icon: FileText,
-  },
-  {
-    nama: "Anak & Istri/Suami",
-    deskripsi: "Dokumen pasangan dan anak",
-    icon: Users,
-  },
+
   {
     nama: "Pendidikan",
-    deskripsi: "Ijazah dan dokumen pendidikan",
+    deskripsi: "Dokumen pendidikan dan pengembangan kompetensi",
     icon: GraduationCap,
+    items: [
+      {
+        nama: "Ijazah Sekolah Formal",
+        deskripsi: "Ijazah pendidikan formal",
+        icon: GraduationCap,
+        aliases: ["Pendidikan"],
+      },
+      {
+        nama: "Sertifikat Bahasa Asing",
+        deskripsi: "Sertifikat kemampuan bahasa asing",
+        icon: BookOpen,
+      },
+      {
+        nama:
+          "Sertifikat Seminar / Workshop / Lokakarya / Sosialisasi",
+        deskripsi:
+          "Sertifikat kegiatan seminar, workshop, lokakarya atau sosialisasi",
+        icon: FileCheck,
+      },
+      {
+        nama: "STTP Diklat",
+        deskripsi: "Surat Tanda Tamat Pendidikan dan Pelatihan",
+        icon: FileBadge,
+        aliases: ["Sertifikat Diklat"],
+      },
+      {
+        nama: "Sertifikat Kursus",
+        deskripsi: "Sertifikat kursus atau pelatihan",
+        icon: BookOpen,
+      },
+      {
+        nama: "Tugas Belajar",
+        deskripsi: "Dokumen tugas belajar",
+        icon: GraduationCap,
+      },
+      {
+        nama: "Izin Belajar",
+        deskripsi: "Dokumen izin belajar",
+        icon: GraduationCap,
+      },
+      {
+        nama: "Pencantuman Gelar",
+        deskripsi: "Dokumen pencantuman gelar",
+        icon: FileBadge,
+      },
+
+      /*
+       * Arsip lama.
+       * Tidak muncul sebagai kartu jika tidak ada datanya.
+       */
+    
+      {
+        nama: "Sertifikat Diklat (Arsip Lama)",
+        deskripsi: "Arsip sertifikat diklat lama",
+        icon: Archive,
+        kategoriSimpan: "Sertifikat Diklat",
+        legacyOnly: true,
+      },
+    ],
   },
+
   {
-    nama: "Sertifikat Diklat",
-    deskripsi: "Sertifikat pendidikan dan pelatihan",
-    icon: Award,
+    nama: "Keluarga",
+    deskripsi: "Dokumen keluarga pegawai",
+    icon: Users,
+    items: [
+      {
+        nama: "Kartu Keluarga",
+        deskripsi: "Kartu Keluarga",
+        icon: Users,
+        aliases: ["KK"],
+      },
+      {
+        nama: "Pas Foto Pasangan",
+        deskripsi: "Pas foto pasangan",
+        icon: Camera,
+      },
+      {
+        nama: "Riwayat Pernikahan",
+        deskripsi: "Dokumen pernikahan",
+        icon: Heart,
+        aliases: ["Buku Nikah"],
+      },
+      {
+        nama: "Karis / Karsu",
+        deskripsi: "Kartu istri atau kartu suami",
+        icon: Heart,
+      },
+      {
+        nama: "Akte Lahir Anak",
+        deskripsi: "Dokumen akta kelahiran anak",
+        icon: Users,
+        aliases: ["Anak & Istri", "Anak & Istri/Suami"],
+      },
+    ],
   },
+
   {
-   nama: "SK Pangkat/Golongan",
-    deskripsi: "Surat keputusan kepegawaian",
-    icon: FileCheck,
+    nama: "Kepegawaian",
+    deskripsi: "Dokumen administrasi kepegawaian",
+    icon: BriefcaseBusiness,
+    items: [
+      {
+        nama: "SK CPNS",
+        deskripsi: "Surat keputusan pengangkatan CPNS",
+        icon: FileText,
+      },
+      {
+        nama: "SK PNS",
+        deskripsi: "Surat keputusan pengangkatan PNS",
+        icon: FileText,
+      },
+      {
+        nama: "Karpeg",
+        deskripsi: "Kartu pegawai",
+        icon: IdCard,
+      },
+      {
+        nama: "KPE",
+        deskripsi: "Kartu Pegawai Elektronik",
+        icon: IdCard,
+      },
+      {
+        nama: "Kartu ASN Virtual",
+        deskripsi: "Kartu ASN Virtual",
+        icon: IdCard,
+      },
+      {
+        nama: "DRH",
+        deskripsi: "Daftar Riwayat Hidup",
+        icon: FileText,
+      },
+      {
+        nama: "DRP",
+        deskripsi: "Daftar Riwayat Pekerjaan",
+        icon: FileText,
+      },
+      {
+        nama: "Pangkat",
+        deskripsi: "Dokumen administrasi pangkat",
+        icon: FileBadge,
+      },
+      {
+        nama: "Ujian Dinas",
+        deskripsi: "Dokumen ujian dinas",
+        icon: ClipboardCheck,
+      },
+      {
+        nama: "SK PPNPN",
+        deskripsi: "Surat keputusan PPNPN",
+        icon: FileText,
+      },
+      {
+        nama: "SK PMK",
+        deskripsi: "Surat keputusan masa kerja",
+        icon: FileText,
+      },
+      {
+        nama: "Pakta Integritas",
+        deskripsi: "Dokumen pakta integritas",
+        icon: ShieldCheck,
+      },
+      {
+        nama: "Surat Pernyataan Lainnya",
+        deskripsi: "Surat pernyataan kepegawaian",
+        icon: FileText,
+      },
+
+    ],
   },
+
   {
-       nama: "SK Jabatan",
-    deskripsi: "Surat keputusan kepegawaian",
-    icon: FileCheck,
+    nama: "Keuangan",
+    deskripsi: "Dokumen administrasi keuangan",
+    icon: WalletCards,
+    items: [
+      {
+        nama: "NPWP",
+        deskripsi: "Dokumen NPWP",
+        icon: WalletCards,
+      },
+      {
+        nama: "Buku Tabungan",
+        deskripsi: "Buku rekening atau tabungan",
+        icon: WalletCards,
+      },
+      {
+        nama: "LHKPN",
+        deskripsi: "Laporan Harta Kekayaan Penyelenggara Negara",
+        icon: FileText,
+      },
+      {
+        nama: "LHKAN",
+        deskripsi: "Laporan Harta Kekayaan Aparatur Negara",
+        icon: FileText,
+      },
+      {
+        nama: "KGB",
+        deskripsi: "Kenaikan Gaji Berkala",
+        icon: WalletCards,
+      },
+    ],
   },
+
   {
-    nama: "Penghargaan",
-    deskripsi: "Dokumen penghargaan pegawai",
-    icon: Award,
+    nama: "Jabatan",
+    deskripsi: "Dokumen jabatan dan pelaksanaan tugas",
+    icon: Landmark,
+    items: [
+      {
+        nama: "SK Jabatan",
+        deskripsi: "Surat keputusan kepegawaian",
+        icon: FileBadge,
+      },
+      {
+        nama: "SK Pindah Instansi",
+        deskripsi: "Surat keputusan pindah instansi",
+        icon: FileText,
+      },
+      {
+        nama: "Pelantikan dan Pengambilan Sumpah",
+        deskripsi: "Dokumen pelantikan dan sumpah jabatan",
+        icon: Landmark,
+      },
+      {
+        nama: "SPP",
+        deskripsi: "Surat Perintah Pelaksanaan",
+        icon: FileText,
+      },
+      {
+        nama: "SPMT",
+        deskripsi: "Surat Pernyataan Melaksanakan Tugas",
+        icon: FileText,
+      },
+      {
+        nama: "SPMJ",
+        deskripsi: "Surat Pernyataan Melaksanakan Jabatan",
+        icon: FileText,
+      },
+      {
+        nama: "SPMMJ",
+        deskripsi: "Surat Pernyataan Melaksanakan Masa Jabatan",
+        icon: FileText,
+      },
+      {
+        nama: "Uji Kompetensi",
+        deskripsi: "Dokumen uji kompetensi",
+        icon: ClipboardCheck,
+      },
+      {
+        nama: "Ujian Dinas",
+        deskripsi: "Dokumen ujian dinas",
+        icon: ClipboardCheck,
+      },
+    ],
   },
+
   {
-    nama: "Izin / Sakit / Lepas Piket / Dinas Luar Half / Dinas Luar Full / Cuti",
-    deskripsi: "Dokumen izin, sakit dan cuti",
-    icon: CalendarDays,
+    nama: "Penilaian",
+    deskripsi: "Dokumen penilaian dan penghargaan",
+    icon: Medal,
+    items: [
+      {
+        nama: "SKP",
+        deskripsi: "Sasaran Kinerja Pegawai",
+        icon: ClipboardCheck,
+      },
+      {
+        nama: "PAK",
+        deskripsi: "Penetapan Angka Kredit",
+        icon: ClipboardCheck,
+      },
+      {
+        nama: "Penghargaan",
+        deskripsi: "Dokumen penghargaan pegawai",
+        icon: Medal,
+      },
+      {
+        nama: "Bebas Hukdis",
+        deskripsi: "Surat bebas hukuman disiplin",
+        icon: ShieldCheck,
+      },
+      {
+        nama: "Hukdis",
+        deskripsi: "Dokumen hukuman disiplin",
+        icon: FileText,
+      },
+    ],
+  },
+
+  {
+    nama: "Persiapan Pensiun",
+    deskripsi: "Dokumen persiapan dan administrasi pensiun",
+    icon: Landmark,
+    items: [
+      {
+        nama: "Taspen",
+        deskripsi: "Dokumen Taspen",
+        icon: FileBadge,
+      },
+      {
+        nama: "DPCP",
+        deskripsi: "Data Perorangan Calon Penerima Pensiun",
+        icon: FileText,
+      },
+      {
+        nama: "SK Pensiun",
+        deskripsi: "Surat keputusan pensiun",
+        icon: FileBadge,
+      },
+    ],
   },
 ];
 
-export default function ArsipKepegawaianPage() {
-const { data: session, status } = useSession();
-const searchParams = useSearchParams();
+function semuaSubKategori() {
+  return kategoriArsip.flatMap((group) => group.items);
+}
 
-const nipDipilih = searchParams.get("nip") || "";
+function cariSubKategori(
+  value: string
+): SubKategori | undefined {
+  const target = normalizeKategori(value);
 
-const [nama, setNama] = useState("Pegawai");
-const [username, setUsername] = useState("");
-const [role, setRole] = useState("");
+  return semuaSubKategori().find((item) => {
+    const values = [
+      item.nama,
+      item.kategoriSimpan,
+      ...(item.aliases ?? []),
+    ]
+      .filter(Boolean)
+      .map(normalizeKategori);
 
-const [daftarPegawai, setDaftarPegawai] = useState<any[]>([]);
-const [pencarian, setPencarian] = useState("");
-const [loadingPegawai, setLoadingPegawai] = useState(false);
+    return values.includes(target);
+  });
+}
 
-const [arsipPegawai, setArsipPegawai] = useState<any[]>([]);
-const [loadingArsip, setLoadingArsip] = useState(false);
+/**
+ * Card dokumen.
+ * Dibuat sederhana supaya URL Supabase tidak pernah tampil di layar.
+ */
+function DokumenCard({
+  item,
+  isAdmin,
+  onDelete,
+}: {
+  item: Arsip;
+  isAdmin: boolean;
+  onDelete: (item: Arsip) => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
 
-const [kategoriDipilih, setKategoriDipilih] = useState("");
-const [showUpload, setShowUpload] = useState(false);
-const [modeArsipSaya, setModeArsipSaya] = useState(false);
+  const namaDokumen =
+    item.nama_dokumen ||
+    item.jenis_dokumen ||
+    "Dokumen";
 
-const [uploadFile, setUploadFile] = useState<File | null>(null);
-const [namaDokumen, setNamaDokumen] = useState("");
-const [nomorDokumen, setNomorDokumen] = useState("");
-const [tanggalDokumen, setTanggalDokumen] = useState("");
-const [tahunDokumen, setTahunDokumen] = useState("");
-const [keteranganDokumen, setKeteranganDokumen] = useState("");
-const [uploadLoading, setUploadLoading] = useState(false);
+  const namaFile =
+    item.nama_file || "File tidak diketahui";
 
-  // ==========================================
-  // ROLE KEPEGAWAIAN
-  // ==========================================
-
-  const roleNormal = String(role)
-    .trim()
-    .toLowerCase();
-
-  const isAdminKepegawaian =
-    roleNormal === "pengelola kepegawaian" ||
-    roleNormal === "admin kepegawaian" ||
-    roleNormal === "kaur kepegawaian" ||
-    roleNormal === "admin";
-const nipAktif =
-  modeArsipSaya
-    ? username
-    : isAdminKepegawaian
-      ? nipDipilih
-      : username;
-  // ==========================================
-  // AMBIL DATA SESSION
-  // ==========================================
-
-  useEffect(() => {
-    const sessionAny = session as any;
-
-    const namaSession =
-      sessionAny?.nama ||
-      sessionAny?.user?.nama ||
-      "";
-
-    const usernameSession =
-      sessionAny?.username ||
-      sessionAny?.user?.username ||
-      "";
-
-    const roleSession =
-      sessionAny?.role ||
-      sessionAny?.user?.role ||
-      sessionAny?.user?.jabatan ||
-      "";
-
-    const userLocal =
-      localStorage.getItem("user");
-
-    if (userLocal) {
-      try {
-        const u = JSON.parse(userLocal);
-
-        setNama(
-          namaSession ||
-            u.nama ||
-            "Pegawai"
-        );
-
-        setUsername(
-          usernameSession ||
-            u.username ||
-            ""
-        );
-
-        setRole(
-          roleSession ||
-            u.role ||
-            u.jabatan ||
-            ""
-        );
-
-        return;
-      } catch {
-        // localStorage tidak valid
-      }
-    }
-
-    setNama(
-      namaSession || "Pegawai"
-    );
-
-    setUsername(
-      usernameSession || ""
-    );
-
-    setRole(
-      roleSession || ""
-    );
-  }, [session]);
-
-  // ==========================================
-  // AMBIL DAFTAR PEGAWAI
-  // KHUSUS PENGELOLA KEPEGAWAIAN
-  // ==========================================
-
-  useEffect(() => {
-    if (!isAdminKepegawaian) {
+  const lihat = () => {
+    if (!item.file_url) {
+      alert("File belum tersedia atau URL file gagal dibuat.");
       return;
     }
 
-  const ambilDaftarPegawai = async () => {
-  try {
-    setLoadingPegawai(true);
-
-    const response = await fetch(
-      "/api/arsip-kepegawaian?mode=pegawai"
+    window.open(
+      item.file_url,
+      "_blank",
+      "noopener,noreferrer"
     );
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      console.error(
-        "Gagal mengambil daftar pegawai:",
-        result.message
-      );
-
-      return;
-    }
-
-    // Hanya tampilkan pegawai yang memiliki NIP 18 digit
-    const hanyaYangPunyaNIP = (result.data ?? []).filter(
-      (pegawai: any) =>
-        /^\d{18}$/.test(
-          String(pegawai.username ?? "").trim()
-        )
-    );
-
-    setDaftarPegawai(hanyaYangPunyaNIP);
-
-  } catch (error) {
-    console.error(
-      "ERROR mengambil daftar pegawai:",
-      error
-    );
-  } finally {
-    setLoadingPegawai(false);
-  }
-};
-
-    ambilDaftarPegawai();
-  }, [isAdminKepegawaian]);
-useEffect(() => {
-  if (status !== "authenticated") return;
-
-const nipTarget =
-  modeArsipSaya
-    ? username
-    : isAdminKepegawaian
-      ? nipDipilih
-      : username;
-
-  if (!nipTarget) {
-    setArsipPegawai([]);
-    return;
-  }
-
-  const ambilArsipPegawai = async () => {
-    try {
-      setLoadingArsip(true);
-
-      const response = await fetch(
-        `/api/arsip-kepegawaian?nip=${encodeURIComponent(
-          nipTarget
-        )}`
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        console.error(
-          "Gagal mengambil arsip:",
-          result.message
-        );
-
-        setArsipPegawai([]);
-        return;
-      }
-
-    console.log("ARSIP PEGAWAI JSON:", JSON.stringify(result.data, null, 2));
-
-      setArsipPegawai(
-        result.data ?? []
-      );
-    } catch (error) {
-      console.error(
-        "ERROR mengambil arsip:",
-        error
-      );
-
-      setArsipPegawai([]);
-    } finally {
-      setLoadingArsip(false);
-    }
   };
 
-  ambilArsipPegawai();
-}, [
-  status,
-  username,
-  nipDipilih,
-  isAdminKepegawaian,
-  modeArsipSaya,
-]);
+  const print = () => {
+    if (!item.file_url) {
+      alert("File belum tersedia.");
+      return;
+    }
 
- 
-  // ==========================================
-  // LOADING SESSION
-  // ==========================================
-
-  if (status === "loading") {
-    return (
-      <main className="arsip-page">
-        <div className="loading-box">
-          Memuat Arsip Kepegawaian...
-        </div>
-      </main>
+    const printWindow = window.open(
+      item.file_url,
+      "_blank"
     );
-  }
 
-  return (
-    <main className="arsip-page">
+    if (!printWindow) {
+      alert(
+        "Browser memblokir jendela baru. Silakan izinkan pop-up untuk SIMASDI."
+      );
+      return;
+    }
 
-      {/* HEADER */}
-      <section className="arsip-header">
+    setTimeout(() => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch {
+        // browser tertentu tidak mengizinkan print otomatis
+      }
+    }, 1500);
+  };
 
-        <div className="arsip-header-icon">
-          <FolderArchive size={30} />
-        </div>
+  const download = () => {
+    if (!item.file_url) {
+      alert("File belum tersedia.");
+      return;
+    }
 
-        <div>
-          <h1>Arsip Kepegawaian</h1>
+    const link = document.createElement("a");
 
-          <p>
-            Pengelolaan dokumen dan arsip kepegawaian
-            secara digital.
-          </p>
-        </div>
+    link.href = item.file_url;
+    link.download =
+      item.nama_file || "dokumen-arsip";
 
-      </section>
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
 
-      {/* ============================= */}
-      {/* PEGAWAI */}
-      {/* ============================= */}
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
-      {!isAdminKepegawaian && (
-        <>
-          <section className="profil-box">
+  const handleDelete = async () => {
+    if (deleting) return;
 
-            <div className="profil-icon">
-              <User size={28} />
-            </div>
-
-            <div className="profil-info">
-
-              <span className="label">
-                Arsip Saya
-              </span>
-
-              <h2>{nama}</h2>
-
-              <p>
-                NIP / Username: {username || "-"}
-              </p>
-
-            </div>
-
-          </section>
-
-          <section className="section-title">
-            <h2>Dokumen Saya</h2>
-
-            <p>
-              Kelola dan simpan dokumen kepegawaian
-              milik Anda sendiri.
-            </p>
-          </section>
-
-          <div className="kategori-grid">
-
-            {kategoriArsip.map((item) => {
-              const Icon = item.icon;
-
-              return (
-              <button
-  key={item.nama}
-  type="button"
-  className="kategori-card"
-onClick={() => {
-  setKategoriDipilih(item.nama);
-  setShowUpload(false);
-}}
->
-
-                  <div className="kategori-icon">
-                    <Icon size={24} />
-                  </div>
-
-                  <div className="kategori-text">
-
-                    <h3>{item.nama}</h3>
-
-                    <p>
-                      {item.deskripsi}
-                    </p>
-
-                  </div>
-
-                  <ChevronRight
-                    size={20}
-                    className="kategori-arrow"
-                  />
-
-                </button>
-              );
-            })}
-
-          </div>
-        
-        </>
-      )}
-{((!isAdminKepegawaian && kategoriDipilih) ||
-  (isAdminKepegawaian && modeArsipSaya && kategoriDipilih)) && (
-  <section className="dokumen-box">
-
-    <div className="section-title">
-      <div>
-        <h2>{kategoriDipilih}</h2>
-
-        <p>
-          Dokumen {kategoriDipilih} milik Anda.
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setShowUpload(true)}
-        className="upload-button"
-      >
-        + Upload Dokumen
-      </button>
-    </div>
-
-    {loadingArsip ? (
-      <div className="empty-box">
-        Memuat dokumen...
-      </div>
-    ) : (
-      (() => {
-        const dokumenKategori = arsipPegawai.filter(
-          (item) =>
-            String(item.kategori ?? "")
-              .trim()
-              .toUpperCase() ===
-            kategoriDipilih
-              .trim()
-              .toUpperCase()
-        );
-
-        if (dokumenKategori.length === 0) {
-          return (
-            <div className="empty-box">
-              <FolderArchive size={42} />
-
-              <h3>
-                Belum ada dokumen
-              </h3>
-
-              <p>
-                Belum ada dokumen pada kategori{" "}
-                {kategoriDipilih}.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => setShowUpload(true)}
-                className="upload-empty-button"
-              >
-                + Upload Dokumen
-              </button>
-            </div>
-          );
-        }
-
-        return (
-          <div className="dokumen-list">
-            {dokumenKategori.map((item) => (
-              <div
-                key={item.id}
-                className="dokumen-card"
-              >
-                <div className="dokumen-info">
-
-                  <div className="dokumen-nama">
-                    📄{" "}
-                    {item.nama_dokumen ||
-                      item.nama_file}
-                  </div>
-
-                  {item.nama_file && (
-                    <div>
-                      File: {item.nama_file}
-                    </div>
-                  )}
-
-                  {item.nomor_dokumen && (
-                    <div>
-                      Nomor: {item.nomor_dokumen}
-                    </div>
-                  )}
-
-                  {item.tanggal_dokumen && (
-                    <div>
-                      Tanggal:{" "}
-                      {new Date(
-                        item.tanggal_dokumen
-                      ).toLocaleDateString("id-ID")}
-                    </div>
-                  )}
-
-                  {item.tahun && (
-                    <div>
-                      Tahun: {item.tahun}
-                    </div>
-                  )}
-
-                  {item.keterangan && (
-                    <div>
-                      Keterangan: {item.keterangan}
-                    </div>
-                  )}
-
-                </div>
-
-                {item.file_url && (
-                  <div className="dokumen-actions">
-
-                    <a
-                      href={item.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-lihat"
-                    >
-                      👁 Lihat
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const printWindow =
-                          window.open(
-                            item.file_url,
-                            "_blank"
-                          );
-
-                        if (printWindow) {
-                          printWindow.onload = () => {
-                            printWindow.print();
-                          };
-                        }
-                      }}
-                      className="btn-print"
-                    >
-                      🖨 Print
-                    </button>
-
-                    <a
-                      href={item.file_url}
-                      download={
-                        item.nama_file ||
-                        "dokumen"
-                      }
-                      className="btn-download"
-                    >
-                      ⬇ Download
-                    </a>
-
-
-<button
-  type="button"
-  onClick={async () => {
     const yakin = window.confirm(
-      `Yakin ingin menghapus dokumen "${item.nama_dokumen || item.nama_file}"?`
+      `Hapus dokumen "${namaDokumen}"?\n\nFile akan dihapus dari arsip SIMASDI.`
     );
 
     if (!yakin) return;
 
+    setDeleting(true);
+
     try {
       const response = await fetch(
-        `/api/arsip-kepegawaian?id=${encodeURIComponent(item.id)}`,
+        `/api/arsip-kepegawaian?id=${encodeURIComponent(
+          item.id
+        )}`,
         {
           method: "DELETE",
         }
@@ -631,1501 +839,1670 @@ onClick={() => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        alert(
+        throw new Error(
           result.message ||
             "Dokumen gagal dihapus."
         );
-        return;
       }
 
-      alert("Dokumen berhasil dihapus.");
-
-      // Hapus langsung dari tampilan
-      setArsipPegawai((prev) =>
-        prev.filter(
-          (arsip) => arsip.id !== item.id
-        )
-      );
-    } catch (error) {
-      console.error(
-        "ERROR HAPUS DOKUMEN:",
-        error
-      );
-
+      onDelete(item);
+    } catch (error: any) {
       alert(
-        "Terjadi kesalahan saat menghapus dokumen."
+        error?.message ||
+          "Terjadi kesalahan saat menghapus dokumen."
       );
+    } finally {
+      setDeleting(false);
     }
-  }}
-  className="btn-hapus"
->
-  🗑 Hapus
-</button>
-                  </div>
-                )}
-              </div>
-            ))}
-            
-          </div>
-        );
-      })()
-    )}
-  {showUpload && kategoriDipilih && (
-  <div
-    style={{
-      marginTop: "20px",
-      padding: "22px",
-      background: "#f8fafc",
-      border: "1px solid #e2e8f0",
-      borderRadius: "16px",
-    }}
-  >
-    <h3
-      style={{
-        margin: "0 0 5px",
-        fontSize: "18px",
-        fontWeight: 800,
-        color: "#0f172a",
-      }}
-    >
-      Upload Dokumen
-    </h3>
+  };
 
-    <p
-      style={{
-        margin: "0 0 20px",
-        fontSize: "13px",
-        color: "#64748b",
-      }}
-    >
-   {kategoriDipilih} — {nipAktif}
-    </p>
+  return (
+    <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+          <FileText size={24} />
+        </div>
 
-    <div
-      style={{
-        display: "grid",
-        gap: "14px",
-      }}
-    >
-      {/* NAMA DOKUMEN */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          Nama Dokumen *
-        </label>
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-base font-bold text-slate-800">
+            {namaDokumen}
+          </h4>
 
-        <input
-          type="text"
-          value={namaDokumen}
-          onChange={(e) =>
-            setNamaDokumen(e.target.value)
-          }
-          placeholder="Contoh: KTP, SK CPNS, Ijazah S1"
-          style={{
-            width: "100%",
-            padding: "11px 12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-            outline: "none",
-          }}
-        />
+          <p className="mt-1 break-all text-sm text-slate-500">
+            File: {namaFile}
+          </p>
+
+          {item.nomor_dokumen && (
+            <p className="mt-1 text-xs text-slate-400">
+              Nomor: {item.nomor_dokumen}
+            </p>
+          )}
+
+          {item.tanggal_dokumen && (
+            <p className="mt-1 text-xs text-slate-400">
+              Tanggal:{" "}
+              {formatTanggal(
+                item.tanggal_dokumen
+              )}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* NOMOR DOKUMEN */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          Nomor Dokumen
-        </label>
-
-        <input
-          type="text"
-          value={nomorDokumen}
-          onChange={(e) =>
-            setNomorDokumen(e.target.value)
-          }
-          placeholder="Nomor dokumen jika ada"
-          style={{
-            width: "100%",
-            padding: "11px 12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-            outline: "none",
-          }}
-        />
-      </div>
-
-      {/* TANGGAL */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          Tanggal Dokumen
-        </label>
-
-        <input
-          type="date"
-          value={tanggalDokumen}
-          onChange={(e) =>
-            setTanggalDokumen(e.target.value)
-          }
-          style={{
-            width: "100%",
-            padding: "11px 12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-            outline: "none",
-          }}
-        />
-      </div>
-
-      {/* TAHUN */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          Tahun
-        </label>
-
-        <input
-          type="number"
-          value={tahunDokumen}
-          onChange={(e) =>
-            setTahunDokumen(e.target.value)
-          }
-          placeholder="Contoh: 2026"
-          min="1900"
-          max="2100"
-          style={{
-            width: "100%",
-            padding: "11px 12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-            outline: "none",
-          }}
-        />
-      </div>
-
-      {/* KETERANGAN */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          Keterangan
-        </label>
-
-        <textarea
-          value={keteranganDokumen}
-          onChange={(e) =>
-            setKeteranganDokumen(e.target.value)
-          }
-          placeholder="Keterangan tambahan"
-          rows={3}
-          style={{
-            width: "100%",
-            padding: "11px 12px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-            outline: "none",
-            resize: "vertical",
-          }}
-        />
-      </div>
-
-      {/* FILE */}
-      <div>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-          }}
-        >
-          File Dokumen *
-        </label>
-
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-          onChange={(e) => {
-            setUploadFile(
-              e.target.files?.[0] ?? null
-            );
-          }}
-          style={{
-            width: "100%",
-            padding: "10px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "10px",
-            background: "white",
-          }}
-        />
-
-        <p
-          style={{
-            margin: "6px 0 0",
-            fontSize: "11px",
-            color: "#64748b",
-          }}
-        >
-          Format: PDF, JPG, PNG, WEBP. Maksimal 10 MB.
-        </p>
-      </div>
-
-      {/* TOMBOL */}
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          justifyContent: "flex-end",
-          marginTop: "5px",
-        }}
-      >
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
         <button
           type="button"
-          onClick={() => {
-            setShowUpload(false);
-            setUploadFile(null);
-            setNamaDokumen("");
-            setNomorDokumen("");
-            setTanggalDokumen("");
-            setTahunDokumen("");
-            setKeteranganDokumen("");
-          }}
-          disabled={uploadLoading}
-          style={{
-            padding: "10px 16px",
-            borderRadius: "10px",
-            border: "1px solid #cbd5e1",
-            background: "white",
-            cursor: "pointer",
-          }}
+          onClick={lihat}
+          disabled={!item.file_url}
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Batal
+          <Eye size={16} />
+          Lihat
         </button>
 
         <button
           type="button"
-          disabled={uploadLoading}
-          onClick={async () => {
-            if (!uploadFile) {
-              alert("Silakan pilih file dokumen.");
-              return;
-            }
+          onClick={print}
+          disabled={!item.file_url}
+          className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Printer size={16} />
+          Print
+        </button>
 
-            if (!namaDokumen.trim()) {
-              alert("Nama dokumen wajib diisi.");
-              return;
-            }
-const nipUpload =
-  modeArsipSaya
-    ? username
-    : isAdminKepegawaian
-      ? nipDipilih
-      : username;
+        <button
+          type="button"
+          onClick={download}
+          disabled={!item.file_url}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          Download
+        </button>
 
-if (!nipUpload) {
-  alert("NIP / username pegawai belum tersedia.");
-  return;
+      {true && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deleting ? (
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
+            ) : (
+              <Trash2 size={16} />
+            )}
+
+            Hapus
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
-            try {
-              setUploadLoading(true);
+function KategoriCard({
+  item,
+  jumlah,
+  aktif,
+  onClick,
+}: {
+  item: SubKategori;
+  jumlah: number;
+  aktif: boolean;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
 
-              const formData = new FormData();
-
-              formData.append(
-                "file",
-                uploadFile
-              );
-
-       formData.append(
-  "nip",
-  nipUpload
-);
-console.log("KATEGORI YANG DIPILIH:", kategoriDipilih);
-              formData.append(
-                "kategori",
-                kategoriDipilih
-              );
-
-              formData.append(
-                "nama_dokumen",
-                namaDokumen.trim()
-              );
-
-              formData.append(
-                "nomor_dokumen",
-                nomorDokumen.trim()
-              );
-
-              formData.append(
-                "tanggal_dokumen",
-                tanggalDokumen
-              );
-
-              formData.append(
-                "tahun",
-                tahunDokumen
-              );
-
-              formData.append(
-                "keterangan",
-                keteranganDokumen.trim()
-              );
-
-              const response = await fetch(
-                "/api/arsip-kepegawaian/upload",
-                {
-                  method: "POST",
-                  body: formData,
-                }
-              );
-
-              const result =
-                await response.json();
-
-              if (
-                !response.ok ||
-                !result.success
-              ) {
-                alert(
-                  result.message ||
-                    "Upload dokumen gagal."
-                );
-                return;
-              }
-
-              alert(
-                "Dokumen berhasil diupload."
-              );
-
-              // Bersihkan form
-              setShowUpload(false);
-              setUploadFile(null);
-              setNamaDokumen("");
-              setNomorDokumen("");
-              setTanggalDokumen("");
-              setTahunDokumen("");
-              setKeteranganDokumen("");
-
-              // Ambil ulang arsip pegawai
-            const arsipResponse =
-  await fetch(
-    `/api/arsip-kepegawaian?nip=${encodeURIComponent(
-      nipUpload
-    )}&kategori=${encodeURIComponent(
-      kategoriDipilih
-    )}`
-  );
-
-              const arsipResult =
-                await arsipResponse.json();
-
-              if (
-                arsipResponse.ok &&
-                arsipResult.success
-              ) {
-                setArsipPegawai(
-                  arsipResult.data ?? []
-                );
-              }
-            } catch (error) {
-              console.error(
-                "ERROR UPLOAD:",
-                error
-              );
-
-              alert(
-                "Terjadi kesalahan saat upload dokumen."
-              );
-            } finally {
-              setUploadLoading(false);
-            }
-          }}
-          style={{
-            padding: "10px 18px",
-            borderRadius: "10px",
-            border: "none",
-            background: uploadLoading
-              ? "#94a3b8"
-              : "#2563eb",
-            color: "white",
-            fontWeight: 700,
-            cursor: uploadLoading
-              ? "not-allowed"
-              : "pointer",
-          }}
-        >
-          {uploadLoading
-            ? "Mengupload..."
-            : "Upload Dokumen"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-  </section>
-)}
-{/* ============================= */}
-{/* ARSIP SAYA - PENGELOLA KEPEGAWAIAN */}
-{/* ============================= */}
-
-{isAdminKepegawaian && (
-  <section className="profil-box">
-    <div className="profil-icon">
-      <User size={28} />
-    </div>
-
-    <div className="profil-info">
-      <span className="label">
-        Arsip Saya
-      </span>
-
-      <h2>{nama}</h2>
-
-      <p>
-        NIP / Username: {username || "-"}
-      </p>
-    </div>
-
+  return (
     <button
       type="button"
-      onClick={() => {
-        setModeArsipSaya(true);
-        setKategoriDipilih("");
-        setShowUpload(false);
-
-        // Bersihkan pilihan pegawai dari URL
-        window.history.replaceState(
-          null,
-          "",
-          "/arsip-kepegawaian"
-        );
-      }}
-      style={{
-        marginLeft: "auto",
-        padding: "10px 16px",
-        border: "none",
-        borderRadius: "10px",
-        background: "#2563eb",
-        color: "white",
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
+      onClick={onClick}
+      className={`group w-full rounded-2xl border p-5 text-left transition ${
+        aktif
+          ? "border-blue-500 bg-blue-50 shadow-md"
+          : "border-slate-200 bg-white hover:border-blue-300 hover:shadow-md"
+      }`}
     >
-      📁 Buka Arsip Saya
-    </button>
-  </section>
-  
-)}
-{/* ============================= */}
-{/* DOKUMEN PRIBADI SARI */}
-{/* ============================= */}
+      <div className="flex items-start gap-4">
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+            aktif
+              ? "bg-blue-600 text-white"
+              : "bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-700"
+          }`}
+        >
+          <Icon size={23} />
+        </div>
 
-{isAdminKepegawaian && modeArsipSaya && (
-  <>
-    <section className="section-title">
-      <h2>Dokumen Saya</h2>
-
-      <p>
-        Kelola dan simpan dokumen kepegawaian milik Anda sendiri.
-      </p>
-    </section>
-
-    <div className="kategori-grid">
-      {kategoriArsip.map((item) => {
-        const Icon = item.icon;
-
-        return (
-          <button
-            key={item.nama}
-            type="button"
-            className="kategori-card"
-            onClick={() => {
-              setKategoriDipilih(item.nama);
-              setShowUpload(false);
-            }}
-          >
-            <div className="kategori-icon">
-              <Icon size={24} />
-            </div>
-
-            <div className="kategori-text">
-              <h3>{item.nama}</h3>
-
-              <p>
-                {item.deskripsi}
-              </p>
-            </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-sm font-bold leading-5 text-slate-800">
+              {item.nama}
+            </h3>
 
             <ChevronRight
-              size={20}
-              className="kategori-arrow"
+              size={18}
+              className={`shrink-0 ${
+                aktif
+                  ? "text-blue-600"
+                  : "text-slate-400"
+              }`}
             />
-          </button>
-        );
-      })}
-    </div>
-  </>
-)}
-      {/* ============================= */}
-      {/* ADMIN / KAUR KEPEGAWAIAN */}
-      {/* ============================= */}
-{isAdminKepegawaian && (nipDipilih || modeArsipSaya) && (
-  <section className="admin-box">
-    <div className="admin-icon">
-      <FolderArchive size={30} />
-    </div>
-
-    <div>
-      <span className="label">
-        Arsip Pegawai
-      </span>
-
-      <h2>
-        {daftarPegawai.find(
-          (pegawai) =>
-            String(pegawai.username) ===
-            String(nipDipilih)
-        )?.nama || "Pegawai Terpilih"}
-      </h2>
-
-      <p>
-        NIP / Username: {nipDipilih}
-      </p>
-    </div>
-  </section>
-)}
-      {/* KATEGORI ARSIP PEGAWAI YANG DIPILIH */}
-   {isAdminKepegawaian && (nipDipilih || modeArsipSaya) && (
-        <>
-          <section className="section-title">
-            <h2>Dokumen Kepegawaian</h2>
-
-            <p>
-              Pilih kategori untuk melihat dan mengelola
-              dokumen pegawai tersebut.
-            </p>
-          </section>
-
-          <div className="kategori-grid">
-            {kategoriArsip.map((item) => {
-              const Icon = item.icon;
-
-              return (
-    <button
-  key={item.nama}
-  type="button"
-  className="kategori-card"
-  onClick={() => {
-    setKategoriDipilih(item.nama);
-  }}
->
-                  <div className="kategori-icon">
-                    <Icon size={24} />
-                  </div>
-
-                  <div className="kategori-text">
-                    <h3>{item.nama}</h3>
-
-                    <p>
-                      {item.deskripsi}
-                    </p>
-                  </div>
-
-                  <ChevronRight
-                    size={20}
-                    className="kategori-arrow"
-                  />
-                </button>
-              );
-            })}
           </div>
-                    {kategoriDipilih && (
-            <section className="dokumen-box">
-           <div className="section-title">
-  <div>
-    <h2>{kategoriDipilih}</h2>
 
-    <p>
-      Dokumen {kategoriDipilih} untuk pegawai yang dipilih.
-    </p>
-  </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {item.deskripsi}
+          </p>
 
-<button
-  type="button"
-  onClick={() => {
-    setShowUpload(true);
-  }}
-  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
->
-  + Upload Dokumen
-</button>
-</div>
+          {jumlah > 0 && (
+            <div className="mt-3">
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
+                {jumlah} dokumen
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
 
-             {arsipPegawai.filter(
-  (item) =>
-    String(item.kategori ?? "").trim().toUpperCase() ===
-    kategoriDipilih.trim().toUpperCase()
-).length === 0 ? (
-  <div className="empty-box">
-    Belum ada dokumen pada kategori {kategoriDipilih}.
-  </div>
-) : (
-  <div
-    style={{
-      marginTop: "20px",
-      display: "grid",
-      gap: "12px",
-    }}
-  >
-    {arsipPegawai
-      .filter(
-        (item) =>
-          String(item.kategori ?? "").trim().toUpperCase() ===
-          kategoriDipilih.trim().toUpperCase()
+export default function ArsipKepegawaianPage() {
+  const { data: session, status } =
+    useSession();
+
+  const [nipDipilih, setNipDipilih] =
+    useState("");
+
+  const [nama, setNama] = useState("");
+  const [username, setUsername] =
+    useState("");
+  const [role, setRole] = useState("");
+
+  const [daftarPegawai, setDaftarPegawai] =
+    useState<Pegawai[]>([]);
+
+  const [pencarian, setPencarian] =
+    useState("");
+
+  const [loadingPegawai, setLoadingPegawai] =
+    useState(false);
+
+  const [arsipPegawai, setArsipPegawai] =
+    useState<Arsip[]>([]);
+    const [hapusId, setHapusId] = useState<string | null>(null);
+
+  const [loadingArsip, setLoadingArsip] =
+    useState(false);
+
+  const [kategoriUtama, setKategoriUtama] =
+    useState("Semua");
+
+  const [kategoriDipilih, setKategoriDipilih] =
+    useState("");
+
+  const [showUpload, setShowUpload] =
+    useState(false);
+
+  const [uploadFile, setUploadFile] =
+    useState<File | null>(null);
+
+  const [namaDokumen, setNamaDokumen] =
+    useState("");
+
+  const [nomorDokumen, setNomorDokumen] =
+    useState("");
+
+  const [tanggalDokumen, setTanggalDokumen] =
+    useState("");
+
+  const [tahunDokumen, setTahunDokumen] =
+    useState(
+      String(new Date().getFullYear())
+    );
+
+  const [keteranganDokumen, setKeteranganDokumen] =
+    useState("");
+
+  const [uploadLoading, setUploadLoading] =
+    useState(false);
+
+  const [pesan, setPesan] =
+    useState("");
+
+  const roleNormal =
+    role.trim().toLowerCase();
+
+  const isAdminKepegawaian =
+    ROLE_ADMIN_KEPEGAWAIAN.includes(
+      roleNormal
+    );
+
+  /*
+   * Ambil data session.
+   */
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const user = session.user as any;
+
+    const sessionNama = String(
+      user.nama ??
+        user.name ??
+        ""
+    ).trim();
+
+    const sessionUsername = String(
+      user.username ?? ""
+    ).trim();
+
+    const sessionRole = String(
+      user.role ?? ""
+    ).trim();
+
+    setNama(sessionNama);
+    setUsername(sessionUsername);
+    setRole(sessionRole);
+
+    /*
+     * Untuk pegawai biasa langsung menggunakan
+     * username/NIP miliknya.
+     */
+    if (
+      !ROLE_ADMIN_KEPEGAWAIAN.includes(
+        sessionRole.toLowerCase()
       )
-      .map((item) => (
-        <div
-          key={item.id}
-          style={{
-            padding: "16px",
-            border: "1px solid #e2e8f0",
-            borderRadius: "14px",
-            background: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "15px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: "250px" }}>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 800,
-                color: "#0f172a",
-                marginBottom: "5px",
-              }}
-            >
-              📄 {item.nama_dokumen || item.nama_file}
-            </div>
+    ) {
+      setNipDipilih(sessionUsername);
+    }
 
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#64748b",
-                lineHeight: 1.7,
-              }}
-            >
-              {item.nama_file && (
-                <div>
-                  File: {item.nama_file}
-                </div>
-              )}
+    /*
+     * Admin: baca ?nip=...
+     */
+    if (
+      ROLE_ADMIN_KEPEGAWAIAN.includes(
+        sessionRole.toLowerCase()
+      )
+    ) {
+      try {
+        const params =
+          new URLSearchParams(
+            window.location.search
+          );
 
-              {item.nomor_dokumen && (
-                <div>
-                  Nomor: {item.nomor_dokumen}
-                </div>
-              )}
+        const nipURL =
+          params.get("nip")?.trim() || "";
 
-              {item.tanggal_dokumen && (
-                <div>
-                  Tanggal:{" "}
-                  {new Date(
-                    item.tanggal_dokumen
-                  ).toLocaleDateString("id-ID")}
-                </div>
-              )}
+        if (nipURL) {
+          setNipDipilih(nipURL);
+        } else {
+          setNipDipilih(sessionUsername);
+        }
+      } catch {
+        setNipDipilih(sessionUsername);
+      }
+    }
+  }, [session]);
 
-              {item.tahun && (
-                <div>
-                  Tahun: {item.tahun}
-                </div>
-              )}
+  /*
+   * Ambil daftar pegawai untuk Admin Kepegawaian.
+   */
+  useEffect(() => {
+    if (
+      status !== "authenticated" ||
+      !isAdminKepegawaian
+    ) {
+      return;
+    }
 
-              {item.keterangan && (
-                <div>
-                  Keterangan: {item.keterangan}
-                </div>
-              )}
-            </div>
-          </div>
+    let aktif = true;
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              alignItems: "center",
-            }}
-          >
-           {item.file_url && (
-  <>
-    {/* Tombol Lihat */}
-    <a
-      href={item.file_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "9px 14px",
-        borderRadius: "9px",
-        background: "#2563eb",
-        color: "white",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: 700,
-      }}
-    >
-      👁 Lihat
-    </a>
+    const loadPegawai = async () => {
+      setLoadingPegawai(true);
 
-    {/* Tombol Download */}
-    <a
-      href={item.file_url}
-      download={item.nama_file || "dokumen"}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "9px 14px",
-        borderRadius: "9px",
-        background: "#16a34a",
-        color: "white",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: 700,
-      }}
-    >
-      ⬇ Download
-    </a>
-      {/* Tombol Hapus */}
-    <button
-      type="button"
-      onClick={async () => {
-        const yakin = window.confirm(
-          `Yakin ingin menghapus dokumen "${item.nama_dokumen || item.nama_file}"?`
+      try {
+        const response = await fetch(
+          "/api/arsip-kepegawaian?mode=pegawai",
+          {
+            cache: "no-store",
+          }
         );
 
-        if (!yakin) return;
+        const result =
+          await response.json();
 
-        try {
-          const response = await fetch(
-            `/api/arsip-kepegawaian?id=${encodeURIComponent(item.id)}`,
-            {
-              method: "DELETE",
-            }
-          );
-
-          const result = await response.json();
-
-          if (!response.ok || !result.success) {
-            alert(
-              result.message || "Dokumen gagal dihapus."
-            );
-            return;
-          }
-
-          alert("Dokumen berhasil dihapus.");
-
-          setArsipPegawai((prev) =>
-            prev.filter(
-              (arsip) => arsip.id !== item.id
-            )
-          );
-        } catch (error) {
-          console.error(
-            "ERROR HAPUS DOKUMEN:",
-            error
-          );
-
-          alert(
-            "Terjadi kesalahan saat menghapus dokumen."
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message ||
+              "Gagal mengambil daftar pegawai."
           );
         }
-      }}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "9px 14px",
-        borderRadius: "9px",
-        background: "#dc2626",
-        color: "white",
-        border: "none",
-        fontSize: "13px",
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
-      🗑 Hapus
-    </button>
-  </>
-)}
 
-          </div>
-        </div>
-      ))}
-  </div>
-)}
-       
-            </section>
-          )}
-        </>
-      )}
-      {isAdminKepegawaian && (
-        <div>
-          <section className="admin-box">
+        if (aktif) {
+          const data =
+            Array.isArray(result.data)
+              ? result.data
+              : [];
 
-            <div className="admin-icon">
-              <Users size={30} />
-            </div>
+          setDaftarPegawai(data);
+        }
+      } catch (error: any) {
+        console.error(error);
 
-            <div>
+        if (aktif) {
+          setPesan(
+            error?.message ||
+              "Gagal mengambil daftar pegawai."
+          );
+        }
+      } finally {
+        if (aktif) {
+          setLoadingPegawai(false);
+        }
+      }
+    };
 
-              <span className="label">
-                Manajemen Arsip
-              </span>
+    loadPegawai();
 
-              <h2>
-                Arsip Seluruh Pegawai
-              </h2>
+    return () => {
+      aktif = false;
+    };
+  }, [
+    status,
+    isAdminKepegawaian,
+  ]);
 
-              <p>
-                Pilih pegawai untuk melihat,
-                mengelola, mencetak, dan menyimpan
-                arsip kepegawaiannya.
-              </p>
+  /*
+   * Ambil arsip berdasarkan NIP aktif.
+   */
+  useEffect(() => {
+    if (
+      status !== "authenticated" ||
+      !nipDipilih
+    ) {
+      return;
+    }
 
-            </div>
+    let aktif = true;
 
-          </section>
+    const loadArsip = async () => {
+      setLoadingArsip(true);
+      setPesan("");
 
-        {!nipDipilih && (
-  <section className="section-title">
+      try {
+        const response = await fetch(
+          `/api/arsip-kepegawaian?nip=${encodeURIComponent(
+            nipDipilih
+          )}`,
+          {
+            cache: "no-store",
+          }
+        );
 
-    <h2>Daftar Pegawai</h2>
+        const result =
+          await response.json();
 
-    <p>
-      Cari pegawai untuk membuka arsip
-      kepegawaiannya.
-    </p>
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message ||
+              "Gagal mengambil arsip."
+          );
+        }
 
-  </section>
-)}
+        if (aktif) {
+          setArsipPegawai(
+            Array.isArray(result.data)
+              ? result.data
+              : []
+          );
+        }
+      } catch (error: any) {
+        console.error(error);
 
-        {/* SEARCH */}
-{!nipDipilih && (
-  <div className="search-box">
+        if (aktif) {
+          setArsipPegawai([]);
+          setPesan(
+            error?.message ||
+              "Gagal mengambil arsip kepegawaian."
+          );
+        }
+      } finally {
+        if (aktif) {
+          setLoadingArsip(false);
+        }
+      }
+    };
 
-            <Search size={20} />
+    loadArsip();
 
-          <input
-  type="text"
-  placeholder="Cari nama atau NIP pegawai..."
-  value={pencarian}
-  onChange={(e) =>
-    setPencarian(e.target.value)
-  }
-/>
+    return () => {
+      aktif = false;
+    };
+  }, [
+    status,
+    nipDipilih,
+  ]);
 
-         </div>
-)}
-{/* DAFTAR PEGAWAI */}
-{!nipDipilih && (
-  <div className="pegawai-list">
-  {loadingPegawai && (
-    <div className="empty-box">
-      <p>Memuat daftar pegawai...</p>
-    </div>
-  )}
+  /*
+   * Pegawai yang sedang dipilih.
+   */
+  const pegawaiAktif = useMemo(() => {
+    return daftarPegawai.find(
+      (item) =>
+        String(item.username).trim() ===
+        String(nipDipilih).trim()
+    );
+  }, [
+    daftarPegawai,
+    nipDipilih,
+  ]);
 
-  {!loadingPegawai &&
-    daftarPegawai
-      .filter((pegawai) => {
-        const kata =
-          pencarian.trim().toLowerCase();
+  const namaPegawaiAktif =
+    pegawaiAktif?.nama ||
+    (nipDipilih === username
+      ? nama
+      : "") ||
+    nipDipilih;
 
-        if (!kata) return true;
+  /*
+   * Filter pegawai untuk admin.
+   */
+  const pegawaiTerfilter = useMemo(() => {
+    const kata =
+      pencarian.trim().toLowerCase();
 
+    if (!kata) {
+      return daftarPegawai;
+    }
+
+    return daftarPegawai.filter(
+      (item) => {
         return (
-          String(pegawai.nama ?? "")
+          String(item.nama ?? "")
             .toLowerCase()
             .includes(kata) ||
-          String(pegawai.username ?? "")
+          String(item.username ?? "")
+            .toLowerCase()
+            .includes(kata) ||
+          String(item.role ?? "")
             .toLowerCase()
             .includes(kata)
         );
-      })
-      .map((pegawai) => (
-       <button
-  key={pegawai.id}
-  type="button"
-  className="pegawai-card"
-  onClick={() => {
-    window.location.href =
-      `/arsip-kepegawaian?nip=${encodeURIComponent(
-        pegawai.username
-      )}`;
-  }}
->
-          <div className="pegawai-icon">
-            <User size={24} />
-          </div>
+      }
+    );
+  }, [
+    daftarPegawai,
+    pencarian,
+  ]);
 
-          <div className="pegawai-info">
-            <h3>{pegawai.nama}</h3>
+  /*
+   * Menentukan apakah suatu kategori punya dokumen.
+   */
+  const jumlahKategori = (
+    item: SubKategori
+  ) => {
+    return arsipPegawai.filter((arsip) =>
+      kategoriCocok(arsip, item)
+    ).length;
+  };
 
-            <p>
-              NIP / Username:{" "}
-              {pegawai.username || "-"}
-            </p>
+  /*
+   * Hanya tampilkan kategori legacy jika
+   * memang ada arsipnya.
+   */
+  const kategoriUntukTampilan =
+    kategoriArsip.map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          !item.legacyOnly ||
+          jumlahKategori(item) > 0
+      ),
+    }));
 
-            <span>
-              {pegawai.role || "Pegawai"}
-            </span>
-          </div>
+  /*
+   * Arsip untuk kategori yang dipilih.
+   */
+  const arsipKategoriDipilih =
+    useMemo(() => {
+      if (!kategoriDipilih) {
+        return [];
+      }
 
-          <ChevronRight
-            size={22}
-            className="pegawai-arrow"
-          />
-        </button>
-      ))}
-
-  {!loadingPegawai &&
-    daftarPegawai.length === 0 && (
-      <div className="empty-box">
-        <Users size={42} />
-
-        <h3>
-          Belum ada data pegawai
-        </h3>
-
-        <p>
-          Data pegawai tidak ditemukan
-          pada tabel pengguna.
-        </p>
-      </div>
-    )}
-
-  {!loadingPegawai &&
-    daftarPegawai.length > 0 &&
-    daftarPegawai.filter((pegawai) => {
-      const kata =
-        pencarian.trim().toLowerCase();
-
-      if (!kata) return true;
-
-      return (
-        String(pegawai.nama ?? "")
-          .toLowerCase()
-          .includes(kata) ||
-        String(pegawai.username ?? "")
-          .toLowerCase()
-          .includes(kata)
+      const item = cariSubKategori(
+        kategoriDipilih
       );
-    }).length === 0 && (
-      <div className="empty-box">
-        <Search size={42} />
 
-        <h3>
-          Pegawai tidak ditemukan
-        </h3>
+      if (!item) {
+        return arsipPegawai.filter(
+          (arsip) =>
+            normalizeKategori(
+              arsip.kategori
+            ) ===
+            normalizeKategori(
+              kategoriDipilih
+            )
+        );
+      }
 
-               <p>
-          Coba gunakan nama atau NIP
-          yang berbeda.
-        </p>
-      </div>
-    )}
-  </div>
-)}
+      return arsipPegawai.filter(
+        (arsip) =>
+          kategoriCocok(arsip, item)
+      );
+    }, [
+      kategoriDipilih,
+      arsipPegawai,
+    ]);
 
+  const semuaArsipTerlihat =
+    arsipPegawai;
+
+  /*
+   * Saat klik kategori.
+   */
+  const pilihKategori = (
+    item: SubKategori
+  ) => {
+    setKategoriDipilih(
+      getKategoriValue(item)
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  /*
+   * Upload dibuka dari kategori yang dipilih.
+   */
+  const bukaUpload = () => {
+    if (!kategoriDipilih) {
+      alert(
+        "Silakan pilih kategori dokumen terlebih dahulu."
+      );
+      return;
+    }
+
+    const item = cariSubKategori(
+      kategoriDipilih
+    );
+
+    setNamaDokumen(
+      item?.nama ||
+        kategoriDipilih
+    );
+
+    setNomorDokumen("");
+    setTanggalDokumen("");
+    setTahunDokumen(
+      String(new Date().getFullYear())
+    );
+    setKeteranganDokumen("");
+    setUploadFile(null);
+    setShowUpload(true);
+  };
+
+  /*
+   * Upload dokumen.
+   */
+  const handleUpload = async (
+    event: React.FormEvent
+  ) => {
+    event.preventDefault();
+
+    if (!uploadFile) {
+      alert("Silakan pilih file.");
+      return;
+    }
+
+    if (!nipDipilih) {
+      alert(
+        "NIP pegawai belum tersedia."
+      );
+      return;
+    }
+
+    if (!kategoriDipilih) {
+      alert(
+        "Kategori dokumen belum dipilih."
+      );
+      return;
+    }
+
+    if (uploadFile.size > 10 * 1024 * 1024) {
+      alert(
+        "Ukuran file maksimal 10 MB."
+      );
+      return;
+    }
+
+    setUploadLoading(true);
+
+    try {
+      const item = cariSubKategori(
+        kategoriDipilih
+      );
+
+      /*
+       * Untuk kategori lama tertentu,
+       * gunakan kategori database yang sudah ada.
+       */
+      const kategoriSimpan =
+        item?.kategoriSimpan ||
+        kategoriDipilih;
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        uploadFile
+      );
+
+      formData.append(
+        "nip",
+        nipDipilih
+      );
+
+      formData.append(
+        "kategori",
+        kategoriSimpan
+      );
+
+      formData.append(
+        "nama_dokumen",
+        namaDokumen.trim() ||
+          kategoriDipilih
+      );
+
+      formData.append(
+        "nomor_dokumen",
+        nomorDokumen.trim()
+      );
+
+      formData.append(
+        "tanggal_dokumen",
+        tanggalDokumen
+      );
+
+      formData.append(
+        "tahun",
+        tahunDokumen
+      );
+
+      formData.append(
+        "keterangan",
+        keteranganDokumen.trim()
+      );
+
+      const response = await fetch(
+        "/api/arsip-kepegawaian/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.message ||
+            "Upload gagal."
+        );
+      }
+
+      alert(
+        "Dokumen berhasil diupload."
+      );
+
+      setShowUpload(false);
+      setUploadFile(null);
+
+      /*
+       * Refresh arsip.
+       */
+      const refresh =
+        await fetch(
+          `/api/arsip-kepegawaian?nip=${encodeURIComponent(
+            nipDipilih
+          )}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+      const refreshResult =
+        await refresh.json();
+
+      if (
+        refresh.ok &&
+        refreshResult.success
+      ) {
+        setArsipPegawai(
+          Array.isArray(
+            refreshResult.data
+          )
+            ? refreshResult.data
+            : []
+        );
+      }
+    } catch (error: any) {
+      console.error(error);
+
+      alert(
+        error?.message ||
+          "Terjadi kesalahan saat upload."
+      );
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  /*
+   * Hapus item dari state setelah API sukses.
+   */
+  const handleDeleteLocal = (
+    item: Arsip
+  ) => {
+    setArsipPegawai((prev) =>
+      prev.filter(
+        (arsip) =>
+          arsip.id !== item.id
+      )
+    );
+  };
+
+  /*
+   * Pilih pegawai admin.
+   */
+  const pilihPegawai = (
+    pegawai: Pegawai
+  ) => {
+    const nip =
+      String(
+        pegawai.username ?? ""
+      ).trim();
+
+    if (!nip) return;
+
+    setNipDipilih(nip);
+    setKategoriDipilih("");
+
+    window.history.replaceState(
+      null,
+      "",
+      `/arsip-kepegawaian?nip=${encodeURIComponent(
+        nip
+      )}`
+    );
+  };
+
+  /*
+   * Kembali ke arsip sendiri.
+   */
+  const kembaliKeSaya = () => {
+    if (!username) return;
+
+    setNipDipilih(username);
+    setKategoriDipilih("");
+
+    window.history.replaceState(
+      null,
+      "",
+      "/arsip-kepegawaian"
+    );
+  };
+
+  /*
+   * Loading login.
+   */
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex items-center gap-3 text-slate-600">
+          <Loader2
+            size={22}
+            className="animate-spin"
+          />
+          Memuat Arsip Kepegawaian...
         </div>
-    )}
-
-      <style jsx>{`
-        .arsip-page {
-          min-height: 100vh;
-          padding: 30px;
-          background: #f8fafc;
-        }
-
-        .loading-box {
-          padding: 40px;
-          text-align: center;
-          color: #64748b;
-        }
-
-        .arsip-header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 25px;
-        }
-
-        .arsip-header-icon {
-          width: 58px;
-          height: 58px;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #dbeafe;
-          color: #2563eb;
-        }
-
-        .arsip-header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .arsip-header p {
-          margin: 5px 0 0;
-          color: #64748b;
-          font-size: 14px;
-        }
-
-        .profil-box,
-        .admin-box {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          padding: 22px;
-          margin-bottom: 28px;
-          border-radius: 18px;
-          background: white;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 5px 18px rgba(15,23,42,.05);
-        }
-
-        .profil-icon,
-        .admin-icon {
-          width: 56px;
-          height: 56px;
-          min-width: 56px;
-          border-radius: 15px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #eff6ff;
-          color: #2563eb;
-        }
-
-        .admin-icon {
-          background: #ecfeff;
-          color: #0891b2;
-        }
-
-        .label {
-          display: block;
-          font-size: 12px;
-          color: #64748b;
-          margin-bottom: 4px;
-        }
-
-        .profil-info h2,
-        .admin-box h2 {
-          margin: 0;
-          font-size: 19px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .profil-info p,
-        .admin-box p {
-          margin: 5px 0 0;
-          color: #64748b;
-          font-size: 13px;
-        }
-
-        .section-title {
-          margin-bottom: 15px;
-        }
-
-        .section-title h2 {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .section-title p {
-          margin: 5px 0 0;
-          font-size: 13px;
-          color: #64748b;
-        }
-
-        .kategori-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 15px;
-        }
-
-        .kategori-card {
-          width: 100%;
-          min-height: 105px;
-          padding: 18px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          text-align: left;
-          border: 1px solid #e2e8f0;
-          border-radius: 17px;
-          background: white;
-          cursor: pointer;
-          transition: .2s;
-        }
-
-        .kategori-card:hover {
-          transform: translateY(-2px);
-          border-color: #93c5fd;
-          box-shadow: 0 8px 20px rgba(15,23,42,.08);
-        }
-
-        .kategori-icon {
-          width: 46px;
-          height: 46px;
-          min-width: 46px;
-          border-radius: 13px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #eff6ff;
-          color: #2563eb;
-        }
-
-        .kategori-text {
-          flex: 1;
-        }
-
-        .kategori-text h3 {
-          margin: 0;
-          font-size: 15px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .kategori-text p {
-          margin: 5px 0 0;
-          font-size: 12px;
-          line-height: 1.4;
-          color: #64748b;
-        }
-
-        .kategori-arrow {
-          color: #94a3b8;
-        }
-
-        .search-box {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 0 15px;
-          max-width: 600px;
-          margin-bottom: 20px;
-          color: #64748b;
-        }
-
-        .search-box input {
-          width: 100%;
-          border: none;
-          outline: none;
-          padding: 14px 0;
-          font-size: 14px;
-          background: transparent;
-        }
-
-        .empty-box {
-          background: white;
-          border: 1px dashed #cbd5e1;
-          border-radius: 18px;
-          padding: 50px 25px;
-          text-align: center;
-          color: #64748b;
-        }
-
-        .empty-box h3 {
-          margin: 12px 0 5px;
-          color: #334155;
-        }
-
-        .empty-box p {
-          margin: 0;
-          font-size: 13px;
-        }
-.pegawai-list {
-  display: grid;
-  gap: 12px;
-}
-
-.pegawai-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 17px 18px;
-  text-align: left;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  cursor: pointer;
-  transition: .2s;
-}
-
-.pegawai-card:hover {
-  transform: translateY(-2px);
-  border-color: #93c5fd;
-  box-shadow: 0 7px 18px rgba(15,23,42,.08);
-}
-
-.pegawai-icon {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.pegawai-info {
-  flex: 1;
-}
-
-.pegawai-info h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.pegawai-info p {
-  margin: 4px 0;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.pegawai-info span {
-  display: inline-block;
-  font-size: 11px;
-  color: #2563eb;
-  background: #eff6ff;
-  padding: 3px 8px;
-  border-radius: 999px;
-}
-
-.pegawai-arrow {
-  color: #94a3b8;
-}
-        @media (max-width: 1000px) {
-          .kategori-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        @media (max-width: 650px) {
-          .arsip-page {
-            padding: 20px 15px;
-          }
-
-          .arsip-header h1 {
-            font-size: 22px;
-          }
-
-          .kategori-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .profil-box,
-          .admin-box {
-            align-items: flex-start;
-          }
-        }
-.dokumen-box {
-  margin-top: 25px;
-  padding: 22px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-}
-
-.upload-button {
-  border: none;
-  background: #2563eb;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.upload-button:hover {
-  background: #1d4ed8;
-}
-
-.upload-empty-button {
-  margin-top: 15px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.dokumen-list {
-  display: grid;
-  gap: 12px;
-}
-
-.dokumen-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #f8fafc;
-}
-
-.dokumen-info {
-  flex: 1;
-  min-width: 250px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.7;
-}
-
-.dokumen-nama {
-  font-size: 16px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 5px;
-}
-
-.dokumen-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.btn-lihat,
-.btn-print,
-.btn-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border-radius: 9px;
-  color: white;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-lihat {
-  background: #2563eb;
-}
-
-.btn-print {
-  background: #7c3aed;
-}
-
-.btn-download {
-  background: #16a34a;
-}
-
-.btn-lihat:hover {
-  background: #1d4ed8;
-}
-
-.btn-print:hover {
-  background: #6d28d9;
-}
-
-.btn-download:hover {
-  background: #15803d;
-}
-.btn-hapus {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border-radius: 9px;
-  background: #dc2626;
-  color: white;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-hapus:hover {
-  background: #b91c1c;
-}
-@media (max-width: 700px) {
-  .dokumen-card {
-    flex-direction: column;
-    align-items: flex-start;
+      </div>
+    );
   }
 
-  .dokumen-actions {
-    width: 100%;
+  if (status !== "authenticated") {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-5 text-center text-red-700">
+          Anda harus login terlebih dahulu.
+        </div>
+      </div>
+    );
   }
-}
-      `}</style>
 
-    </main>
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 lg:px-8">
+
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+        <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 text-white shadow-lg">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+                  <Archive size={27} />
+                </div>
+
+                <div>
+                  <h1 className="text-2xl font-bold md:text-3xl">
+                    Arsip Kepegawaian
+                  </h1>
+
+                  <p className="mt-1 text-sm text-blue-100">
+                    Pengelolaan dokumen dan arsip kepegawaian secara digital.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white/10 px-5 py-4 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <CircleUserRound
+                  size={24}
+                />
+
+                <div>
+                  <p className="text-sm font-semibold">
+                    {namaPegawaiAktif}
+                  </p>
+
+                  <p className="text-xs text-blue-100">
+                    NIP / Username:{" "}
+                    {nipDipilih || "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =====================================================
+            ADMIN PEGAWAI
+        ====================================================== */}
+        {isAdminKepegawaian && (
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Users
+                    size={20}
+                    className="text-blue-600"
+                  />
+
+                  <h2 className="font-bold text-slate-800">
+                    Pilih Pegawai
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Pengelola Kepegawaian dapat melihat arsip masing-masing pegawai berdasarkan NIP.
+                </p>
+              </div>
+
+              {nipDipilih !== username && (
+                <button
+                  type="button"
+                  onClick={kembaliKeSaya}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                >
+                  <ArrowLeft size={16} />
+                  Arsip Saya
+                </button>
+              )}
+            </div>
+
+            <div className="relative mb-4">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                type="text"
+                value={pencarian}
+                onChange={(e) =>
+                  setPencarian(
+                    e.target.value
+                  )
+                }
+                placeholder="Cari nama atau NIP..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            {loadingPegawai ? (
+              <div className="flex items-center justify-center py-8 text-slate-500">
+                <Loader2
+                  size={20}
+                  className="mr-2 animate-spin"
+                />
+                Memuat daftar pegawai...
+              </div>
+            ) : (
+              <div className="grid max-h-[360px] grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
+                {pegawaiTerfilter.map(
+                  (pegawai) => {
+                    const aktif =
+                      pegawai.username ===
+                      nipDipilih;
+
+                    return (
+                      <button
+                        key={pegawai.id}
+                        type="button"
+                        onClick={() =>
+                          pilihPegawai(
+                            pegawai
+                          )
+                        }
+                        className={`rounded-xl border p-3 text-left transition ${
+                          aktif
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                              aktif
+                                ? "bg-blue-600 text-white"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            <User
+                              size={18}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-800">
+                              {
+                                pegawai.nama
+                              }
+                            </p>
+
+                            <p className="truncate text-xs text-slate-500">
+                              {
+                                pegawai.username
+                              }
+                            </p>
+
+                            {pegawai.role && (
+                              <p className="truncate text-[11px] text-slate-400">
+                                {
+                                  pegawai.role
+                                }
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =====================================================
+            INFORMASI PEMILIK
+        ====================================================== */}
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <CircleUserRound
+                  size={28}
+                />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {isAdminKepegawaian &&
+                  nipDipilih !== username
+                    ? "Arsip Pegawai"
+                    : "Arsip Saya"}
+                </p>
+
+                <h2 className="text-xl font-bold text-slate-800">
+                  {namaPegawaiAktif}
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  NIP / Username:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {nipDipilih}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <div className="rounded-xl bg-slate-100 px-4 py-3 text-center">
+                <p className="text-xl font-bold text-slate-800">
+                  {
+                    semuaArsipTerlihat.length
+                  }
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  Total Dokumen
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadingArsip(true);
+
+                  fetch(
+                    `/api/arsip-kepegawaian?nip=${encodeURIComponent(
+                      nipDipilih
+                    )}`,
+                    {
+                      cache: "no-store",
+                    }
+                  )
+                    .then((res) =>
+                      res.json()
+                    )
+                    .then((result) => {
+                      if (
+                        result.success
+                      ) {
+                        setArsipPegawai(
+                          Array.isArray(
+                            result.data
+                          )
+                            ? result.data
+                            : []
+                        );
+                      }
+                    })
+                    .catch(
+                      console.error
+                    )
+                    .finally(() =>
+                      setLoadingArsip(
+                        false
+                      )
+                    );
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                <RefreshCw
+                  size={17}
+                  className={
+                    loadingArsip
+                      ? "animate-spin"
+                      : ""
+                  }
+                />
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* =====================================================
+            PESAN ERROR
+        ====================================================== */}
+        {pesan && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <ShieldCheck
+              size={19}
+              className="mt-0.5 shrink-0"
+            />
+
+            <div className="flex-1">
+              {pesan}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPesan("")
+              }
+            >
+              <X size={17} />
+            </button>
+          </div>
+        )}
+
+        {/* =====================================================
+            KATEGORI
+        ====================================================== */}
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">
+                Dokumen Saya
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Kelola dan simpan dokumen kepegawaian milik Anda sendiri.
+              </p>
+            </div>
+
+            {kategoriDipilih && (
+              <button
+                type="button"
+                onClick={() =>
+                  setKategoriDipilih("")
+                }
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                <ArrowLeft size={16} />
+                Semua Kategori
+              </button>
+            )}
+          </div>
+
+          {/* FILTER GROUP */}
+          <div className="mb-5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setKategoriUtama(
+                  "Semua"
+                )
+              }
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                kategoriUtama ===
+                "Semua"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              Semua
+            </button>
+
+            {kategoriUntukTampilan.map(
+              (group) => (
+                <button
+                  key={group.nama}
+                  type="button"
+                  onClick={() =>
+                    setKategoriUtama(
+                      group.nama
+                    )
+                  }
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    kategoriUtama ===
+                    group.nama
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {group.nama}
+                </button>
+              )
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {kategoriUntukTampilan
+              .filter(
+                (group) =>
+                  kategoriUtama ===
+                    "Semua" ||
+                  group.nama ===
+                    kategoriUtama
+              )
+              .flatMap((group) =>
+                group.items.map(
+                  (item) => ({
+                    ...item,
+                    groupNama:
+                      group.nama,
+                  })
+                )
+              )
+              .map((item) => {
+                const jumlah =
+                  jumlahKategori(
+                    item
+                  );
+
+                const aktif =
+                  normalizeKategori(
+                    kategoriDipilih
+                  ) ===
+                  normalizeKategori(
+                    getKategoriValue(
+                      item
+                    )
+                  );
+
+                return (
+                  <KategoriCard
+                    key={`${item.groupNama}-${item.nama}`}
+                    item={item}
+                    jumlah={jumlah}
+                    aktif={aktif}
+                    onClick={() =>
+                      pilihKategori(
+                        item
+                      )
+                    }
+                  />
+                );
+              })}
+          </div>
+        </div>
+
+        {/* =====================================================
+            DETAIL KATEGORI
+        ====================================================== */}
+        {kategoriDipilih && (
+          <div className="mb-8">
+            <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                  Kategori Dokumen
+                </p>
+
+                <h2 className="mt-1 text-2xl font-bold text-blue-900">
+                  {
+                    cariSubKategori(
+                      kategoriDipilih
+                    )?.nama ||
+                    kategoriDipilih
+                  }
+                </h2>
+
+                <p className="mt-1 text-sm text-blue-700">
+                  {cariSubKategori(
+                    kategoriDipilih
+                  )?.deskripsi ||
+                    "Dokumen kepegawaian milik Anda."}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={bukaUpload}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+              >
+                <Plus size={19} />
+                Upload Dokumen
+              </button>
+            </div>
+
+            {loadingArsip ? (
+              <div className="rounded-2xl border border-slate-200 bg-white py-14 text-center shadow-sm">
+                <Loader2
+                  size={30}
+                  className="mx-auto animate-spin text-blue-600"
+                />
+
+                <p className="mt-3 text-sm text-slate-500">
+                  Memuat dokumen...
+                </p>
+              </div>
+            ) : arsipKategoriDipilih.length ===
+              0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <FileArchive
+                    size={30}
+                  />
+                </div>
+
+                <h3 className="mt-4 text-lg font-bold text-slate-700">
+                  Belum ada dokumen
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                  Belum terdapat dokumen pada kategori ini. Silakan upload dokumen jika diperlukan.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={bukaUpload}
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
+                >
+                  <Upload
+                    size={18}
+                  />
+                  Upload Dokumen
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {arsipKategoriDipilih.map(
+                  (item) => (
+                    <DokumenCard
+                      key={item.id}
+                      item={item}
+                      isAdmin={
+                        isAdminKepegawaian
+                      }
+                      onDelete={
+                        handleDeleteLocal
+                      }
+                    />
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =====================================================
+            MODAL UPLOAD
+        ====================================================== */}
+        {showUpload && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">
+                    Upload Dokumen
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    {
+                      cariSubKategori(
+                        kategoriDipilih
+                      )?.nama ||
+                      kategoriDipilih
+                    }
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    !uploadLoading &&
+                    setShowUpload(
+                      false
+                    )
+                  }
+                  className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X size={21} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={
+                  handleUpload
+                }
+                className="space-y-5 p-6"
+              >
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <CircleUserRound
+                      size={20}
+                      className="mt-0.5 text-blue-600"
+                    />
+
+                    <div>
+                      <p className="text-sm font-bold text-blue-900">
+                        {namaPegawaiAktif}
+                      </p>
+
+                      <p className="mt-1 text-xs text-blue-700">
+                        NIP: {nipDipilih}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* FILE */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    File Dokumen{" "}
+                    <span className="text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center transition hover:border-blue-400 hover:bg-blue-50">
+                    <Upload
+                      size={30}
+                      className="text-blue-600"
+                    />
+
+                    <span className="mt-3 text-sm font-semibold text-slate-700">
+                      {uploadFile
+                        ? uploadFile.name
+                        : "Klik untuk memilih file"}
+                    </span>
+
+                    <span className="mt-1 text-xs text-slate-500">
+                      PDF, JPG, JPEG, PNG, WEBP — maksimal 10 MB
+                    </span>
+
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file =
+                          e.target.files?.[0] ||
+                          null;
+
+                        setUploadFile(
+                          file
+                        );
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* NAMA DOKUMEN */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Nama Dokumen{" "}
+                    <span className="text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      namaDokumen
+                    }
+                    onChange={(e) =>
+                      setNamaDokumen(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Contoh: SK Pangkat III/c"
+                    required
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                {/* NOMOR */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Nomor Dokumen
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      nomorDokumen
+                    }
+                    onChange={(e) =>
+                      setNomorDokumen(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Nomor SK / dokumen"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {/* TANGGAL */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Tanggal Dokumen
+                    </label>
+
+                    <div className="relative">
+                      <CalendarDays
+                        size={18}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="date"
+                        value={
+                          tanggalDokumen
+                        }
+                        onChange={(e) =>
+                          setTanggalDokumen(
+                            e.target.value
+                          )
+                        }
+                        className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* TAHUN */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Tahun
+                    </label>
+
+                    <input
+                      type="number"
+                      min="1900"
+                      max="2100"
+                      value={
+                        tahunDokumen
+                      }
+                      onChange={(e) =>
+                        setTahunDokumen(
+                          e.target.value
+                        )
+                      }
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {/* KETERANGAN */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Keterangan
+                  </label>
+
+                  <textarea
+                    value={
+                      keteranganDokumen
+                    }
+                    onChange={(e) =>
+                      setKeteranganDokumen(
+                        e.target.value
+                      )
+                    }
+                    rows={4}
+                    placeholder="Keterangan tambahan..."
+                    className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                {/* BUTTON */}
+                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    disabled={
+                      uploadLoading
+                    }
+                    onClick={() =>
+                      setShowUpload(
+                        false
+                      )
+                    }
+                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={
+                      uploadLoading ||
+                      !uploadFile
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {uploadLoading ? (
+                      <>
+                        <Loader2
+                          size={18}
+                          className="animate-spin"
+                        />
+                        Mengupload...
+                      </>
+                    ) : (
+                      <>
+                        <Upload
+                          size={18}
+                        />
+                        Upload Dokumen
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================
+            FOOTER
+        ====================================================== */}
+        <div className="mt-10 border-t border-slate-200 pt-6 text-center">
+          <div className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700">
+            <Archive size={17} />
+            SIMASDI
+          </div>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Sistem Informasi Manajemen Arsip Digital
+          </p>
+
+          <p className="mt-2 text-xs text-slate-400">
+            © 2026 Balai Pemasyarakatan Kelas I Jakarta Barat
+          </p>
+
+          <p className="mt-1 text-[11px] text-slate-400">
+            SIMASDI Version 1.0.0
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

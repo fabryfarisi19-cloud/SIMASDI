@@ -253,7 +253,7 @@ export default function GlobalAudioEngine() {
       "Lima menit lagi apel pagi akan dimulai. " +
       `Pelaksanaan apel bertempat di ${lokasi}. ` +
       "Kepada seluruh pegawai dan petugas apel agar segera menuju tempat pelaksanaan apel " +
-      "dan menempati posisi masing-masing.";
+      "dan menempati posisi masing-masing, terimakasih";
 
     await putarTengTong();
 
@@ -277,17 +277,6 @@ export default function GlobalAudioEngine() {
     let teks =
       "Mohon Perhatian. " +
       "Apel pagi Bapas Kelas Satu Jakarta Barat dimulai. ";
-
-    if (pembina?.nama_petugas) {
-      teks +=
-        `Apel pagi akan dipimpin oleh ${pembina.nama_petugas}`;
-
-      if (pembina.jabatan) {
-        teks += `, ${pembina.jabatan}`;
-      }
-
-      teks += ". ";
-    }
 
     teks +=
       "Kepada seluruh peserta apel dimohon untuk mengikuti apel dengan tertib.";
