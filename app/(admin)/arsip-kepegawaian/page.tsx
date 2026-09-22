@@ -27,7 +27,17 @@ type ArsipKategori = {
 
 const kategoriArsip: ArsipKategori[] = [
   {
-    nama: "Data Kepegawaian",
+    nama: "DRH",
+    deskripsi: "Dokumen dan data administrasi kepegawaian",
+    icon: User,
+  },
+  {
+     nama: "DRP",
+    deskripsi: "Dokumen dan data administrasi kepegawaian",
+    icon: User,  
+  },
+  {
+     nama: "KGB",
     deskripsi: "Dokumen dan data administrasi kepegawaian",
     icon: User,
   },
@@ -62,7 +72,7 @@ const kategoriArsip: ArsipKategori[] = [
     icon: FileText,
   },
   {
-    nama: "Anak & Istri",
+    nama: "Anak & Istri/Suami",
     deskripsi: "Dokumen pasangan dan anak",
     icon: Users,
   },
@@ -77,7 +87,12 @@ const kategoriArsip: ArsipKategori[] = [
     icon: Award,
   },
   {
-    nama: "SK",
+   nama: "SK Pangkat/Golongan",
+    deskripsi: "Surat keputusan kepegawaian",
+    icon: FileCheck,
+  },
+  {
+       nama: "SK Jabatan",
     deskripsi: "Surat keputusan kepegawaian",
     icon: FileCheck,
   },
@@ -87,7 +102,7 @@ const kategoriArsip: ArsipKategori[] = [
     icon: Award,
   },
   {
-    nama: "Izin / Sakit / Cuti",
+    nama: "Izin / Sakit / Lepas Piket / Dinas Luar Half / Dinas Luar Full / Cuti",
     deskripsi: "Dokumen izin, sakit dan cuti",
     icon: CalendarDays,
   },
@@ -112,6 +127,7 @@ const [loadingArsip, setLoadingArsip] = useState(false);
 
 const [kategoriDipilih, setKategoriDipilih] = useState("");
 const [showUpload, setShowUpload] = useState(false);
+const [modeArsipSaya, setModeArsipSaya] = useState(false);
 
 const [uploadFile, setUploadFile] = useState<File | null>(null);
 const [namaDokumen, setNamaDokumen] = useState("");
@@ -134,9 +150,12 @@ const [uploadLoading, setUploadLoading] = useState(false);
     roleNormal === "admin kepegawaian" ||
     roleNormal === "kaur kepegawaian" ||
     roleNormal === "admin";
-const nipAktif = isAdminKepegawaian
-  ? nipDipilih
-  : username;
+const nipAktif =
+  modeArsipSaya
+    ? username
+    : isAdminKepegawaian
+      ? nipDipilih
+      : username;
   // ==========================================
   // AMBIL DATA SESSION
   // ==========================================
@@ -215,52 +234,56 @@ const nipAktif = isAdminKepegawaian
       return;
     }
 
-    const ambilDaftarPegawai =
-      async () => {
-        try {
-          setLoadingPegawai(true);
+  const ambilDaftarPegawai = async () => {
+  try {
+    setLoadingPegawai(true);
 
-          const response =
-            await fetch(
-              "/api/arsip-kepegawaian?mode=pegawai"
-            );
+    const response = await fetch(
+      "/api/arsip-kepegawaian?mode=pegawai"
+    );
 
-          const result =
-            await response.json();
+    const result = await response.json();
 
-          if (
-            !response.ok ||
-            !result.success
-          ) {
-            console.error(
-              "Gagal mengambil daftar pegawai:",
-              result.message
-            );
+    if (!response.ok || !result.success) {
+      console.error(
+        "Gagal mengambil daftar pegawai:",
+        result.message
+      );
 
-            return;
-          }
+      return;
+    }
 
-          setDaftarPegawai(
-            result.data ?? []
-          );
-        } catch (error) {
-          console.error(
-            "ERROR mengambil daftar pegawai:",
-            error
-          );
-        } finally {
-          setLoadingPegawai(false);
-        }
-      };
+    // Hanya tampilkan pegawai yang memiliki NIP 18 digit
+    const hanyaYangPunyaNIP = (result.data ?? []).filter(
+      (pegawai: any) =>
+        /^\d{18}$/.test(
+          String(pegawai.username ?? "").trim()
+        )
+    );
+
+    setDaftarPegawai(hanyaYangPunyaNIP);
+
+  } catch (error) {
+    console.error(
+      "ERROR mengambil daftar pegawai:",
+      error
+    );
+  } finally {
+    setLoadingPegawai(false);
+  }
+};
 
     ambilDaftarPegawai();
   }, [isAdminKepegawaian]);
 useEffect(() => {
   if (status !== "authenticated") return;
 
-  const nipTarget = isAdminKepegawaian
-    ? nipDipilih
-    : username;
+const nipTarget =
+  modeArsipSaya
+    ? username
+    : isAdminKepegawaian
+      ? nipDipilih
+      : username;
 
   if (!nipTarget) {
     setArsipPegawai([]);
@@ -312,6 +335,7 @@ useEffect(() => {
   username,
   nipDipilih,
   isAdminKepegawaian,
+  modeArsipSaya,
 ]);
 
  
@@ -430,7 +454,8 @@ onClick={() => {
         
         </>
       )}
-{!isAdminKepegawaian && kategoriDipilih && (
+{((!isAdminKepegawaian && kategoriDipilih) ||
+  (isAdminKepegawaian && modeArsipSaya && kategoriDipilih)) && (
   <section className="dokumen-box">
 
     <div className="section-title">
@@ -925,9 +950,12 @@ onClick={() => {
               alert("Nama dokumen wajib diisi.");
               return;
             }
-const nipUpload = isAdminKepegawaian
-  ? nipDipilih
-  : username;
+const nipUpload =
+  modeArsipSaya
+    ? username
+    : isAdminKepegawaian
+      ? nipDipilih
+      : username;
 
 if (!nipUpload) {
   alert("NIP / username pegawai belum tersedia.");
@@ -1072,10 +1100,112 @@ console.log("KATEGORI YANG DIPILIH:", kategoriDipilih);
 )}
   </section>
 )}
+{/* ============================= */}
+{/* ARSIP SAYA - PENGELOLA KEPEGAWAIAN */}
+{/* ============================= */}
+
+{isAdminKepegawaian && (
+  <section className="profil-box">
+    <div className="profil-icon">
+      <User size={28} />
+    </div>
+
+    <div className="profil-info">
+      <span className="label">
+        Arsip Saya
+      </span>
+
+      <h2>{nama}</h2>
+
+      <p>
+        NIP / Username: {username || "-"}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+        setModeArsipSaya(true);
+        setKategoriDipilih("");
+        setShowUpload(false);
+
+        // Bersihkan pilihan pegawai dari URL
+        window.history.replaceState(
+          null,
+          "",
+          "/arsip-kepegawaian"
+        );
+      }}
+      style={{
+        marginLeft: "auto",
+        padding: "10px 16px",
+        border: "none",
+        borderRadius: "10px",
+        background: "#2563eb",
+        color: "white",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      📁 Buka Arsip Saya
+    </button>
+  </section>
+  
+)}
+{/* ============================= */}
+{/* DOKUMEN PRIBADI SARI */}
+{/* ============================= */}
+
+{isAdminKepegawaian && modeArsipSaya && (
+  <>
+    <section className="section-title">
+      <h2>Dokumen Saya</h2>
+
+      <p>
+        Kelola dan simpan dokumen kepegawaian milik Anda sendiri.
+      </p>
+    </section>
+
+    <div className="kategori-grid">
+      {kategoriArsip.map((item) => {
+        const Icon = item.icon;
+
+        return (
+          <button
+            key={item.nama}
+            type="button"
+            className="kategori-card"
+            onClick={() => {
+              setKategoriDipilih(item.nama);
+              setShowUpload(false);
+            }}
+          >
+            <div className="kategori-icon">
+              <Icon size={24} />
+            </div>
+
+            <div className="kategori-text">
+              <h3>{item.nama}</h3>
+
+              <p>
+                {item.deskripsi}
+              </p>
+            </div>
+
+            <ChevronRight
+              size={20}
+              className="kategori-arrow"
+            />
+          </button>
+        );
+      })}
+    </div>
+  </>
+)}
       {/* ============================= */}
       {/* ADMIN / KAUR KEPEGAWAIAN */}
       {/* ============================= */}
-{isAdminKepegawaian && nipDipilih && (
+{isAdminKepegawaian && (nipDipilih || modeArsipSaya) && (
   <section className="admin-box">
     <div className="admin-icon">
       <FolderArchive size={30} />
@@ -1101,7 +1231,7 @@ console.log("KATEGORI YANG DIPILIH:", kategoriDipilih);
   </section>
 )}
       {/* KATEGORI ARSIP PEGAWAI YANG DIPILIH */}
-      {isAdminKepegawaian && nipDipilih && (
+   {isAdminKepegawaian && (nipDipilih || modeArsipSaya) && (
         <>
           <section className="section-title">
             <h2>Dokumen Kepegawaian</h2>
