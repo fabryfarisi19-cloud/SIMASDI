@@ -2410,40 +2410,28 @@ export default function ArsipKepegawaianPage() {
         {/* =====================================================
             MODAL UPLOAD
         ====================================================== */}
+             {/* =====================================================
+            MODAL UPLOAD
+        ====================================================== */}
         {showUpload && (
-          <div
-            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4"
-            onMouseDown={(e) => {
-              if (
-                e.target ===
-                e.currentTarget
-              ) {
-                if (
-                  !uploadLoading
-                ) {
-                  setShowUpload(
-                    false
-                  );
-                }
-              }
-            }}
-          >
-            <div className="my-2 flex max-h-[96vh] w-full min-w-0 max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:my-0 sm:max-h-[92vh] sm:rounded-3xl">
+          <div className="fixed inset-0 z-[99999] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+            <div className="relative my-2 flex max-h-[96dvh] w-full min-w-0 max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:my-0 sm:max-h-[92dvh] sm:rounded-3xl">
 
-              {/* MODAL HEADER */}
-              <div className="sticky top-0 z-10 flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
+              {/* =================================================
+                  HEADER MODAL
+              ================================================== */}
+              <div className="sticky top-0 z-20 flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
+
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-lg font-bold text-slate-800 sm:text-xl">
+                  <h2 className="break-words text-lg font-bold leading-6 text-slate-800 sm:text-xl">
                     Upload Dokumen
                   </h2>
 
                   <p className="mt-1 break-words text-xs leading-5 text-slate-500 sm:text-sm">
-                    {
-                      cariSubKategori(
-                        kategoriDipilih
-                      )?.nama ||
+                    {cariSubKategori(
                       kategoriDipilih
-                    }
+                    )?.nama ||
+                      kategoriDipilih}
                   </p>
                 </div>
 
@@ -2451,56 +2439,62 @@ export default function ArsipKepegawaianPage() {
                   type="button"
                   onClick={() =>
                     !uploadLoading &&
-                    setShowUpload(
-                      false
-                    )
+                    setShowUpload(false)
                   }
-                  disabled={
-                    uploadLoading
-                  }
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={uploadLoading}
                   aria-label="Tutup"
+                  className="shrink-0 rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <X size={21} />
                 </button>
               </div>
 
-              {/* MODAL FORM */}
+              {/* =================================================
+                  FORM
+              ================================================== */}
               <form
-                onSubmit={
-                  handleUpload
-                }
+                onSubmit={handleUpload}
                 className="min-w-0 overflow-y-auto p-4 sm:p-6"
               >
                 <div className="space-y-5">
 
-                  {/* INFORMASI PEGAWAI */}
-                  <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
+                  {/* =================================================
+                      INFORMASI PEGAWAI
+                  ================================================== */}
+                  <div className="min-w-0 overflow-hidden rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:p-5">
                     <div className="flex min-w-0 items-start gap-3">
-                      <CircleUserRound
-                        size={20}
-                        className="mt-0.5 shrink-0 text-blue-600"
-                      />
 
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-bold text-blue-900">
-                          {
-                            namaPegawaiAktif
-                          }
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                        <User size={20} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-bold leading-5 text-slate-800 sm:text-base">
+                          {namaPegawaiAktif}
                         </p>
 
-                        <p className="mt-1 break-all text-xs text-blue-700">
-                          NIP:{" "}
-                          {
-                            nipDipilih
-                          }
+                        <p className="mt-1 break-all text-xs leading-5 text-slate-500 sm:text-sm">
+                          NIP: {nipDipilih}
+                        </p>
+
+                        <p className="mt-1 break-words text-[11px] leading-5 text-blue-600 sm:text-xs">
+                          Kategori:{" "}
+                          <span className="font-semibold">
+                            {cariSubKategori(
+                              kategoriDipilih
+                            )?.nama ||
+                              kategoriDipilih}
+                          </span>
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* FILE */}
+                  {/* =================================================
+                      FILE DOKUMEN
+                  ================================================== */}
                   <div className="min-w-0">
+
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       File Dokumen{" "}
                       <span className="text-red-500">
@@ -2509,46 +2503,45 @@ export default function ArsipKepegawaianPage() {
                     </label>
 
                     <label className="flex w-full min-w-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-3 py-7 text-center transition hover:border-blue-400 hover:bg-blue-50 sm:px-5 sm:py-8">
+
                       <Upload
                         size={30}
-                        className="shrink-0 text-blue-600"
+                        className="shrink-0 text-blue-500"
                       />
 
-                      <span className="mt-3 max-w-full break-all px-2 text-xs font-semibold leading-5 text-slate-700 sm:text-sm">
+                      <span className="mt-3 max-w-full break-all px-2 text-sm font-semibold leading-5 text-slate-700">
                         {uploadFile
                           ? uploadFile.name
                           : "Klik untuk memilih file"}
                       </span>
 
-                      <span className="mt-1 max-w-full break-words px-2 text-[10px] leading-4 text-slate-500 sm:text-xs">
-                        PDF, JPG,
-                        JPEG, PNG,
-                        WEBP —
-                        maksimal
-                        10 MB
+                      <span className="mt-2 max-w-full break-words px-2 text-xs leading-5 text-slate-500">
+                        PDF, JPG, JPEG, PNG, WEBP
+                        <br className="sm:hidden" />
+                        {" "}— maksimal 10 MB
                       </span>
 
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,.webp"
-                        className="hidden"
-                        onChange={(
-                          e
-                        ) => {
+                        onChange={(event) => {
                           const file =
-                            e.target.files?.[0] ||
+                            event.target.files?.[0] ||
                             null;
 
-                          setUploadFile(
-                            file
-                          );
+                          setUploadFile(file);
                         }}
+                        className="hidden"
                       />
                     </label>
+
                   </div>
 
-                  {/* NAMA DOKUMEN */}
+                  {/* =================================================
+                      NAMA DOKUMEN
+                  ================================================== */}
                   <div className="min-w-0">
+
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Nama Dokumen{" "}
                       <span className="text-red-500">
@@ -2558,137 +2551,135 @@ export default function ArsipKepegawaianPage() {
 
                     <input
                       type="text"
-                      value={
-                        namaDokumen
-                      }
-                      onChange={(
-                        e
-                      ) =>
+                      value={namaDokumen}
+                      onChange={(event) =>
                         setNamaDokumen(
-                          e.target.value
+                          event.target.value
                         )
                       }
-                      placeholder="Contoh: SK Pangkat III/c"
+                      placeholder="Contoh: SK Pangkat Terakhir"
+                      className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm leading-5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       required
-                      className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:px-4"
                     />
+
                   </div>
 
-                  {/* NOMOR */}
+                  {/* =================================================
+                      NOMOR DOKUMEN
+                  ================================================== */}
                   <div className="min-w-0">
+
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Nomor Dokumen
                     </label>
 
                     <input
                       type="text"
-                      value={
-                        nomorDokumen
-                      }
-                      onChange={(
-                        e
-                      ) =>
+                      value={nomorDokumen}
+                      onChange={(event) =>
                         setNomorDokumen(
-                          e.target.value
+                          event.target.value
                         )
                       }
-                      placeholder="Nomor SK / dokumen"
-                      className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:px-4"
+                      placeholder="Nomor dokumen (jika ada)"
+                      className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm leading-5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
+
                   </div>
 
-                  {/* TANGGAL + TAHUN */}
-                  <div className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
+                  {/* =================================================
+                      TANGGAL + TAHUN
+                  ================================================== */}
+                  <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+
                     {/* TANGGAL */}
                     <div className="min-w-0">
+
                       <label className="mb-2 block text-sm font-semibold text-slate-700">
                         Tanggal Dokumen
                       </label>
 
                       <div className="relative min-w-0">
+
                         <CalendarDays
                           size={18}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                         />
 
                         <input
                           type="date"
-                          value={
-                            tanggalDokumen
-                          }
-                          onChange={(
-                            e
-                          ) =>
+                          value={tanggalDokumen}
+                          onChange={(event) =>
                             setTanggalDokumen(
-                              e.target.value
+                              event.target.value
                             )
                           }
-                          className="block w-full min-w-0 max-w-full appearance-none rounded-xl border border-slate-200 py-3 pl-10 pr-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:pr-4"
+                          className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 py-3 pl-10 pr-2 text-sm leading-5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:pr-4"
                         />
+
                       </div>
                     </div>
 
                     {/* TAHUN */}
                     <div className="min-w-0">
+
                       <label className="mb-2 block text-sm font-semibold text-slate-700">
                         Tahun
                       </label>
 
                       <input
                         type="number"
-                        min="1900"
-                        max="2100"
-                        value={
-                          tahunDokumen
-                        }
-                        onChange={(
-                          e
-                        ) =>
+                        value={tahunDokumen}
+                        onChange={(event) =>
                           setTahunDokumen(
-                            e.target.value
+                            event.target.value
                           )
                         }
-                        className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:px-4"
+                        placeholder="2026"
+                        min="1900"
+                        max="2100"
+                        className="block w-full min-w-0 max-w-full rounded-xl border border-slate-200 px-4 py-3 text-sm leading-5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       />
+
                     </div>
                   </div>
 
-                  {/* KETERANGAN */}
+                  {/* =================================================
+                      KETERANGAN
+                  ================================================== */}
                   <div className="min-w-0">
+
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Keterangan
                     </label>
 
                     <textarea
-                      value={
-                        keteranganDokumen
-                      }
-                      onChange={(
-                        e
-                      ) =>
+                      value={keteranganDokumen}
+                      onChange={(event) =>
                         setKeteranganDokumen(
-                          e.target.value
+                          event.target.value
                         )
                       }
-                      rows={4}
                       placeholder="Keterangan tambahan..."
-                      className="block w-full min-w-0 max-w-full resize-none rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:px-4"
+                      rows={4}
+                      className="block w-full min-w-0 max-w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm leading-5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
+
                   </div>
 
-                  {/* BUTTON */}
+                  {/* =================================================
+                      TOMBOL
+                  ================================================== */}
                   <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+
                     <button
                       type="button"
-                      disabled={
-                        uploadLoading
-                      }
                       onClick={() =>
-                        setShowUpload(
-                          false
-                        )
+                        !uploadLoading &&
+                        setShowUpload(false)
                       }
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
+                      disabled={uploadLoading}
+                      className="w-full rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                     >
                       Batal
                     </button>
@@ -2699,7 +2690,7 @@ export default function ArsipKepegawaianPage() {
                         uploadLoading ||
                         !uploadFile
                       }
-                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                     >
                       {uploadLoading ? (
                         <>
@@ -2711,20 +2702,18 @@ export default function ArsipKepegawaianPage() {
                         </>
                       ) : (
                         <>
-                          <Upload
-                            size={18}
-                          />
+                          <Upload size={18} />
                           Upload Dokumen
                         </>
                       )}
                     </button>
+
                   </div>
                 </div>
               </form>
             </div>
           </div>
         )}
-
         {/* =====================================================
             FOOTER
         ====================================================== */}
