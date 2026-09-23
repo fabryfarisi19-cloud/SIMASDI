@@ -216,7 +216,7 @@ export default function GlobalAudioEngine() {
       "Diberitahukan susunan petugas apel pagi Bapas Kelas Satu Jakarta Barat hari ini. " +
       bagian.join(". ") +
       ". " +
-      "Kepada seluruh petugas apel agar mempersiapkan diri."
+      "terimakasih."
     );
   }
 
@@ -276,10 +276,10 @@ export default function GlobalAudioEngine() {
 
     let teks =
       "Mohon Perhatian. " +
-      "Apel pagi Bapas Kelas Satu Jakarta Barat dimulai. ";
+      "Apel pagi Bapas Kelas Satu Jakarta Barat segera dimulai. ";
 
     teks +=
-      "Kepada seluruh peserta apel dimohon untuk mengikuti apel dengan tertib.";
+      "Kepada seluruh peserta apel dimohon untuk mengikuti apel dengan tertib, terimakasih.";
 
     await putarTengTong();
 
