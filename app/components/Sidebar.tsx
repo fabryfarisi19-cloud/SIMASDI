@@ -23,6 +23,7 @@ Wallet,
 FileSpreadsheet,
 KeyRound,
 FolderArchive,
+  Award,
 } from "lucide-react";
 import { Ticket } from "lucide-react";
 import { Boxes } from "lucide-react";
@@ -134,8 +135,33 @@ const menu = [
    "Arsiparis",
    "PPNPN",
 ],
+
   },
   {
+  nama: "Pegawai Teladan",
+  href: "/pegawai-teladan",
+  icon: Award,
+  roles: [
+    "Kabapas",
+    "Kasubag TU",
+    "Kaur Umum",
+    "Kaur Keuangan",
+    "Kaur Kepegawaian",
+    "Kasi BKA",
+    "Kasi BKD",
+    "Kasubsi Bimker Anak",
+    "Kasubsi Bimker Dewasa",
+    "Kasubsi Registrasi Dewasa",
+    "Kasubsi Bimkemas Anak",
+    "Kasubsi Bimkemas Dewasa",
+    "Kasubsi Registrasi Anak",
+
+    // Pengelola boleh masuk dan mengelola rekap/periode
+    "Pengelola Kepegawaian",
+  ],
+},
+  {
+    
     nama: "Publikasi",
     href: "/publikasi",
     icon: Megaphone,

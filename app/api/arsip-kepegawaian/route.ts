@@ -12,7 +12,12 @@ const ROLE_ADMIN_KEPEGAWAIAN = [
   "admin kepegawaian",
   "admin",
 ];
-
+const ROLE_DILARANG_ARSIP_KEPEGAWAIAN = [
+  "petugas",
+  "kiosk",
+  "display",
+  "admin",
+];
 // ======================================================
 // NORMALISASI TEKS
 // ======================================================
@@ -49,7 +54,20 @@ export async function GET(req: Request) {
     const role = normalizeText(
       (session.user as any).role ?? ""
     );
+// ======================================================
+// BLOKIR AKSES ROLE YANG TIDAK BOLEH MENGAKSES ARSIP
+// ======================================================
 
+if (ROLE_DILARANG_ARSIP_KEPEGAWAIAN.includes(role)) {
+  return NextResponse.json(
+    {
+      success: false,
+      message:
+        "Akun Anda tidak memiliki akses ke Arsip Kepegawaian.",
+    },
+    { status: 403 }
+  );
+}
     if (!username) {
       return NextResponse.json(
         {
@@ -96,21 +114,22 @@ export async function GET(req: Request) {
         );
       }
 
-      const {
-        data: pegawai,
-        error: pegawaiError,
-      } = await supabaseAdmin
-        .from("pengguna")
-        .select(`
-          id,
-          nama,
-          username,
-          role,
-          status
-        `)
-        .order("nama", {
-          ascending: true,
-        });
+     const {
+  data: pegawai,
+  error: pegawaiError,
+} = await supabaseAdmin
+  .from("pengguna")
+  .select(`
+    id,
+    nama,
+    username,
+    role,
+    status
+  `)
+  .not("username", "in", '("admin","display","kiosk","petugas")')
+  .order("nama", {
+    ascending: true,
+  });
 
       if (pegawaiError) {
         console.error(
@@ -363,7 +382,20 @@ export async function DELETE(req: Request) {
     const role = normalizeText(
       (session.user as any).role ?? ""
     );
+// ======================================================
+// BLOKIR AKSES ROLE YANG TIDAK BOLEH MENGAKSES ARSIP
+// ======================================================
 
+if (ROLE_DILARANG_ARSIP_KEPEGAWAIAN.includes(role)) {
+  return NextResponse.json(
+    {
+      success: false,
+      message:
+        "Akun Anda tidak memiliki akses ke Arsip Kepegawaian.",
+    },
+    { status: 403 }
+  );
+}
     if (!username) {
       return NextResponse.json(
         {
