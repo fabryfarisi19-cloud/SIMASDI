@@ -27,44 +27,60 @@ const ALLOWED_NIP = [
 
 export default function GlobalAudioEngine() {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-  setMounted(true);
-}, []);
-  const tengTongRef = useRef<HTMLAudioElement | null>(null);
-  const ttsRef = useRef<HTMLAudioElement | null>(null);
-  const indonesiaRayaRef = useRef<HTMLAudioElement | null>(null);
-
+  const [hakAudio, setHakAudio] = useState(false);
   const [audioAktif, setAudioAktif] = useState(false);
   const [siap, setSiap] = useState(false);
+
+  const tengTongRef = useRef<HTMLAudioElement | null>(null);
+  const ttsRef = useRef<HTMLAudioElement | null>(null);
+  const indonesiaRayaRef =
+    useRef<HTMLAudioElement | null>(null);
 
   const sedangBicaraRef = useRef(false);
 
   // Mencegah pengumuman yang sama diputar berulang kali
-  const sudahDiputarRef = useRef<Record<string, string>>({});
+  const sudahDiputarRef =
+    useRef<Record<string, string>>({});
 
   // =========================================================
   // CEK HAK AKSES
+  // HANYA DIPANGGIL DI BROWSER
   // =========================================================
-  function cekHakAudio() {
-    try {
-      const rawUser = localStorage.getItem("user");
+  function cekHakAudio(): boolean {
+    if (typeof window === "undefined") {
+      return false;
+    }
 
-      if (!rawUser) return false;
+    try {
+      const rawUser =
+        window.localStorage.getItem("user");
+
+      if (!rawUser) {
+        return false;
+      }
 
       const user = JSON.parse(rawUser);
 
-      const username = String(user?.username || "")
+      const username = String(
+        user?.username || ""
+      )
         .trim()
         .toLowerCase();
 
-      const nip = String(user?.nip || "").trim();
+      const nip = String(
+        user?.nip || ""
+      ).trim();
 
       return (
         ALLOWED_USERNAMES.includes(username) ||
         ALLOWED_NIP.includes(nip)
       );
     } catch (error) {
-      console.error("Gagal membaca user:", error);
+      console.error(
+        "Gagal membaca user:",
+        error
+      );
+
       return false;
     }
   }
@@ -76,8 +92,14 @@ export default function GlobalAudioEngine() {
     const sekarang = new Date();
 
     const tahun = sekarang.getFullYear();
-    const bulan = String(sekarang.getMonth() + 1).padStart(2, "0");
-    const tanggal = String(sekarang.getDate()).padStart(2, "0");
+
+    const bulan = String(
+      sekarang.getMonth() + 1
+    ).padStart(2, "0");
+
+    const tanggal = String(
+      sekarang.getDate()
+    ).padStart(2, "0");
 
     return `${tahun}-${bulan}-${tanggal}`;
   }
@@ -85,7 +107,9 @@ export default function GlobalAudioEngine() {
   // =========================================================
   // AMBIL JADWAL APEL HARI INI
   // =========================================================
-  async function ambilJadwalApel(): Promise<JadwalApel[]> {
+  async function ambilJadwalApel(): Promise<
+    JadwalApel[]
+  > {
     try {
       const today = tanggalHariIni();
 
@@ -96,16 +120,26 @@ export default function GlobalAudioEngine() {
         )
         .eq("tanggal", today)
         .eq("aktif", true)
-        .order("created_at", { ascending: true });
+        .order("created_at", {
+          ascending: true,
+        });
 
       if (error) {
-        console.error("Gagal mengambil jadwal apel:", error);
+        console.error(
+          "Gagal mengambil jadwal apel:",
+          error
+        );
+
         return [];
       }
 
       return (data || []) as JadwalApel[];
     } catch (error) {
-      console.error("Error jadwal apel:", error);
+      console.error(
+        "Error jadwal apel:",
+        error
+      );
+
       return [];
     }
   }
@@ -118,9 +152,13 @@ export default function GlobalAudioEngine() {
 
     try {
       tengTongRef.current.currentTime = 0;
+
       await tengTongRef.current.play();
     } catch (error) {
-      console.error("Gagal memutar teng tong:", error);
+      console.error(
+        "Gagal memutar teng tong:",
+        error
+      );
     }
   }
 
@@ -131,29 +169,41 @@ export default function GlobalAudioEngine() {
     if (!teks) return;
 
     if (sedangBicaraRef.current) {
-      console.log("Audio sedang berbicara, dilewati.");
+      console.log(
+        "Audio sedang berbicara, dilewati."
+      );
+
       return;
     }
 
     sedangBicaraRef.current = true;
 
     try {
-      const response = await fetch("/api/tts-edge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: teks,
-        }),
-      });
+      const response = await fetch(
+        "/api/tts-edge",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            text: teks,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("TTS API gagal");
+        throw new Error(
+          "TTS API gagal"
+        );
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      const blob =
+        await response.blob();
+
+      const url =
+        URL.createObjectURL(blob);
 
       const audio = ttsRef.current;
 
@@ -167,20 +217,33 @@ export default function GlobalAudioEngine() {
 
       await audio.play();
 
-      await new Promise<void>((resolve) => {
-        const selesai = () => {
-          audio.removeEventListener("ended", selesai);
-          resolve();
-        };
+      await new Promise<void>(
+        (resolve) => {
+          const selesai = () => {
+            audio.removeEventListener(
+              "ended",
+              selesai
+            );
 
-        audio.addEventListener("ended", selesai);
-      });
+            resolve();
+          };
+
+          audio.addEventListener(
+            "ended",
+            selesai
+          );
+        }
+      );
 
       URL.revokeObjectURL(url);
+
       audio.removeAttribute("src");
       audio.load();
     } catch (error) {
-      console.error("Gagal memutar TTS:", error);
+      console.error(
+        "Gagal memutar TTS:",
+        error
+      );
     } finally {
       sedangBicaraRef.current = false;
     }
@@ -189,7 +252,9 @@ export default function GlobalAudioEngine() {
   // =========================================================
   // SUSUN NAMA PETUGAS
   // =========================================================
-  function susunNamaPetugas(jadwal: JadwalApel[]) {
+  function susunNamaPetugas(
+    jadwal: JadwalApel[]
+  ) {
     if (jadwal.length === 0) {
       return (
         "Mohon Perhatian. " +
@@ -198,25 +263,30 @@ export default function GlobalAudioEngine() {
     }
 
     const bagian: string[] = [];
-  jadwal.forEach((item) => {
-    const nama = item.nama_petugas?.trim();
-    const tugas = item.tugas?.trim();
+
+    jadwal.forEach((item) => {
+      const nama =
+        item.nama_petugas?.trim();
+
+      const tugas =
+        item.tugas?.trim();
 
       if (!nama) return;
 
-   if (tugas) {
-      bagian.push(`${tugas}, ${nama}`);
-    } else {
-      bagian.push(nama);
-    }
-  });
+      if (tugas) {
+        bagian.push(
+          `${tugas}, ${nama}`
+        );
+      } else {
+        bagian.push(nama);
+      }
+    });
 
     return (
       "Mohon Perhatian. " +
       "Diberitahukan susunan petugas apel pagi Bapas Kelas Satu Jakarta Barat hari ini. " +
       bagian.join(". ") +
-      ". " +
-      "terimakasih."
+      ". Terimakasih."
     );
   }
 
@@ -224,16 +294,22 @@ export default function GlobalAudioEngine() {
   // PENGUMUMAN 07:50
   // =========================================================
   async function pengumuman0750() {
-    const jadwal = await ambilJadwalApel();
+    const jadwal =
+      await ambilJadwalApel();
 
-    console.log("Jadwal apel hari ini:", jadwal);
+    console.log(
+      "Jadwal apel hari ini:",
+      jadwal
+    );
 
-    const teks = susunNamaPetugas(jadwal);
+    const teks =
+      susunNamaPetugas(jadwal);
 
     await putarTengTong();
 
-    // beri jeda sedikit setelah teng tong
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1200)
+    );
 
     await putarTTS(teks);
   }
@@ -242,10 +318,13 @@ export default function GlobalAudioEngine() {
   // PENGUMUMAN 07:55
   // =========================================================
   async function pengumuman0755() {
-    const jadwal = await ambilJadwalApel();
+    const jadwal =
+      await ambilJadwalApel();
 
-    let lokasi =
-      jadwal.find((item) => item.lokasi)?.lokasi ||
+    const lokasi =
+      jadwal.find(
+        (item) => item.lokasi
+      )?.lokasi ||
       "Halaman Griya Abhipraya Bapas Kelas I Jakarta Barat";
 
     const teks =
@@ -253,11 +332,13 @@ export default function GlobalAudioEngine() {
       "Lima menit lagi apel pagi akan dimulai. " +
       `Pelaksanaan apel bertempat di ${lokasi}. ` +
       "Kepada seluruh pegawai dan petugas apel agar segera menuju tempat pelaksanaan apel " +
-      "dan menempati posisi masing-masing, terimakasih";
+      "dan menempati posisi masing-masing, terimakasih.";
 
     await putarTengTong();
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1200)
+    );
 
     await putarTTS(teks);
   }
@@ -266,13 +347,21 @@ export default function GlobalAudioEngine() {
   // PENGUMUMAN 08:00
   // =========================================================
   async function pengumuman0800() {
-    const jadwal = await ambilJadwalApel();
+    const jadwal =
+      await ambilJadwalApel();
 
-    const pembina = jadwal.find(
-      (item) =>
-        item.tugas?.trim().toLowerCase() ===
-        "pembina apel"
-    );
+    const pembina =
+      jadwal.find(
+        (item) =>
+          item.tugas
+            ?.trim()
+            .toLowerCase() ===
+          "pembina apel"
+      );
+
+    // Variabel tetap dipertahankan
+    // untuk kompatibilitas jadwal yang ada.
+    void pembina;
 
     let teks =
       "Mohon Perhatian. " +
@@ -283,7 +372,9 @@ export default function GlobalAudioEngine() {
 
     await putarTengTong();
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1200)
+    );
 
     await putarTTS(teks);
   }
@@ -292,7 +383,9 @@ export default function GlobalAudioEngine() {
   // INDONESIA RAYA 10:00
   // =========================================================
   async function putarIndonesiaRaya() {
-    if (!indonesiaRayaRef.current) return;
+    if (!indonesiaRayaRef.current) {
+      return;
+    }
 
     const teks =
       "Mohon Perhatian. " +
@@ -301,15 +394,24 @@ export default function GlobalAudioEngine() {
 
     await putarTengTong();
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1200)
+    );
 
     await putarTTS(teks);
 
-    // tunggu sebentar setelah pengumuman
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Tunggu sebentar setelah pengumuman
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1500)
+    );
 
     try {
+      if (!indonesiaRayaRef.current) {
+        return;
+      }
+
       indonesiaRayaRef.current.currentTime = 0;
+
       await indonesiaRayaRef.current.play();
     } catch (error) {
       console.error(
@@ -325,30 +427,51 @@ export default function GlobalAudioEngine() {
   async function cekJadwalAudio() {
     if (!audioAktif) return;
 
-    if (typeof window === "undefined") return;
+    if (
+      typeof window ===
+      "undefined"
+    ) {
+      return;
+    }
 
     const sekarang = new Date();
 
-    const jam = String(sekarang.getHours()).padStart(2, "0");
-    const menit = String(sekarang.getMinutes()).padStart(2, "0");
+    const jam = String(
+      sekarang.getHours()
+    ).padStart(2, "0");
 
-    const waktuSekarang = `${jam}:${menit}`;
+    const menit = String(
+      sekarang.getMinutes()
+    ).padStart(2, "0");
 
-    const tanggal = tanggalHariIni();
+    const waktuSekarang =
+      `${jam}:${menit}`;
 
-    const kunci0750 = `${tanggal}-07:50`;
-    const kunci0755 = `${tanggal}-07:55`;
-    const kunci0800 = `${tanggal}-08:00`;
-    const kunci1000 = `${tanggal}-10:00`;
+    const tanggal =
+      tanggalHariIni();
+
+    const kunci0750 =
+      `${tanggal}-07:50`;
+
+    const kunci0755 =
+      `${tanggal}-07:55`;
+
+    const kunci0800 =
+      `${tanggal}-08:00`;
+
+    const kunci1000 =
+      `${tanggal}-10:00`;
 
     // =======================================================
     // 07:50 - NAMA PETUGAS
     // =======================================================
     if (
       waktuSekarang === "07:50" &&
-      sudahDiputarRef.current.p0750 !== kunci0750
+      sudahDiputarRef.current.p0750 !==
+        kunci0750
     ) {
-      sudahDiputarRef.current.p0750 = kunci0750;
+      sudahDiputarRef.current.p0750 =
+        kunci0750;
 
       console.log(
         "🔊 Menjalankan pengumuman 07:50"
@@ -362,9 +485,11 @@ export default function GlobalAudioEngine() {
     // =======================================================
     if (
       waktuSekarang === "07:55" &&
-      sudahDiputarRef.current.p0755 !== kunci0755
+      sudahDiputarRef.current.p0755 !==
+        kunci0755
     ) {
-      sudahDiputarRef.current.p0755 = kunci0755;
+      sudahDiputarRef.current.p0755 =
+        kunci0755;
 
       console.log(
         "🔊 Menjalankan pengumuman 07:55"
@@ -378,9 +503,11 @@ export default function GlobalAudioEngine() {
     // =======================================================
     if (
       waktuSekarang === "08:00" &&
-      sudahDiputarRef.current.p0800 !== kunci0800
+      sudahDiputarRef.current.p0800 !==
+        kunci0800
     ) {
-      sudahDiputarRef.current.p0800 = kunci0800;
+      sudahDiputarRef.current.p0800 =
+        kunci0800;
 
       console.log(
         "🔊 Menjalankan pengumuman 08:00"
@@ -390,13 +517,15 @@ export default function GlobalAudioEngine() {
     }
 
     // =======================================================
-    // 10:00
+    // 10:00 - INDONESIA RAYA
     // =======================================================
     if (
       waktuSekarang === "10:00" &&
-      sudahDiputarRef.current.p1000 !== kunci1000
+      sudahDiputarRef.current.p1000 !==
+        kunci1000
     ) {
-      sudahDiputarRef.current.p1000 = kunci1000;
+      sudahDiputarRef.current.p1000 =
+        kunci1000;
 
       console.log(
         "🇮🇩 Menjalankan Indonesia Raya 10:00"
@@ -410,10 +539,11 @@ export default function GlobalAudioEngine() {
   // AKTIFKAN AUDIO
   // =========================================================
   async function aktifkanAudio() {
-    if (!cekHakAudio()) {
+    if (!hakAudio) {
       alert(
         "Akun ini tidak memiliki hak untuk mengaktifkan audio."
       );
+
       return;
     }
 
@@ -421,6 +551,7 @@ export default function GlobalAudioEngine() {
       // Unlock audio browser dengan gesture pengguna
       if (tengTongRef.current) {
         tengTongRef.current.currentTime = 0;
+
         await tengTongRef.current.play();
 
         tengTongRef.current.pause();
@@ -429,18 +560,19 @@ export default function GlobalAudioEngine() {
 
       if (indonesiaRayaRef.current) {
         indonesiaRayaRef.current.currentTime = 0;
+
         await indonesiaRayaRef.current.play();
 
         indonesiaRayaRef.current.pause();
         indonesiaRayaRef.current.currentTime = 0;
       }
 
-      localStorage.setItem(
+      window.localStorage.setItem(
         AUDIO_STORAGE_KEY,
         "aktif"
       );
 
-      localStorage.setItem(
+      window.localStorage.setItem(
         "simasdi-global-audio-lock",
         "aktif"
       );
@@ -467,10 +599,18 @@ export default function GlobalAudioEngine() {
   // MATIKAN AUDIO
   // =========================================================
   function matikanAudio() {
-    localStorage.removeItem(AUDIO_STORAGE_KEY);
-    localStorage.removeItem(
-      "simasdi-global-audio-lock"
-    );
+    if (
+      typeof window !==
+      "undefined"
+    ) {
+      window.localStorage.removeItem(
+        AUDIO_STORAGE_KEY
+      );
+
+      window.localStorage.removeItem(
+        "simasdi-global-audio-lock"
+      );
+    }
 
     setAudioAktif(false);
     setSiap(false);
@@ -497,14 +637,22 @@ export default function GlobalAudioEngine() {
 
   // =========================================================
   // INITIAL
+  // SEMUA AKSES localStorage HANYA DI SINI
   // =========================================================
   useEffect(() => {
-    if (!cekHakAudio()) {
+    setMounted(true);
+
+    const punyaHak =
+      cekHakAudio();
+
+    setHakAudio(punyaHak);
+
+    if (!punyaHak) {
       return;
     }
 
     const status =
-      localStorage.getItem(
+      window.localStorage.getItem(
         AUDIO_STORAGE_KEY
       );
 
@@ -518,18 +666,21 @@ export default function GlobalAudioEngine() {
   // TIMER GLOBAL
   // =========================================================
   useEffect(() => {
-    if (!audioAktif) return;
+    if (!audioAktif) {
+      return;
+    }
 
     console.log(
       "⏰ Global Audio Engine berjalan"
     );
 
-    // cek langsung
+    // Cek langsung
     cekJadwalAudio();
 
-    const interval = setInterval(() => {
-      cekJadwalAudio();
-    }, 1000);
+    const interval =
+      setInterval(() => {
+        cekJadwalAudio();
+      }, 1000);
 
     return () => {
       clearInterval(interval);
@@ -539,10 +690,17 @@ export default function GlobalAudioEngine() {
   // =========================================================
   // TAMPILAN
   // =========================================================
-  if (!cekHakAudio()) {
+
+  // Jangan render sebelum browser siap
+  if (!mounted) {
     return null;
   }
-if (!mounted) return null;
+
+  // User tidak memiliki hak audio
+  if (!hakAudio) {
+    return null;
+  }
+
   return (
     <>
       <audio
