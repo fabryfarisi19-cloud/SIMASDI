@@ -32,6 +32,7 @@ import {
   XCircle,
   Info,
   Wrench,
+  FileOutput,
 } from "lucide-react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -121,7 +122,38 @@ const menu: MenuItem[] = [
       "Kasubag TU",
     ],
   },
-
+{
+  nama: "Nomor Surat Keluar",
+  href: "/nomor-surat-keluar",
+  icon: FileOutput,
+  roles: [
+    "Admin Umum",
+    "Kaur Umum",
+    "Admin",
+    "Kabapas",
+    "Kasubag TU",
+    "Kasi BKA",
+    "Kasi BKD",
+    "Kasubsi Bimker Anak",
+    "Kasubsi Bimker Dewasa",
+    "Kasubsi Registrasi Dewasa",
+    "Kasubsi Bimkemas Anak",
+    "Kasubsi Bimkemas Dewasa",
+    "Kasubsi Registrasi Anak",
+    "Kaur Kepegawaian",
+    "Admin Kepegawaian",
+    "Pengelola Kepegawaian",
+    "Kaur Keuangan",
+    "Admin Keuangan",
+    "Staf",
+    "Pegawai",
+    "PK Madya",
+    "PK Muda",
+    "PK Pertama",
+    "APK",
+    "Arsiparis",
+  ],
+},
   {
     nama: "SIMSTOK BMN",
     href: "/simstok/dashboard",
