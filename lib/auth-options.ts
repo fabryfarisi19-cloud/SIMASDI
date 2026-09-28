@@ -6,15 +6,19 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 export const authOptions: NextAuthOptions = {
   providers: [
     /**
+     * =========================================================
      * LOGIN NIP + PASSWORD SIMASDI
+     * =========================================================
      */
     CredentialsProvider({
       name: "SIMASDI",
+
       credentials: {
         username: {
           label: "NIP",
           type: "text",
         },
+
         password: {
           label: "Password",
           type: "password",
@@ -22,53 +26,39 @@ export const authOptions: NextAuthOptions = {
       },
 
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        if (
+          !credentials?.username ||
+          !credentials?.password
+        ) {
           return null;
         }
 
         const username = credentials.username.trim();
         const password = credentials.password;
 
-console.log("Username login:", username);
-console.log("Password terisi:", Boolean(password));
         /**
-         * Query dilakukan DI SERVER menggunakan service role.
+         * =====================================================
+         * CATATAN
+         * =====================================================
+         * Untuk sementara database masih menggunakan password
+         * plaintext.
          *
-         * Untuk tahap 1 kita masih menggunakan password plaintext
-         * karena database SIMASDI saat ini masih menyimpan password
-         * dalam bentuk tersebut.
-         *
-         * HASH PASSWORD akan kita kerjakan pada tahap berikutnya.
+         * Nanti sebaiknya dimigrasikan ke bcrypt/argon2.
+         * =====================================================
          */
-   const { data, error } = await supabaseAdmin
-  .from("pengguna")
-  .select("id, nama, username, role, status")
-  .eq("username", username)
-  .eq("password", password)
-  .maybeSingle();
 
-if (error) {
-  console.error(
-    "Gagal mencari akun SIMASDI:",
-    error
-  );
-
-  return null;
-}
-
-
-if (!data) {
-  return null;
-
-}
-
-if (data.status === "Nonaktif") {
-  return null;
-}
+        const { data, error } = await supabaseAdmin
+          .from("pengguna")
+          .select(
+            "id, nama, username, role, status"
+          )
+          .eq("username", username)
+          .eq("password", password)
+          .maybeSingle();
 
         if (error) {
           console.error(
-            "Gagal memeriksa login SIMASDI:",
+            "Gagal mencari akun SIMASDI:",
             error
           );
 
@@ -79,19 +69,28 @@ if (data.status === "Nonaktif") {
           return null;
         }
 
-        if (data.status === "Nonaktif") {
+        /**
+         * Akun nonaktif tidak boleh login.
+         */
+        if (
+          String(data.status || "")
+            .trim()
+            .toLowerCase() !== "aktif"
+        ) {
           return null;
         }
 
         /**
-         * Perbarui waktu login.
+         * Update waktu login.
          */
-        const { error: updateError } = await supabaseAdmin
-          .from("pengguna")
-          .update({
-            terakhir_login: new Date().toISOString(),
-          })
-          .eq("id", data.id);
+        const { error: updateError } =
+          await supabaseAdmin
+            .from("pengguna")
+            .update({
+              terakhir_login:
+                new Date().toISOString(),
+            })
+            .eq("id", data.id);
 
         if (updateError) {
           console.error(
@@ -101,9 +100,8 @@ if (data.status === "Nonaktif") {
         }
 
         /**
-         * Data yang masuk ke JWT/session.
-         *
-         * Jangan masukkan password.
+         * Jangan pernah masukkan password
+         * ke JWT/session.
          */
         return {
           id: String(data.id),
@@ -115,18 +113,23 @@ if (data.status === "Nonaktif") {
     }),
 
     /**
+     * =========================================================
      * LOGIN GOOGLE
+     * =========================================================
      *
-     * Tetap digunakan untuk koneksi Google Drive.
+     * Tetap digunakan untuk Google Drive.
      */
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+
       authorization: {
         params: {
           scope:
             "openid email profile https://www.googleapis.com/auth/drive.file",
+
           access_type: "offline",
+
           prompt: "consent",
         },
       },
@@ -141,46 +144,80 @@ if (data.status === "Nonaktif") {
 
   callbacks: {
     /**
-     * Simpan identitas pengguna SIMASDI ke JWT.
+     * =========================================================
+     * JWT
+     * =========================================================
      */
-    async jwt({ token, user, account }) {
+    async jwt({
+      token,
+      user,
+      account,
+    }) {
       /**
-       * Login NIP/password
+       * Login NIP + Password SIMASDI
        */
       if (user) {
         token.penggunaId = user.id;
+
         token.username = (user as any).username;
+
         token.role = (user as any).role;
+
         token.name = user.name;
       }
 
       /**
-       * Login Google
+       * Login Google.
        *
-       * Access token Google tetap disimpan untuk Google Drive.
+       * Access token tetap disimpan untuk Google Drive.
        */
       if (account?.provider === "google") {
-        token.accessToken = account.access_token;
+        token.accessToken =
+          account.access_token;
       }
 
       return token;
     },
 
     /**
-     * Masukkan data JWT ke session.
+     * =========================================================
+     * SESSION
+     * =========================================================
      */
-    async session({ session, token }) {
-      (session as any).penggunaId = token.penggunaId;
-      (session as any).username = token.username;
-      (session as any).role = token.role;
-      (session as any).accessToken = token.accessToken;
+    async session({
+      session,
+      token,
+    }) {
+      const sessionAny = session as any;
 
-  session.user = {
-  ...session.user,
-  name: token.name,
-  username: token.username,
-  role: token.role,
-};
+      sessionAny.penggunaId =
+        token.penggunaId;
+
+      sessionAny.username =
+        token.username;
+
+      sessionAny.role =
+        token.role;
+
+      sessionAny.accessToken =
+        token.accessToken;
+
+      session.user = {
+        ...session.user,
+
+        name:
+          token.name ||
+          session.user?.name ||
+          null,
+
+        username:
+          token.username ||
+          null,
+
+        role:
+          token.role ||
+          null,
+      } as any;
 
       return session;
     },
