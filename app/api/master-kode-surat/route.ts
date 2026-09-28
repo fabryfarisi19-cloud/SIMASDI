@@ -1,16 +1,20 @@
+
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getAuthenticatedUser } from "@/lib/authenticated-user";
+
 
 const ROLE_ADMIN = ["admin", "kaur umum"];
 
-function normalizeRole(role: string | null | undefined) {
-  return String(role || "")
+
+function normalizeRole(role: unknown) {
+  return String(role ?? "")
     .trim()
     .toLowerCase();
 }
 
-function isAllowedRole(role: string | null | undefined) {
+function isAllowedRole(role: unknown) {
   return ROLE_ADMIN.includes(normalizeRole(role));
 }
 
@@ -33,19 +37,27 @@ function formatKode(
  */
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session) {
       return NextResponse.json(
         {
           success: false,
-          message: "Anda belum login.",
+          message:  "Unauthorized",
         },
         { status: 401 }
       );
     }
 
-    if (!isAllowedRole(user.role)) {
+   const role = String(
+  (session as any).role ??
+    (session.user as any)?.role ??
+    ""
+)
+  .trim()
+  .toLowerCase();
+  
+    if (!isAllowedRole(role)) {
       return NextResponse.json(
         {
           success: false,
@@ -75,7 +87,7 @@ export async function GET() {
       );
     }
 
-    const hasil = (data || []).map((item) => ({
+    const hasil = (data ?? []).map((item) => ({
       ...item,
       kode_lengkap: formatKode(
         item.kode_unit,
@@ -106,11 +118,11 @@ export async function GET() {
  * POST
  * Menambahkan master kode baru
  */
-export async function POST(request:  Request) {
+export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session) {
       return NextResponse.json(
         {
           success: false,
@@ -120,7 +132,13 @@ export async function POST(request:  Request) {
       );
     }
 
-    if (!isAllowedRole(user.role)) {
+    const role = String(
+      (session as any).role ??
+        (session.user as any)?.role ??
+        ""
+    ).trim();
+
+    if (!isAllowedRole(role)) {
       return NextResponse.json(
         {
           success: false,
@@ -250,9 +268,9 @@ export async function POST(request:  Request) {
  */
 export async function PATCH(request: Request) {
   try {
-    const user = await getAuthenticatedUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session) {
       return NextResponse.json(
         {
           success: false,
@@ -262,7 +280,13 @@ export async function PATCH(request: Request) {
       );
     }
 
-    if (!isAllowedRole(user.role)) {
+    const role = String(
+      (session as any).role ??
+        (session.user as any)?.role ??
+        ""
+    ).trim();
+
+    if (!isAllowedRole(role)) {
       return NextResponse.json(
         {
           success: false,
@@ -312,6 +336,7 @@ export async function PATCH(request: Request) {
       updateData.aktif = Boolean(body.aktif);
     }
 
+    // Validasi bagian kode
     if (
       updateData.kode_unit !== undefined &&
       !updateData.kode_unit
