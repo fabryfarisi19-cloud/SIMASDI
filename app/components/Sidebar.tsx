@@ -27,7 +27,7 @@ import {
   Car,
   Ticket,
   Boxes,
-   Bell,
+  Bell,
   CheckCircle2,
   XCircle,
   Info,
@@ -122,6 +122,7 @@ const menu: MenuItem[] = [
       "Kasubag TU",
     ],
   },
+
   {
     nama: "Nomor Surat",
     href: "/nomor-surat",
@@ -197,6 +198,7 @@ const menu: MenuItem[] = [
       "Arsiparis",
     ],
   },
+
   {
     nama: "Pengaduan Sarpras",
     href: "/pengaduan-sarpras",
@@ -460,7 +462,6 @@ const menu: MenuItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
   const { data: session } = useSession();
 
   const roleRaw =
@@ -470,14 +471,16 @@ export default function Sidebar() {
     "";
 
   const role = String(roleRaw).trim();
-// AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIMASDI
-if (role === "Kiosk") {
-  return null;
-}
+
   const username =
     (session as any)?.username ||
     (session as any)?.user?.username ||
     "";
+
+  /*
+   * Petugas memang tidak menerima notifikasi.
+   */
+  const menerimaNotifikasi = role !== "Petugas";
 
   const [bukaMenu, setBukaMenu] = useState(false);
   const [nama, setNama] = useState("Pengguna");
@@ -487,8 +490,12 @@ if (role === "Kiosk") {
      STATE NOTIFIKASI
      ========================================================= */
 
-  const [notifikasi, setNotifikasi] = useState<Notifikasi[]>([]);
-  const [bukaNotifikasi, setBukaNotifikasi] = useState(false);
+  const [notifikasi, setNotifikasi] =
+    useState<Notifikasi[]>([]);
+
+  const [bukaNotifikasi, setBukaNotifikasi] =
+    useState(false);
+
   const [loadingNotifikasi, setLoadingNotifikasi] =
     useState(false);
 
@@ -550,6 +557,16 @@ if (role === "Kiosk") {
      ========================================================= */
 
   const loadNotifikasi = async () => {
+    /*
+     * Pengamanan tambahan:
+     * Petugas tidak boleh mengambil notifikasi.
+     */
+    if (!menerimaNotifikasi) {
+      setNotifikasi([]);
+      setLoadingNotifikasi(false);
+      return;
+    }
+
     try {
       setLoadingNotifikasi(true);
 
@@ -593,6 +610,18 @@ if (role === "Kiosk") {
       return;
     }
 
+    /*
+     * Petugas tidak menerima notifikasi.
+     * Tidak melakukan polling API.
+     */
+    if (!menerimaNotifikasi) {
+      setNotifikasi([]);
+      setBukaNotifikasi(false);
+      setLoadingNotifikasi(false);
+
+      return;
+    }
+
     loadNotifikasi();
 
     const interval = setInterval(() => {
@@ -602,7 +631,7 @@ if (role === "Kiosk") {
     return () => {
       clearInterval(interval);
     };
-  }, [session]);
+  }, [session, role]);
 
   /* =========================================================
      JUMLAH BELUM DIBACA
@@ -617,12 +646,9 @@ if (role === "Kiosk") {
      FORMAT WAKTU
      ========================================================= */
 
-  const formatWaktu = (
-    tanggal: string
-  ) => {
+  const formatWaktu = (tanggal: string) => {
     try {
       const waktu = new Date(tanggal);
-
       const sekarang = new Date();
 
       const selisih =
@@ -713,6 +739,10 @@ if (role === "Kiosk") {
   const bacaNotifikasi = async (
     item: Notifikasi
   ) => {
+    if (!menerimaNotifikasi) {
+      return;
+    }
+
     try {
       if (!item.dibaca) {
         await fetch(
@@ -770,6 +800,10 @@ if (role === "Kiosk") {
 
   const bacaSemuaNotifikasi =
     async () => {
+      if (!menerimaNotifikasi) {
+        return;
+      }
+
       try {
         const response =
           await fetch(
@@ -833,6 +867,16 @@ if (role === "Kiosk") {
     router.replace("/login");
   };
 
+  /*
+   * AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIMASDI.
+   *
+   * Diletakkan setelah seluruh hooks agar tidak melanggar
+   * Rules of Hooks React.
+   */
+  if (role === "Kiosk") {
+    return null;
+  }
+
   return (
     <>
       {/* =====================================================
@@ -854,28 +898,32 @@ if (role === "Kiosk") {
         </div>
 
         <div className="header-actions-mobile">
-          {/* NOTIFIKASI HP */}
 
-          <button
-            type="button"
-            className="tombol-notifikasi-mobile"
-            onClick={() =>
-              setBukaNotifikasi(
-                !bukaNotifikasi
-              )
-            }
-            aria-label="Notifikasi"
-          >
-            <Bell size={23} />
+          {/* NOTIFIKASI HP
+              Petugas tidak melihat tombol ini */}
 
-            {jumlahBelumDibaca > 0 && (
-              <span className="badge-notifikasi-mobile">
-                {jumlahBelumDibaca > 99
-                  ? "99+"
-                  : jumlahBelumDibaca}
-              </span>
-            )}
-          </button>
+          {menerimaNotifikasi && (
+            <button
+              type="button"
+              className="tombol-notifikasi-mobile"
+              onClick={() =>
+                setBukaNotifikasi(
+                  !bukaNotifikasi
+                )
+              }
+              aria-label="Notifikasi"
+            >
+              <Bell size={23} />
+
+              {jumlahBelumDibaca > 0 && (
+                <span className="badge-notifikasi-mobile">
+                  {jumlahBelumDibaca > 99
+                    ? "99+"
+                    : jumlahBelumDibaca}
+                </span>
+              )}
+            </button>
+          )}
 
           <button
             onClick={() =>
@@ -891,95 +939,99 @@ if (role === "Kiosk") {
 
       {/* =====================================================
           PANEL NOTIFIKASI HP
+          Petugas tidak melihat panel
           ===================================================== */}
 
-      {bukaNotifikasi && (
-        <div className="panel-notifikasi panel-notifikasi-mobile">
-          <div className="notifikasi-header">
-            <div>
-              <h3>Notifikasi</h3>
+      {menerimaNotifikasi &&
+        bukaNotifikasi && (
+          <div className="panel-notifikasi panel-notifikasi-mobile">
+            <div className="notifikasi-header">
+              <div>
+                <h3>Notifikasi</h3>
+
+                {jumlahBelumDibaca > 0 && (
+                  <span>
+                    {jumlahBelumDibaca} belum
+                    dibaca
+                  </span>
+                )}
+              </div>
 
               {jumlahBelumDibaca > 0 && (
-                <span>
-                  {jumlahBelumDibaca} belum dibaca
-                </span>
+                <button
+                  type="button"
+                  onClick={
+                    bacaSemuaNotifikasi
+                  }
+                >
+                  Tandai semua
+                </button>
               )}
             </div>
 
-            {jumlahBelumDibaca > 0 && (
-              <button
-                type="button"
-                onClick={
-                  bacaSemuaNotifikasi
-                }
-              >
-                Tandai semua
-              </button>
-            )}
-          </div>
+            <div className="notifikasi-list">
+              {loadingNotifikasi &&
+              notifikasi.length === 0 ? (
+                <div className="notifikasi-kosong">
+                  Memuat notifikasi...
+                </div>
+              ) : notifikasi.length === 0 ? (
+                <div className="notifikasi-kosong">
+                  <Bell size={28} />
 
-          <div className="notifikasi-list">
-            {loadingNotifikasi &&
-            notifikasi.length === 0 ? (
-              <div className="notifikasi-kosong">
-                Memuat notifikasi...
-              </div>
-            ) : notifikasi.length === 0 ? (
-              <div className="notifikasi-kosong">
-                <Bell size={28} />
-                <p>
-                  Belum ada notifikasi
-                </p>
-              </div>
-            ) : (
-              notifikasi.map(
-                (item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={`notifikasi-item ${
-                      !item.dibaca
-                        ? "belum-dibaca"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      bacaNotifikasi(
-                        item
-                      )
-                    }
-                  >
-                    <div className="notifikasi-icon">
-                      {getIconNotifikasi(
-                        item.tipe
-                      )}
-                    </div>
-
-                    <div className="notifikasi-content">
-                      <strong>
-                        {item.judul}
-                      </strong>
-
-                      <p>
-                        {item.pesan}
-                      </p>
-
-                      <small>
-                        {formatWaktu(
-                          item.created_at
+                  <p>
+                    Belum ada notifikasi
+                  </p>
+                </div>
+              ) : (
+                notifikasi.map(
+                  (item) => (
+                    <button
+                      type="button"
+                      key={item.id}
+                      className={`notifikasi-item ${
+                        !item.dibaca
+                          ? "belum-dibaca"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        bacaNotifikasi(
+                          item
+                        )
+                      }
+                    >
+                      <div className="notifikasi-icon">
+                        {getIconNotifikasi(
+                          item.tipe
                         )}
-                      </small>
-                    </div>
+                      </div>
 
-                    {!item.dibaca && (
-                      <span className="titik-belum-dibaca" />
-                    )}
-                  </button>
+                      <div className="notifikasi-content">
+                        <strong>
+                          {item.judul}
+                        </strong>
+
+                        <p>
+                          {item.pesan}
+                        </p>
+
+                        <small>
+                          {formatWaktu(
+                            item.created_at
+                          )}
+                        </small>
+                      </div>
+
+                      {!item.dibaca && (
+                        <span className="titik-belum-dibaca" />
+                      )}
+                    </button>
+                  )
                 )
-              )
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* =====================================================
           OVERLAY MOBILE
@@ -1040,150 +1092,154 @@ if (role === "Kiosk") {
         </div>
 
         {/* ===================================================
-            NOTIFIKASI SIDEBAR
+            NOTIFIKASI SIDEBAR DESKTOP
+
+            Petugas TIDAK menampilkan bagian ini.
             =================================================== */}
 
-        <div className="sidebar-notifikasi-wrapper">
-          <button
-            type="button"
-            className={`sidebar-notifikasi ${
-              bukaNotifikasi
-                ? "notifikasi-aktif"
-                : ""
-            }`}
-            onClick={() =>
-              setBukaNotifikasi(
-                !bukaNotifikasi
-              )
-            }
-          >
-            <div className="sidebar-notifikasi-icon">
-              <Bell size={20} />
+        {menerimaNotifikasi && (
+          <div className="sidebar-notifikasi-wrapper">
+            <button
+              type="button"
+              className={`sidebar-notifikasi ${
+                bukaNotifikasi
+                  ? "notifikasi-aktif"
+                  : ""
+              }`}
+              onClick={() =>
+                setBukaNotifikasi(
+                  !bukaNotifikasi
+                )
+              }
+            >
+              <div className="sidebar-notifikasi-icon">
+                <Bell size={20} />
 
-              {jumlahBelumDibaca > 0 && (
-                <span className="badge-notifikasi">
-                  {jumlahBelumDibaca > 99
-                    ? "99+"
-                    : jumlahBelumDibaca}
+                {jumlahBelumDibaca > 0 && (
+                  <span className="badge-notifikasi">
+                    {jumlahBelumDibaca > 99
+                      ? "99+"
+                      : jumlahBelumDibaca}
+                  </span>
+                )}
+              </div>
+
+              <div className="sidebar-notifikasi-text">
+                <strong>
+                  Notifikasi
+                </strong>
+
+                <span>
+                  {jumlahBelumDibaca > 0
+                    ? `${jumlahBelumDibaca} belum dibaca`
+                    : "Tidak ada notifikasi baru"}
                 </span>
-              )}
-            </div>
+              </div>
+            </button>
 
-            <div className="sidebar-notifikasi-text">
-              <strong>
-                Notifikasi
-              </strong>
+            {/* =================================================
+                PANEL NOTIFIKASI DESKTOP
+                ================================================= */}
 
-              <span>
-                {jumlahBelumDibaca > 0
-                  ? `${jumlahBelumDibaca} belum dibaca`
-                  : "Tidak ada notifikasi baru"}
-              </span>
-            </div>
-          </button>
+            {bukaNotifikasi && (
+              <div className="panel-notifikasi">
+                <div className="notifikasi-header">
+                  <div>
+                    <h3>Notifikasi</h3>
 
-          {/* =================================================
-              PANEL NOTIFIKASI DESKTOP
-              ================================================= */}
-
-          {bukaNotifikasi && (
-            <div className="panel-notifikasi">
-              <div className="notifikasi-header">
-                <div>
-                  <h3>Notifikasi</h3>
+                    {jumlahBelumDibaca >
+                      0 && (
+                      <span>
+                        {
+                          jumlahBelumDibaca
+                        }{" "}
+                        belum dibaca
+                      </span>
+                    )}
+                  </div>
 
                   {jumlahBelumDibaca >
                     0 && (
-                    <span>
-                      {
-                        jumlahBelumDibaca
-                      }{" "}
-                      belum dibaca
-                    </span>
+                    <button
+                      type="button"
+                      onClick={
+                        bacaSemuaNotifikasi
+                      }
+                    >
+                      Tandai semua
+                    </button>
                   )}
                 </div>
 
-                {jumlahBelumDibaca >
-                  0 && (
-                  <button
-                    type="button"
-                    onClick={
-                      bacaSemuaNotifikasi
-                    }
-                  >
-                    Tandai semua
-                  </button>
-                )}
-              </div>
+                <div className="notifikasi-list">
+                  {loadingNotifikasi &&
+                  notifikasi.length ===
+                    0 ? (
+                    <div className="notifikasi-kosong">
+                      Memuat notifikasi...
+                    </div>
+                  ) : notifikasi.length ===
+                    0 ? (
+                    <div className="notifikasi-kosong">
+                      <Bell size={28} />
 
-              <div className="notifikasi-list">
-                {loadingNotifikasi &&
-                notifikasi.length ===
-                  0 ? (
-                  <div className="notifikasi-kosong">
-                    Memuat notifikasi...
-                  </div>
-                ) : notifikasi.length ===
-                  0 ? (
-                  <div className="notifikasi-kosong">
-                    <Bell size={28} />
-
-                    <p>
-                      Belum ada notifikasi
-                    </p>
-                  </div>
-                ) : (
-                  notifikasi.map(
-                    (item) => (
-                      <button
-                        type="button"
-                        key={item.id}
-                        className={`notifikasi-item ${
-                          !item.dibaca
-                            ? "belum-dibaca"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          bacaNotifikasi(
-                            item
-                          )
-                        }
-                      >
-                        <div className="notifikasi-icon">
-                          {getIconNotifikasi(
-                            item.tipe
-                          )}
-                        </div>
-
-                        <div className="notifikasi-content">
-                          <strong>
-                            {
-                              item.judul
-                            }
-                          </strong>
-
-                          <p>
-                            {item.pesan}
-                          </p>
-
-                          <small>
-                            {formatWaktu(
-                              item.created_at
+                      <p>
+                        Belum ada notifikasi
+                      </p>
+                    </div>
+                  ) : (
+                    notifikasi.map(
+                      (item) => (
+                        <button
+                          type="button"
+                          key={item.id}
+                          className={`notifikasi-item ${
+                            !item.dibaca
+                              ? "belum-dibaca"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            bacaNotifikasi(
+                              item
+                            )
+                          }
+                        >
+                          <div className="notifikasi-icon">
+                            {getIconNotifikasi(
+                              item.tipe
                             )}
-                          </small>
-                        </div>
+                          </div>
 
-                        {!item.dibaca && (
-                          <span className="titik-belum-dibaca" />
-                        )}
-                      </button>
+                          <div className="notifikasi-content">
+                            <strong>
+                              {
+                                item.judul
+                              }
+                            </strong>
+
+                            <p>
+                              {item.pesan}
+                            </p>
+
+                            <small>
+                              {formatWaktu(
+                                item.created_at
+                              )}
+                            </small>
+                          </div>
+
+                          {!item.dibaca && (
+                            <span className="titik-belum-dibaca" />
+                          )}
+                        </button>
+                      )
                     )
-                  )
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* ===================================================
             MENU
@@ -1345,8 +1401,7 @@ if (role === "Kiosk") {
           font-size: 9px;
           font-weight: 800;
 
-          border: 2px solid
-            #0b2e78;
+          border: 2px solid #0b2e78;
         }
 
         .versi-app {
@@ -1676,36 +1731,13 @@ if (role === "Kiosk") {
            PANEL NOTIFIKASI
            =================================================== */
 
-       .panel-notifikasi {
-  position: fixed;
+        .panel-notifikasi {
+          position: fixed;
 
-  left: 240px;
-  top: 80px;
+          left: 240px;
+          top: 80px;
 
-  width: 370px;
-
-  background: white;
-
-  border-radius: 16px;
-
-  overflow: hidden;
-
-  box-shadow:
-    0 20px 50px
-      rgba(
-        15,
-        23,
-        42,
-        0.28
-      );
-
-  border: 1px solid
-    #e2e8f0;
-
-  color: #0f172a;
-
-  z-index: 100000;
-}
+          width: 370px;
 
           background: white;
 
@@ -1722,10 +1754,11 @@ if (role === "Kiosk") {
                 0.28
               );
 
-          border: 1px solid
-            #e2e8f0;
+          border: 1px solid #e2e8f0;
 
           color: #0f172a;
+
+          z-index: 100000;
         }
 
         .notifikasi-header {

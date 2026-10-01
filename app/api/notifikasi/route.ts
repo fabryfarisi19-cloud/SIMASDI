@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
+ * =========================================================
  * GET
  * Mengambil notifikasi milik pengguna yang sedang login.
  *
- * Query:
- * ?semua=true  -> ambil semua notifikasi
- * default      -> ambil 20 notifikasi terbaru
+ * Default  : 20 notifikasi terbaru
+ * ?semua=true : semua notifikasi
+ * =========================================================
  */
 export async function GET(request: Request) {
   try {
@@ -25,41 +26,87 @@ export async function GET(request: Request) {
       );
     }
 
-    const namaLogin =
-      session.user.name ||
-      (session.user as any).nama ||
+    /*
+     * Ambil identitas pengguna dari session.
+     *
+     * SIMASDI menggunakan beberapa kemungkinan field
+     * karena session sudah mengalami beberapa pengembangan.
+     */
+    const username =
+      (session.user as any)?.username ||
+      (session as any)?.username ||
       "";
 
-    if (!namaLogin) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Nama pengguna tidak ditemukan pada session",
-        },
-        { status: 400 }
-      );
+    const namaLogin =
+      session.user.name ||
+      (session.user as any)?.nama ||
+      "";
+
+    /*
+     * Prioritas pencarian:
+     * 1. username/NIP dari session
+     * 2. nama pengguna
+     */
+    let pengguna: {
+      id: string;
+      nama: string;
+      username: string;
+      role: string;
+    } | null = null;
+
+    /*
+     * -------------------------------------------------------
+     * CARI BERDASARKAN USERNAME
+     * -------------------------------------------------------
+     */
+    if (username) {
+      const { data, error } = await supabaseAdmin
+        .from("pengguna")
+        .select("id, nama, username, role")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (error) {
+        console.error(
+          "ERROR CARI PENGGUNA BERDASARKAN USERNAME:",
+          error
+        );
+      }
+
+      if (data) {
+        pengguna = data;
+      }
     }
 
-    // Cari data pengguna berdasarkan nama login
-    const { data: pengguna, error: penggunaError } = await supabase
-      .from("pengguna")
-      .select("id, nama, username, role")
-      .eq("nama", namaLogin)
-      .maybeSingle();
+    /*
+     * -------------------------------------------------------
+     * FALLBACK CARI BERDASARKAN NAMA
+     * -------------------------------------------------------
+     */
+    if (!pengguna && namaLogin) {
+      const { data, error } = await supabaseAdmin
+        .from("pengguna")
+        .select("id, nama, username, role")
+        .eq("nama", namaLogin)
+        .maybeSingle();
 
-    if (penggunaError) {
-      console.error("ERROR CARI PENGGUNA:", penggunaError);
+      if (error) {
+        console.error(
+          "ERROR CARI PENGGUNA BERDASARKAN NAMA:",
+          error
+        );
+      }
 
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Gagal mencari data pengguna",
-          error: penggunaError.message,
-        },
-        { status: 500 }
-      );
+      if (data) {
+        pengguna = data;
+      }
     }
 
+    /*
+     * -------------------------------------------------------
+     * PENGGUNA TIDAK DITEMUKAN
+     * -------------------------------------------------------
+     */
     if (!pengguna) {
       return NextResponse.json(
         {
@@ -70,14 +117,24 @@ export async function GET(request: Request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const semua = searchParams.get("semua") === "true";
+    /*
+     * -------------------------------------------------------
+     * AMBIL NOTIFIKASI
+     * -------------------------------------------------------
+     */
 
-    let query = supabase
+    const { searchParams } = new URL(request.url);
+
+    const semua =
+      searchParams.get("semua") === "true";
+
+    let query = supabaseAdmin
       .from("notifikasi")
       .select("*")
       .eq("nip_penerima", pengguna.username)
-      .order("created_at", { ascending: false });
+      .order("created_at", {
+        ascending: false,
+      });
 
     if (!semua) {
       query = query.limit(20);
@@ -86,7 +143,10 @@ export async function GET(request: Request) {
     const { data, error } = await query;
 
     if (error) {
-      console.error("ERROR AMBIL NOTIFIKASI:", error);
+      console.error(
+        "ERROR AMBIL NOTIFIKASI:",
+        error
+      );
 
       return NextResponse.json(
         {
@@ -104,13 +164,19 @@ export async function GET(request: Request) {
       jumlah: data?.length || 0,
     });
   } catch (error: any) {
-    console.error("ERROR GET NOTIFIKASI:", error);
+    console.error(
+      "ERROR GET NOTIFIKASI:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan saat mengambil notifikasi",
-        error: error?.message || "Unknown error",
+        message:
+          "Terjadi kesalahan saat mengambil notifikasi",
+        error:
+          error?.message ||
+          "Unknown error",
       },
       { status: 500 }
     );
@@ -118,15 +184,18 @@ export async function GET(request: Request) {
 }
 
 /**
+ * =========================================================
  * POST
  * Membuat notifikasi baru.
  *
- * Saat ini endpoint ini dipersiapkan untuk digunakan
- * oleh proses persetujuan/penolakan Pinjam Mobil Dinas.
+ * Digunakan antara lain untuk:
+ * Pinjam Mobil Dinas
+ * =========================================================
  */
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session =
+      await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
@@ -149,37 +218,49 @@ export async function POST(request: Request) {
       referensi_kode,
     } = body;
 
-    if (!nip_penerima || !judul || !pesan) {
+    if (
+      !nip_penerima ||
+      !judul ||
+      !pesan
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "nip_penerima, judul, dan pesan wajib diisi",
+          message:
+            "nip_penerima, judul, dan pesan wajib diisi",
         },
         { status: 400 }
       );
     }
 
-    const { data, error } = await supabase
-      .from("notifikasi")
-      .insert({
-        nip_penerima,
-        judul,
-        pesan,
-        tipe: tipe || "info",
-        dibaca: false,
-        referensi_id: referensi_id || null,
-        referensi_kode: referensi_kode || null,
-      })
-      .select("*")
-      .single();
+    const { data, error } =
+      await supabaseAdmin
+        .from("notifikasi")
+        .insert({
+          nip_penerima,
+          judul,
+          pesan,
+          tipe: tipe || "info",
+          dibaca: false,
+          referensi_id:
+            referensi_id || null,
+          referensi_kode:
+            referensi_kode || null,
+        })
+        .select("*")
+        .single();
 
     if (error) {
-      console.error("ERROR BUAT NOTIFIKASI:", error);
+      console.error(
+        "ERROR BUAT NOTIFIKASI:",
+        error
+      );
 
       return NextResponse.json(
         {
           success: false,
-          message: "Gagal membuat notifikasi",
+          message:
+            "Gagal membuat notifikasi",
           error: error.message,
         },
         { status: 500 }
@@ -188,17 +269,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Notifikasi berhasil dibuat",
+      message:
+        "Notifikasi berhasil dibuat",
       data,
     });
   } catch (error: any) {
-    console.error("ERROR POST NOTIFIKASI:", error);
+    console.error(
+      "ERROR POST NOTIFIKASI:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan saat membuat notifikasi",
-        error: error?.message || "Unknown error",
+        message:
+          "Terjadi kesalahan saat membuat notifikasi",
+        error:
+          error?.message ||
+          "Unknown error",
       },
       { status: 500 }
     );
@@ -206,23 +294,28 @@ export async function POST(request: Request) {
 }
 
 /**
+ * =========================================================
  * PATCH
- * Menandai notifikasi sebagai sudah dibaca.
  *
- * Body:
+ * Menandai:
+ * - satu notifikasi sebagai sudah dibaca
+ * - atau semua notifikasi sebagai sudah dibaca
+ *
+ * Body satu:
  * {
  *   id: "uuid"
  * }
  *
- * atau:
- *
+ * Body semua:
  * {
  *   semua: true
  * }
+ * =========================================================
  */
 export async function PATCH(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session =
+      await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
@@ -234,32 +327,72 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const namaLogin =
-      session.user.name ||
-      (session.user as any).nama ||
+    const username =
+      (session.user as any)?.username ||
+      (session as any)?.username ||
       "";
 
-    if (!namaLogin) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Nama pengguna tidak ditemukan pada session",
-        },
-        { status: 400 }
-      );
+    const namaLogin =
+      session.user.name ||
+      (session.user as any)?.nama ||
+      "";
+
+    let pengguna: {
+      username: string;
+    } | null = null;
+
+    /*
+     * Cari berdasarkan username
+     */
+    if (username) {
+      const { data, error } =
+        await supabaseAdmin
+          .from("pengguna")
+          .select("username")
+          .eq("username", username)
+          .maybeSingle();
+
+      if (error) {
+        console.error(
+          "ERROR CARI USER PATCH:",
+          error
+        );
+      }
+
+      if (data) {
+        pengguna = data;
+      }
     }
 
-    const { data: pengguna, error: penggunaError } = await supabase
-      .from("pengguna")
-      .select("username")
-      .eq("nama", namaLogin)
-      .maybeSingle();
+    /*
+     * Fallback berdasarkan nama
+     */
+    if (!pengguna && namaLogin) {
+      const { data, error } =
+        await supabaseAdmin
+          .from("pengguna")
+          .select("username")
+          .eq("nama", namaLogin)
+          .maybeSingle();
 
-    if (penggunaError || !pengguna) {
+      if (error) {
+        console.error(
+          "ERROR CARI USER PATCH BERDASARKAN NAMA:",
+          error
+        );
+      }
+
+      if (data) {
+        pengguna = data;
+      }
+    }
+
+    if (!pengguna) {
       return NextResponse.json(
         {
           success: false,
-          message: "Data pengguna tidak ditemukan",
+          message:
+            "Data pengguna tidak ditemukan",
         },
         { status: 404 }
       );
@@ -270,22 +403,35 @@ export async function PATCH(request: Request) {
     const id = body?.id;
     const semua = body?.semua === true;
 
+    /*
+     * -------------------------------------------------------
+     * TANDAI SEMUA
+     * -------------------------------------------------------
+     */
     if (semua) {
-      const { error } = await supabase
-        .from("notifikasi")
-        .update({
-          dibaca: true,
-        })
-        .eq("nip_penerima", pengguna.username)
-        .eq("dibaca", false);
+      const { error } =
+        await supabaseAdmin
+          .from("notifikasi")
+          .update({
+            dibaca: true,
+          })
+          .eq(
+            "nip_penerima",
+            pengguna.username
+          )
+          .eq("dibaca", false);
 
       if (error) {
-        console.error("ERROR BACA SEMUA NOTIFIKASI:", error);
+        console.error(
+          "ERROR BACA SEMUA NOTIFIKASI:",
+          error
+        );
 
         return NextResponse.json(
           {
             success: false,
-            message: "Gagal menandai semua notifikasi",
+            message:
+              "Gagal menandai semua notifikasi",
             error: error.message,
           },
           { status: 500 }
@@ -294,35 +440,55 @@ export async function PATCH(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "Semua notifikasi telah dibaca",
+        message:
+          "Semua notifikasi telah dibaca",
       });
     }
 
+    /*
+     * -------------------------------------------------------
+     * ID WAJIB UNTUK SATU NOTIFIKASI
+     * -------------------------------------------------------
+     */
     if (!id) {
       return NextResponse.json(
         {
           success: false,
-          message: "ID notifikasi wajib diisi",
+          message:
+            "ID notifikasi wajib diisi",
         },
         { status: 400 }
       );
     }
 
-    // Pastikan notifikasi memang milik pengguna yang login
-    const { data: notifikasi, error: cekError } = await supabase
+    /*
+     * Pastikan notifikasi memang milik
+     * pengguna yang sedang login.
+     */
+    const {
+      data: notifikasi,
+      error: cekError,
+    } = await supabaseAdmin
       .from("notifikasi")
       .select("id")
       .eq("id", id)
-      .eq("nip_penerima", pengguna.username)
+      .eq(
+        "nip_penerima",
+        pengguna.username
+      )
       .maybeSingle();
 
     if (cekError) {
-      console.error("ERROR CEK NOTIFIKASI:", cekError);
+      console.error(
+        "ERROR CEK NOTIFIKASI:",
+        cekError
+      );
 
       return NextResponse.json(
         {
           success: false,
-          message: "Gagal memeriksa notifikasi",
+          message:
+            "Gagal memeriksa notifikasi",
           error: cekError.message,
         },
         { status: 500 }
@@ -333,27 +499,41 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Notifikasi tidak ditemukan",
+          message:
+            "Notifikasi tidak ditemukan",
         },
         { status: 404 }
       );
     }
 
-    const { error } = await supabase
-      .from("notifikasi")
-      .update({
-        dibaca: true,
-      })
-      .eq("id", id)
-      .eq("nip_penerima", pengguna.username);
+    /*
+     * -------------------------------------------------------
+     * UPDATE SATU NOTIFIKASI
+     * -------------------------------------------------------
+     */
+    const { error } =
+      await supabaseAdmin
+        .from("notifikasi")
+        .update({
+          dibaca: true,
+        })
+        .eq("id", id)
+        .eq(
+          "nip_penerima",
+          pengguna.username
+        );
 
     if (error) {
-      console.error("ERROR UPDATE NOTIFIKASI:", error);
+      console.error(
+        "ERROR UPDATE NOTIFIKASI:",
+        error
+      );
 
       return NextResponse.json(
         {
           success: false,
-          message: "Gagal menandai notifikasi",
+          message:
+            "Gagal menandai notifikasi",
           error: error.message,
         },
         { status: 500 }
@@ -362,16 +542,23 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Notifikasi telah dibaca",
+      message:
+        "Notifikasi telah dibaca",
     });
   } catch (error: any) {
-    console.error("ERROR PATCH NOTIFIKASI:", error);
+    console.error(
+      "ERROR PATCH NOTIFIKASI:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan saat memperbarui notifikasi",
-        error: error?.message || "Unknown error",
+        message:
+          "Terjadi kesalahan saat memperbarui notifikasi",
+        error:
+          error?.message ||
+          "Unknown error",
       },
       { status: 500 }
     );
