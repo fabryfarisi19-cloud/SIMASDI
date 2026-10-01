@@ -124,6 +124,10 @@ console.log("ROLE LOGIN =", role);
     router.push("/siantar/kiosk");
     break;
 
+  case "Buku Tamu":
+    router.push("/kiosk/buku-tamu");
+    break;
+
   case "Display":
     router.push("/display");
     break;

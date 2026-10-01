@@ -873,9 +873,12 @@ export default function Sidebar() {
    * Diletakkan setelah seluruh hooks agar tidak melanggar
    * Rules of Hooks React.
    */
-  if (role === "Kiosk") {
-    return null;
-  }
+if (
+  role === "Kiosk" ||
+  role === "Buku Tamu"
+) {
+  return null;
+}
 
   return (
     <>
