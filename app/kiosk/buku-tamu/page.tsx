@@ -418,68 +418,86 @@ export default function BukuTamuKioskPage() {
   ========================================================= */
 
   async function simpanKunjungan() {
-    setError("");
-
-    const validation =
-      validateForm();
-
-    if (validation) {
-      setError(validation);
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const response = await fetch(
-        "/api/buku-tamu",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify(form),
-        }
-      );
-
-      const result =
-        await response.json();
-
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.message ||
-            "Gagal menyimpan kunjungan"
-        );
-      }
-
-      setNomorKunjungan(
-        result.nomor_kunjungan || ""
-      );
-
-      setStep("sukses");
-
-      setTimeout(() => {
-        resetKiosk();
-      }, 10000);
-    } catch (err) {
-      console.error(
-        "SIMPAN BUKU TAMU:",
-        err
-      );
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Gagal menyimpan kunjungan"
-      );
-    } finally {
-      setSaving(false);
-    }
+  // =========================================================
+  // CEGAH DOUBLE SUBMIT
+  // =========================================================
+  if (saving) {
+    return;
   }
+
+  setError("");
+
+  // =========================================================
+  // VALIDASI
+  // =========================================================
+  const validation = validateForm();
+
+  if (validation) {
+    setError(validation);
+    return;
+  }
+
+  // =========================================================
+  // MULAI SIMPAN
+  // =========================================================
+  setSaving(true);
+
+  try {
+    const response = await fetch(
+      "/api/buku-tamu",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      }
+    );
+
+    const result = await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+          "Gagal menyimpan kunjungan"
+      );
+    }
+
+    // =======================================================
+    // BERHASIL
+    // =======================================================
+
+    setNomorKunjungan(
+      result.nomor_kunjungan || ""
+    );
+
+    setStep("sukses");
+
+    // =======================================================
+    // OTOMATIS KEMBALI KE AWAL SETELAH 10 DETIK
+    // =======================================================
+
+    setTimeout(() => {
+      resetKiosk();
+    }, 10000);
+  } catch (err) {
+    console.error(
+      "SIMPAN BUKU TAMU:",
+      err
+    );
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Gagal menyimpan kunjungan"
+    );
+  } finally {
+    setSaving(false);
+  }
+}
 
   /* =========================================================
      RESET
@@ -1574,229 +1592,377 @@ export default function BukuTamuKioskPage() {
               SUKSES
           ================================================= */}
 
-          {step === "sukses" && (
-            <section
-              className="print-area"
-              style={{
-                background:
-                  "white",
-                borderRadius:
-                  "24px",
-                padding:
-                  "clamp(30px, 6vw, 70px)",
-                textAlign:
-                  "center",
-                boxShadow:
-                  "0 8px 30px rgba(15,23,42,.12)",
-              }}
-            >
-              <div
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius:
-                    "50%",
-                  background:
-                    "#dcfce7",
-                  color:
-                    "#15803d",
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                  margin:
-                    "0 auto 25px",
-                  fontSize:
-                    "55px",
-                }}
-              >
-                ✓
-              </div>
+    
+{step === "sukses" && (
+  <section
+    className="print-area"
+    style={{
+      background: "white",
+      borderRadius: "24px",
+      padding: "clamp(25px, 5vw, 55px)",
+      textAlign: "center",
+      boxShadow:
+        "0 8px 30px rgba(15,23,42,.12)",
+    }}
+  >
+    {/* ================================
+        HEADER CETAK
+    ================================= */}
 
-              <div
-                style={{
-                  color:
-                    "#15803d",
-                  fontWeight: 800,
-                  fontSize:
-                    "18px",
-                  letterSpacing:
-                    "1px",
-                }}
-              >
-                KUNJUNGAN BERHASIL
-              </div>
+    <div
+      style={{
+        borderBottom:
+          "3px solid #1e3a8a",
+        paddingBottom: "18px",
+        marginBottom: "25px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "14px",
+          fontWeight: 700,
+          letterSpacing: "1px",
+          color: "#334155",
+        }}
+      >
+        KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN
+      </div>
 
-              <h2
-                style={{
-                  margin:
-                    "12px 0 10px",
-                  fontSize:
-                    "clamp(28px, 6vw, 42px)",
-                  color:
-                    "#0f172a",
-                }}
-              >
-                Terima Kasih
-              </h2>
+      <div
+        style={{
+          fontSize: "22px",
+          fontWeight: 900,
+          color: "#0f172a",
+          marginTop: "5px",
+        }}
+      >
+        BAPAS KELAS I JAKARTA BARAT
+      </div>
 
-              <p
-                style={{
-                  color:
-                    "#64748b",
-                  fontSize:
-                    "18px",
-                }}
-              >
-                Data kunjungan Anda
-                telah berhasil dicatat.
-              </p>
+      <div
+        style={{
+          fontSize: "14px",
+          color: "#64748b",
+          marginTop: "5px",
+        }}
+      >
+        SISTEM BUKU TAMU DIGITAL
+      </div>
+    </div>
 
-              <div
-                style={{
-                  margin:
-                    "30px auto",
-                  maxWidth:
-                    "500px",
-                  border:
-                    "2px dashed #94a3b8",
-                  borderRadius:
-                    "18px",
-                  padding:
-                    "25px",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize:
-                      "14px",
-                    color:
-                      "#64748b",
-                    marginBottom:
-                      "8px",
-                  }}
-                >
-                  NOMOR KUNJUNGAN
-                </div>
+    {/* ================================
+        STATUS
+    ================================= */}
 
-                <div
-                  style={{
-                    fontSize:
-                      "clamp(30px, 6vw, 48px)",
-                    fontWeight: 900,
-                    color:
-                      "#1d4ed8",
-                    letterSpacing:
-                      "2px",
-                  }}
-                >
-                  {
-                    nomorKunjungan
-                  }
-                </div>
-              </div>
+    <div
+      style={{
+        width: "75px",
+        height: "75px",
+        borderRadius: "50%",
+        background: "#dcfce7",
+        color: "#15803d",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        margin: "0 auto 15px",
+        fontSize: "42px",
+        fontWeight: 900,
+      }}
+    >
+      ✓
+    </div>
 
-              {pegawaiTerpilih && (
-                <div
-                  style={{
-                    marginBottom:
-                      "25px",
-                    color:
-                      "#475569",
-                  }}
-                >
-                  Bertemu dengan{" "}
-                  <strong>
-                    {
-                      pegawaiTerpilih.nama
-                    }
-                  </strong>
-                </div>
-              )}
+    <div
+      style={{
+        color: "#15803d",
+        fontWeight: 900,
+        fontSize: "17px",
+        letterSpacing: "1px",
+      }}
+    >
+      KUNJUNGAN BERHASIL
+    </div>
 
-              <div
-                style={{
-                  display:
-                    "flex",
-                  justifyContent:
-                    "center",
-                  gap: "12px",
-                  flexWrap:
-                    "wrap",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={
-                    printBukti
-                  }
-                  style={{
-                    border:
-                      "none",
-                    background:
-                      "#0f172a",
-                    color:
-                      "white",
-                    padding:
-                      "14px 24px",
-                    borderRadius:
-                      "12px",
-                    fontWeight:
-                      700,
-                    fontSize:
-                      "16px",
-                    cursor:
-                      "pointer",
-                  }}
-                >
-                  🖨️ Cetak Bukti
-                </button>
+    <p
+      style={{
+        color: "#64748b",
+        fontSize: "14px",
+        marginTop: "7px",
+      }}
+    >
+      Data kunjungan telah berhasil
+      dicatat dalam sistem.
+    </p>
 
-                <button
-                  type="button"
-                  onClick={
-                    resetKiosk
-                  }
-                  style={{
-                    border:
-                      "none",
-                    background:
-                      "#1d4ed8",
-                    color:
-                      "white",
-                    padding:
-                      "14px 24px",
-                    borderRadius:
-                      "12px",
-                    fontWeight:
-                      700,
-                    fontSize:
-                      "16px",
-                    cursor:
-                      "pointer",
-                  }}
-                >
-                  Kembali ke Awal
-                </button>
-              </div>
+    {/* ================================
+        NOMOR KUNJUNGAN
+    ================================= */}
 
-              <div
-                style={{
-                  marginTop:
-                    "25px",
-                  color:
-                    "#94a3b8",
-                  fontSize:
-                    "13px",
-                }}
-              >
-                Halaman akan kembali ke
-                menu utama secara otomatis.
-              </div>
-            </section>
-          )}
+    <div
+      style={{
+        margin: "25px auto",
+        maxWidth: "500px",
+        border: "2px dashed #64748b",
+        borderRadius: "15px",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          fontWeight: 700,
+          color: "#64748b",
+          letterSpacing: "1px",
+        }}
+      >
+        NOMOR KUNJUNGAN
+      </div>
+
+      <div
+        style={{
+          marginTop: "7px",
+          fontSize:
+            "clamp(28px, 6vw, 44px)",
+          fontWeight: 900,
+          color: "#1d4ed8",
+          letterSpacing: "2px",
+        }}
+      >
+        {nomorKunjungan}
+      </div>
+    </div>
+
+    {/* ================================
+        DETAIL KUNJUNGAN
+    ================================= */}
+
+    <div
+      style={{
+        maxWidth: "650px",
+        margin: "0 auto 25px",
+        textAlign: "left",
+        border:
+          "1px solid #e2e8f0",
+        borderRadius: "15px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: "#f8fafc",
+          padding: "12px 16px",
+          fontWeight: 800,
+          color: "#334155",
+          borderBottom:
+            "1px solid #e2e8f0",
+        }}
+      >
+        DETAIL KUNJUNGAN
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "160px 1fr",
+          fontSize: "14px",
+        }}
+      >
+        <div style={printLabelStyle}>
+          Nama
+        </div>
+
+        <div style={printValueStyle}>
+          {form.nama || "-"}
+        </div>
+
+        <div style={printLabelStyle}>
+          Jenis Pengunjung
+        </div>
+
+        <div style={printValueStyle}>
+          {form.jenis_pengunjung ===
+            "KLIEN_DEWASA" &&
+            "Klien Dewasa"}
+
+          {form.jenis_pengunjung ===
+            "KLIEN_ANAK" &&
+            "Klien Anak"}
+
+          {form.jenis_pengunjung ===
+            "TAMU_DINAS" &&
+            "Tamu Dinas"}
+        </div>
+
+        {form.nik && (
+          <>
+            <div style={printLabelStyle}>
+              NIK
+            </div>
+
+            <div style={printValueStyle}>
+              {form.nik}
+            </div>
+          </>
+        )}
+
+        {form.instansi && (
+          <>
+            <div style={printLabelStyle}>
+              Instansi
+            </div>
+
+            <div style={printValueStyle}>
+              {form.instansi}
+            </div>
+          </>
+        )}
+
+        {form.jabatan && (
+          <>
+            <div style={printLabelStyle}>
+              Jabatan
+            </div>
+
+            <div style={printValueStyle}>
+              {form.jabatan}
+            </div>
+          </>
+        )}
+
+        <div style={printLabelStyle}>
+          Jenis Keperluan
+        </div>
+
+        <div style={printValueStyle}>
+          {form.jenis_keperluan || "-"}
+        </div>
+
+        <div style={printLabelStyle}>
+          Keperluan
+        </div>
+
+        <div style={printValueStyle}>
+          {form.keperluan || "-"}
+        </div>
+
+        <div style={printLabelStyle}>
+          Bertemu Dengan
+        </div>
+
+        <div style={printValueStyle}>
+          {pegawaiTerpilih?.nama || "-"}
+        </div>
+
+        <div style={printLabelStyle}>
+          Jabatan Tujuan
+        </div>
+
+        <div style={printValueStyle}>
+          {pegawaiTerpilih?.role || "-"}
+        </div>
+      </div>
+    </div>
+
+    {/* ================================
+        INFORMASI WAKTU
+    ================================= */}
+
+    <div
+      style={{
+        marginBottom: "25px",
+        color: "#64748b",
+        fontSize: "13px",
+      }}
+    >
+      Dicatat pada{" "}
+      {new Date().toLocaleDateString(
+        "id-ID",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }
+      )}{" "}
+      pukul{" "}
+      {new Date().toLocaleTimeString(
+        "id-ID",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }
+      )}{" "}
+      WIB
+    </div>
+
+    {/* ================================
+        TOMBOL
+    ================================= */}
+
+    <div
+      className="print-hidden"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: "12px",
+        flexWrap: "wrap",
+      }}
+    >
+      <button
+        type="button"
+        onClick={printBukti}
+        style={{
+          border: "none",
+          background: "#0f172a",
+          color: "white",
+          padding: "14px 24px",
+          borderRadius: "12px",
+          fontWeight: 700,
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
+      >
+        🖨️ Cetak Bukti
+      </button>
+
+      <button
+        type="button"
+        onClick={resetKiosk}
+        style={{
+          border: "none",
+          background: "#1d4ed8",
+          color: "white",
+          padding: "14px 24px",
+          borderRadius: "12px",
+          fontWeight: 700,
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
+      >
+        Kembali ke Awal
+      </button>
+    </div>
+
+    {/* ================================
+        CATATAN
+    ================================= */}
+
+    <div
+      className="print-hidden"
+      style={{
+        marginTop: "25px",
+        color: "#94a3b8",
+        fontSize: "13px",
+      }}
+    >
+      Halaman akan kembali ke menu
+      utama secara otomatis.
+    </div>
+  </section>
+)}
+
 
           {/* FOOTER */}
 
@@ -1844,4 +2010,25 @@ const inputStyle: React.CSSProperties = {
   color: "#0f172a",
   background: "#fff",
   outline: "none",
+};
+
+/* =========================================================
+   STYLE CETAK BUKTI BUKU TAMU
+   ========================================================= */
+
+const printLabelStyle: React.CSSProperties = {
+  width: "150px",
+  fontSize: "12px",
+  fontWeight: 700,
+  color: "#475569",
+  verticalAlign: "top",
+  padding: "5px 0",
+};
+
+const printValueStyle: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#0f172a",
+  padding: "5px 0",
+  verticalAlign: "top",
 };

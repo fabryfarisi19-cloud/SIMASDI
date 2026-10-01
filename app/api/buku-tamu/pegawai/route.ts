@@ -18,10 +18,7 @@ export async function GET() {
       });
 
     if (error) {
-      console.error(
-        "GET PEGAWAI BUKU TAMU:",
-        error
-      );
+      console.error("GET PEGAWAI BUKU TAMU:", error);
 
       return NextResponse.json(
         {
@@ -34,61 +31,38 @@ export async function GET() {
       );
     }
 
-    // Role yang TIDAK BOLEH menjadi tujuan tamu
+    // =====================================================
+    // ROLE YANG TIDAK BOLEH MENJADI TUJUAN TAMU
+    // =====================================================
     const roleDikecualikan = [
       "PPNPN",
       "KIOSK",
-      "Kiosk",
       "DISPLAY TV",
-      "Display TV",
       "TV",
       "PETUGAS LOKET",
-      "Petugas Loket",
       "PETUGAS PIKET",
-      "Petugas Piket",
       "ADMIN",
-      "Admin",
     ];
 
-  const hasil = (data || []).filter((pegawai) => {
-  const role = String(pegawai.role || "")
-    .trim()
-    .toUpperCase();
+    // =====================================================
+    // FILTER PEGAWAI
+    // =====================================================
+    const hasil = (data || []).filter((pegawai) => {
+      const role = String(pegawai.role || "")
+        .trim()
+        .toUpperCase();
 
-  const nama = String(pegawai.nama || "")
-    .trim()
-    .toUpperCase();
-
-  const username = String(pegawai.username || "")
-    .trim()
-    .toUpperCase();
-
-  const dikecualikan = [
-    "PPNPN",
-    "KIOSK",
-    "DISPLAY TV",
-    "TV",
-    "PETUGAS LOKET",
-    "PETUGAS PIKET",
-    "ADMIN",
-  ];
-
-  const teks = `${role} ${nama} ${username}`;
-
-  return !dikecualikan.some((kata) =>
-    teks.includes(kata)
-  );
-});
+      // Hanya berdasarkan ROLE.
+      // Nama dan username tidak ikut difilter.
+      return !roleDikecualikan.includes(role);
+    });
 
     return NextResponse.json({
       success: true,
       data: hasil,
     });
   } catch (error) {
-    console.error(
-      "GET PEGAWAI ERROR:",
-      error
-    );
+    console.error("GET PEGAWAI ERROR:", error);
 
     return NextResponse.json(
       {
