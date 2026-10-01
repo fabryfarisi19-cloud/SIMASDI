@@ -1,34 +1,40 @@
+
 "use client";
-import type { ReactNode } from "react";
-import SidebarSIAP from "@/app/components/SidebarSIAP";
+
+import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import SidebarSIAP from "../components/SidebarSIAP";
 
 export default function SiantarLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-
   const pathname = usePathname();
 
-const hideSidebar =
-  pathname === "/siantar/display" ||
-  pathname === "/siantar/kiosk";
- return (
-  <div className="min-h-screen bg-slate-100">
+  // Halaman tiket khusus untuk cetak,
+  // sehingga tidak menggunakan SidebarSIAP.
+  const hideSidebar = pathname === "/siantar/tiket";
 
-  {!hideSidebar && <SidebarSIAP />}
+  return (
+    <div className="min-h-screen bg-slate-100">
 
-<main
-  className={
-    hideSidebar
-      ? "min-h-screen"
-      : "min-h-screen md:ml-72 p-6 pt-20 md:p-8 md:pt-8"
-  }
->
-      {children}
-    </main>
+      {/* Sidebar SIAP tampil di seluruh halaman SIAP,
+          kecuali halaman tiket */}
+      {!hideSidebar && <SidebarSIAP />}
 
-  </div>
-);
+      {/* Konten utama */}
+      <main
+        className={
+          hideSidebar
+            ? "min-h-screen"
+            : "min-h-screen ml-64"
+        }
+      >
+        {children}
+      </main>
+
+    </div>
+  );
 }
+

@@ -470,7 +470,10 @@ export default function Sidebar() {
     "";
 
   const role = String(roleRaw).trim();
-
+// AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIMASDI
+if (role === "Kiosk") {
+  return null;
+}
   const username =
     (session as any)?.username ||
     (session as any)?.user?.username ||

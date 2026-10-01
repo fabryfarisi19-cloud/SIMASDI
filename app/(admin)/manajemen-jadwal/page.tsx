@@ -248,232 +248,697 @@ function parseJadwal(teks: string): JadwalPreview[] {
 
   return hasil;
 }
-const parseJadwalPelayanan = (
+// ============================================================
+// PARSER JADWAL PELAYANAN PUBLIK OTOMATIS
+// ============================================================
+
+const BULAN_INDONESIA: Record<string, string> = {
+  januari: "01",
+  februari: "02",
+  maret: "03",
+  april: "04",
+  mei: "05",
+  juni: "06",
+  juli: "07",
+  agustus: "08",
+  september: "09",
+  oktober: "10",
+  november: "11",
+  desember: "12",
+};
+
+// Jabatan yang biasa muncul sebagai PENGAWAS
+const DAFTAR_PENGAWAS_PELAYANAN = [
+  "Kasubsi Bimkemas Dewasa",
+  "Kasubsi Registrasi Dewasa",
+  "Kasubsi Bimker Anak",
+  "Kasubsi Bimker Dewasa",
+  "Kasubsi Registrasi Anak",
+  "Kasubsi Bimkemas Anak",
+  "Kasubbag Tata Usaha",
+  "Kaur Kepegawaian",
+  "Kaur Keuangan",
+  "Kaur Umum",
+];
+
+// Jabatan yang biasa muncul sebagai KOORDINATOR
+const DAFTAR_KOORDINATOR_PELAYANAN = [
+  "Kasubbag Tata Usaha",
+  "Kasi BKA",
+  "Kasi BKD",
+  "Kaur Umum",
+  "Kaur Keuangan",
+  "Kaur Kepegawaian",
+];
+
+// Normalisasi teks
+function normalisasiTeksPelayanan(teks: string): string {
+  return teks
+    .replace(/\u00A0/g, " ")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Escape regex
+function escapeRegexPelayanan(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ============================================================
+// DETEKSI BULAN / TAHUN PDF
+// ============================================================
+
+function deteksiBulanTahunPelayanan(
   teks: string
-): PelayananPublikPreview[] => {
-  console.log("=== PARSER PELAYANAN DIMULAI ===");
+): {
+  bulan: number;
+  tahun: number;
+  namaBulan: string;
+} | null {
+  const teksNormal = normalisasiTeksPelayanan(teks).toLowerCase();
 
-  /*
-   * PDF September 2026.
-   *
-   * Karena PDF.js mengacak urutan teks berdasarkan posisi
-   * kolom, kita gunakan tanggal sebagai kunci data.
-   *
-   * Data ini mengikuti jadwal pelayanan publik September 2026
-   * yang sudah diverifikasi.
-   */
+  const regex =
+    /\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})\b/i;
 
-  const dataSeptember2026: PelayananPublikPreview[] = [
-    {
-      tanggal: "2026-09-01",
-      duta_layanan: "Arif Wicaksono Nugroho",
-      pelayanan_publik: "Mohamad Okta Reza",
-      maganghub: "Adinda Saskia Rahmadani",
-      pengawas: "Kasubsi Bimker Anak",
-      koordinator: "Gita Noverita Sari",
-    },
-    {
-      tanggal: "2026-09-02",
-      duta_layanan: "Nicky Chairani Isa Chamidi",
-      pelayanan_publik: "Dwi Asti Meryani",
-      maganghub: "Bintang Anugrah Ramadhan",
-      pengawas: "Kaur Keuangan",
-      koordinator: "Rosita",
-    },
-    {
-      tanggal: "2026-09-03",
-      duta_layanan: "Satrio Hartono",
-      pelayanan_publik: "Adhityo Sandjaya",
-      maganghub: "Refie Ruliansyah",
-      pengawas: "Kasubsi Bimkemas Anak",
-      koordinator: "Manawati",
-    },
-    {
-      tanggal: "2026-09-04",
-      duta_layanan: "Devi Rizki Oktavia",
-      pelayanan_publik: "Ikhsan Hardianto Fadillah",
-      maganghub: "Arum Pramesti Wirawati",
-      pengawas: "Kasubsi Bimker Dewasa",
-      koordinator: "Kasi BKD",
-    },
-    {
-      tanggal: "2026-09-07",
-      duta_layanan: "Kharunia Nur Hidayah",
-      pelayanan_publik: "Galih Ismoyo Yantho",
-      maganghub: "Laila Fitri Amalia",
-      pengawas: "Kaur Umum",
-      koordinator: "Kasi BKA",
-    },
-    {
-      tanggal: "2026-09-08",
-      duta_layanan: "Shabrina Kirana Almira",
-      pelayanan_publik: "Hesty Nur Rachmawati",
-      maganghub: "Arviana Zakkiyan Aini",
-      pengawas: "Kasubsi Bimkemas Dewasa",
-      koordinator: "Yudistira",
-    },
-    {
-      tanggal: "2026-09-09",
-      duta_layanan: "M. Ichwanul",
-      pelayanan_publik: "Ikhsan Nur Syahid",
-      maganghub: "Haifa Rahma",
-      pengawas: "Kasubsi Registrasi Anak",
-      koordinator: "Haposan Pohan",
-    },
-    {
-      tanggal: "2026-09-10",
-      duta_layanan: "Eko Setyowaty",
-      pelayanan_publik: "Sherman",
-      maganghub: "Wan Berliani Halawa",
-      pengawas: "Kaur Kepegawaian",
-      koordinator: "Kasubbag Tata Usaha",
-    },
-    {
-      tanggal: "2026-09-11",
-      duta_layanan: "Dyah Nurmasari",
-      pelayanan_publik: "Triaditya Galih Wijanarko",
-      maganghub: "Andira Agustrinanda Kurniawan",
-      pengawas: "Kasubsi Registrasi Dewasa",
-      koordinator: "Gita Noverita Sari",
-    },
-    {
-      tanggal: "2026-09-14",
-      duta_layanan: "Arif Sugianto",
-      pelayanan_publik: "Della Okthalia",
-      maganghub: "Satria Pambudi",
-      pengawas: "Kasubsi Bimker Anak",
-      koordinator: "Rosita",
-    },
-    {
-      tanggal: "2026-09-15",
-      duta_layanan: "Achmad Nurhadi RachmatA",
-      pelayanan_publik: "Agung Setiawan",
-      maganghub: "Adinda Saskia Rahmadani",
-      pengawas: "Kaur Keuangan",
-      koordinator: "Manawati",
-    },
-    {
-      tanggal: "2026-09-16",
-      duta_layanan: "Dwi Ria Ciptasari",
-      pelayanan_publik: "Slamet Riyadi",
-      maganghub: "Bintang Anugrah Ramadhan",
-      pengawas: "Kasubsi Bimkemas Anak",
-      koordinator: "Kasi BKD",
-    },
-    {
-      tanggal: "2026-09-17",
-      duta_layanan: "Andre Triyudha Syahputra",
-      pelayanan_publik: "Rio Andara",
-      maganghub: "Refie Ruliansyah",
-      pengawas: "Kasubsi Bimker Dewasa",
-      koordinator: "Kasi BKA",
-    },
-    {
-      tanggal: "2026-09-18",
-      duta_layanan: "Johannes Bagus Pranowo",
-      pelayanan_publik: "Trio Yuliaryanto",
-      maganghub: "Arum Pramesti Wirawati",
-      pengawas: "Kaur Umum",
-      koordinator: "Yudistira",
-    },
-    {
-      tanggal: "2026-09-21",
-      duta_layanan: "Gerry Rizky Putra El Pasemah",
-      pelayanan_publik: "Jefri Rinaldi Hermawan",
-      maganghub: "Laila Fitri Amalia",
-      pengawas: "Kasubsi Bimkemas Dewasa",
-      koordinator: "Haposan Pohan",
-    },
-    {
-      tanggal: "2026-09-22",
-      duta_layanan: "Adidthya Faragita Yuniar",
-      pelayanan_publik: "Sari Kirana",
-      maganghub: "Arviana Zakkiyan Aini",
-      pengawas: "Kasubsi Registrasi Anak",
-      koordinator: "Kasubbag Tata Usaha",
-    },
-    {
-      tanggal: "2026-09-23",
-      duta_layanan: "Lia Angela Piyoh",
-      pelayanan_publik: "Hardi Septiandi",
-      maganghub: "Haifa Rahma",
-      pengawas: "Kaur Kepegawaian",
-      koordinator: "Gita Noverita Sari",
-    },
-    {
-      tanggal: "2026-09-24",
-      duta_layanan: "Lulu Od’hiyani",
-      pelayanan_publik: "M Teguh Arief Wibowo",
-      maganghub: "Wan Berliani Halawa",
-      pengawas: "Kasubsi Registrasi Dewasa",
-      koordinator: "Rosita",
-    },
-    {
-      tanggal: "2026-09-25",
-      duta_layanan: "Hardanta Putra Pratama",
-      pelayanan_publik: "Andrian Eduard Indra",
-      maganghub: "Andira Agustrinanda Kurniawan",
-      pengawas: "Kasubsi Bimker Anak",
-      koordinator: "Manawati",
-    },
-    {
-      tanggal: "2026-09-28",
-      duta_layanan: "Irfan Nurhadi Pratama",
-      pelayanan_publik: "Dohlas Hot Maringan",
-      maganghub: "Satria Pambudi",
-      pengawas: "Kaur Keuangan",
-      koordinator: "Kasi BKD",
-    },
-    {
-      tanggal: "2026-09-29",
-      duta_layanan: "Yudha Pradana",
-      pelayanan_publik: "Ricky Octaviano",
-      maganghub: "Adinda Saskia Rahmadani",
-      pengawas: "Kasubsi Bimkemas Dewasa",
-      koordinator: "Kasi BKA",
-    },
-    {
-      tanggal: "2026-09-30",
-      duta_layanan: "Chandra Kurnia Pratama",
-      pelayanan_publik: "Rahmat Hidayat",
-      maganghub: "Bintang Anugrah Ramadhan",
-      pengawas: "Kasubsi Bimker Dewasa",
-      koordinator: "Yudistira",
-    },
+  const match = teksNormal.match(regex);
+
+  if (!match) {
+    return null;
+  }
+
+  const namaBulan = match[1].toLowerCase();
+  const tahun = Number(match[2]);
+  const bulanString = BULAN_INDONESIA[namaBulan];
+
+  if (!bulanString) {
+    return null;
+  }
+
+  return {
+    bulan: Number(bulanString),
+    tahun,
+    namaBulan: match[1],
+  };
+}
+
+// ============================================================
+// DETEKSI TANGGAL DALAM TEKS
+// ============================================================
+
+function cariTanggalPelayanan(
+  teks: string
+): {
+  tanggal: string;
+  index: number;
+  panjang: number;
+}[] {
+  const hasil: {
+    tanggal: string;
+    index: number;
+    panjang: number;
+  }[] = [];
+
+  const regex =
+    /\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})\b/gi;
+
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(teks)) !== null) {
+    const hari = Number(match[1]);
+    const namaBulan = match[2].toLowerCase();
+    const tahun = Number(match[3]);
+
+    const bulan = BULAN_INDONESIA[namaBulan];
+
+    if (!bulan) continue;
+
+    hasil.push({
+      tanggal: `${tahun}-${bulan}-${String(hari).padStart(2, "0")}`,
+      index: match.index,
+      panjang: match[0].length,
+    });
+  }
+
+  return hasil;
+}
+
+// ============================================================
+// CARI LABEL TUGAS
+// ============================================================
+
+function cariLabelTugasPelayanan(
+  teks: string
+): {
+  label: string;
+  index: number;
+  panjang: number;
+}[] {
+  const daftarLabel = [
+    "Duta Layanan",
+    "Pelayanan Publik",
+    "Maganghub",
   ];
 
+  const hasil: {
+    label: string;
+    index: number;
+    panjang: number;
+  }[] = [];
+
+  for (const label of daftarLabel) {
+    const regex = new RegExp(
+      escapeRegexPelayanan(label),
+      "gi"
+    );
+
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(teks)) !== null) {
+      hasil.push({
+        label,
+        index: match.index,
+        panjang: match[0].length,
+      });
+    }
+  }
+
+  return hasil.sort((a, b) => a.index - b.index);
+}
+
+// ============================================================
+// CARI NAMA SEBELUM LABEL TUGAS
+// ============================================================
+
+function ambilNamaSebelumLabel(
+  teks: string,
+  posisiLabel: number,
+  batasAwal: number
+): string {
+  let nama = teks.slice(
+    batasAwal,
+    posisiLabel
+  );
+
+  nama = nama
+    .replace(/\b\d{1,2}\s*$/g, "")
+    .replace(/\b(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu),?\s*$/gi, "")
+    .trim();
+
+  // Bersihkan karakter pemisah
+  nama = nama
+    .replace(/^[,;|:\-]+/, "")
+    .replace(/[,;|:\-]+$/, "")
+    .trim();
+
+  return nama;
+}
+
+// ============================================================
+// CARI NAMA SESUDAH LABEL TUGAS
+// Digunakan sebagai fallback apabila urutan PDF berbeda.
+// ============================================================
+
+function ambilNamaSesudahLabel(
+  teks: string,
+  posisiSetelahLabel: number,
+  batasAkhir: number
+): string {
+  let nama = teks.slice(
+    posisiSetelahLabel,
+    batasAkhir
+  );
+
+  nama = nama
+    .replace(/^[,;|:\-]+/, "")
+    .replace(/[,;|:\-]+$/, "")
+    .trim();
+
+  return nama;
+}
+
+// ============================================================
+// CARI JABATAN PENGAWAS
+// ============================================================
+
+function cariPengawasPelayanan(
+  teks: string
+): string {
+  const teksNormal = normalisasiTeksPelayanan(teks);
+
+  const daftar = [...DAFTAR_PENGAWAS_PELAYANAN].sort(
+    (a, b) => b.length - a.length
+  );
+
+  for (const jabatan of daftar) {
+    const regex = new RegExp(
+      escapeRegexPelayanan(jabatan),
+      "i"
+    );
+
+    const match = teksNormal.match(regex);
+
+    if (match) {
+      return match[0].trim();
+    }
+  }
+
+  return "";
+}
+
+// ============================================================
+// CARI KOORDINATOR
+// ============================================================
+
+function cariKoordinatorPelayanan(
+  teks: string,
+  pengawas: string
+): string {
+  let teksNormal = normalisasiTeksPelayanan(teks);
+
+  // Hapus pengawas supaya tidak terdeteksi sebagai koordinator
+  if (pengawas) {
+    const regexPengawas = new RegExp(
+      escapeRegexPelayanan(pengawas),
+      "i"
+    );
+
+    teksNormal = teksNormal.replace(
+      regexPengawas,
+      " "
+    );
+  }
+
+  // Jabatan struktural yang umum menjadi koordinator
+  const daftarJabatan = [
+    ...DAFTAR_KOORDINATOR_PELAYANAN,
+  ].sort((a, b) => b.length - a.length);
+
+  for (const jabatan of daftarJabatan) {
+    const regex = new RegExp(
+      escapeRegexPelayanan(jabatan),
+      "i"
+    );
+
+    const match = teksNormal.match(regex);
+
+    if (match) {
+      return match[0].trim();
+    }
+  }
+
   /*
-   * Pastikan PDF memang berisi jadwal September 2026.
+   * Jika bukan jabatan, koordinator biasanya berupa
+   * nama pegawai. Kita cari nama setelah struktur
+   * pengawas sebagai fallback.
    */
-  const teksNormal = teks
-    .toLowerCase()
-    .replace(/\s+/g, " ");
 
-  const pdfSeptember2026 =
-    teksNormal.includes("jadwal piket petugas pelayanan publik") &&
-    teksNormal.includes("september 2026");
+  return "";
+}
 
-  if (!pdfSeptember2026) {
+// ============================================================
+// PARSER SATU BLOK TANGGAL
+// ============================================================
+
+function parseBlokPelayanan(
+  blok: string,
+  tanggal: string
+): PelayananPublikPreview | null {
+  let teks = normalisasiTeksPelayanan(blok);
+
+  if (!teks) return null;
+
+  // ----------------------------------------------------------
+  // Hapus tanggal dari blok
+  // ----------------------------------------------------------
+
+  teks = teks.replace(
+    /\b\d{1,2}\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4}\b/gi,
+    " "
+  );
+
+  teks = normalisasiTeksPelayanan(teks);
+
+  // ----------------------------------------------------------
+  // Cari semua label tugas
+  // ----------------------------------------------------------
+
+  const labels = cariLabelTugasPelayanan(teks);
+
+  let duta_layanan = "";
+  let pelayanan_publik = "";
+  let maganghub = "";
+
+  // ----------------------------------------------------------
+  // STRATEGI 1
+  // Nama berada sebelum label
+  //
+  // Contoh:
+  // Ilham Rizky Juniawan Duta Layanan
+  // Agung Swandoyo Pelayanan Publik
+  // Refie Ruliansyah Maganghub
+  // ----------------------------------------------------------
+
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+
+    const batasAwal =
+      i === 0
+        ? 0
+        : labels[i - 1].index +
+          labels[i - 1].panjang;
+
+    const nama = ambilNamaSebelumLabel(
+      teks,
+      label.index,
+      batasAwal
+    );
+
+    if (!nama) continue;
+
+    if (
+      label.label.toLowerCase() ===
+      "duta layanan"
+    ) {
+      duta_layanan = nama;
+    }
+
+    if (
+      label.label.toLowerCase() ===
+      "pelayanan publik"
+    ) {
+      pelayanan_publik = nama;
+    }
+
+    if (
+      label.label.toLowerCase() ===
+      "maganghub"
+    ) {
+      maganghub = nama;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // STRATEGI 2
+  // Jika nama tidak terbaca sebelum label,
+  // coba nama setelah label.
+  // ----------------------------------------------------------
+
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+
+    const batasAkhir =
+      i + 1 < labels.length
+        ? labels[i + 1].index
+        : teks.length;
+
+    const nama = ambilNamaSesudahLabel(
+      teks,
+      label.index + label.panjang,
+      batasAkhir
+    );
+
+    if (!nama) continue;
+
+    if (
+      label.label.toLowerCase() ===
+        "duta layanan" &&
+      !duta_layanan
+    ) {
+      duta_layanan = nama;
+    }
+
+    if (
+      label.label.toLowerCase() ===
+        "pelayanan publik" &&
+      !pelayanan_publik
+    ) {
+      pelayanan_publik = nama;
+    }
+
+    if (
+      label.label.toLowerCase() ===
+        "maganghub" &&
+      !maganghub
+    ) {
+      maganghub = nama;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // PENGAWAS
+  // ----------------------------------------------------------
+
+  const pengawas =
+    cariPengawasPelayanan(teks);
+
+  // ----------------------------------------------------------
+  // KOORDINATOR
+  // ----------------------------------------------------------
+
+  const koordinator =
+    cariKoordinatorPelayanan(
+      teks,
+      pengawas
+    );
+
+  // ----------------------------------------------------------
+  // Bersihkan hasil
+  // ----------------------------------------------------------
+
+  duta_layanan = duta_layanan
+    .replace(
+      /\b(Kasubsi|Kasubbag|Kaur|Kasi)\b.*$/i,
+      ""
+    )
+    .trim();
+
+  pelayanan_publik = pelayanan_publik
+    .replace(
+      /\b(Kasubsi|Kasubbag|Kaur|Kasi)\b.*$/i,
+      ""
+    )
+    .trim();
+
+  maganghub = maganghub
+    .replace(
+      /\b(Kasubsi|Kasubbag|Kaur|Kasi)\b.*$/i,
+      ""
+    )
+    .trim();
+
+  return {
+    tanggal,
+    duta_layanan,
+    pelayanan_publik,
+    maganghub,
+    pengawas,
+    koordinator,
+  };
+}
+
+// ============================================================
+// PARSER UTAMA
+// OTOMATIS SEMUA BULAN / TAHUN
+// ============================================================
+
+function parseJadwalPelayanan(
+  teks: string
+): PelayananPublikPreview[] {
+  console.log(
+    "=== PARSER JADWAL PELAYANAN PUBLIK OTOMATIS ==="
+  );
+
+  const teksNormal = normalisasiTeksPelayanan(
+    teks
+  );
+
+  // ----------------------------------------------------------
+  // VALIDASI JENIS PDF
+  // ----------------------------------------------------------
+
+  const isJadwalPelayanan =
+    /jadwal\s+piket\s+petugas\s+pelayanan\s+publik/i.test(
+      teksNormal
+    ) ||
+    /jadwal\s+pelayanan\s+publik/i.test(
+      teksNormal
+    );
+
+  if (!isJadwalPelayanan) {
     console.warn(
-      "PDF bukan format Jadwal Pelayanan Publik September 2026."
+      "PDF bukan Jadwal Pelayanan Publik."
+    );
+
+    return [];
+  }
+
+  // ----------------------------------------------------------
+  // DETEKSI BULAN DAN TAHUN
+  // ----------------------------------------------------------
+
+  const periode =
+    deteksiBulanTahunPelayanan(
+      teksNormal
+    );
+
+  if (!periode) {
+    console.warn(
+      "Bulan dan tahun tidak berhasil dideteksi dari PDF."
     );
 
     return [];
   }
 
   console.log(
-    "PDF Jadwal Pelayanan Publik September 2026 terdeteksi."
+    "Periode PDF:",
+    periode.namaBulan,
+    periode.tahun
+  );
+
+  // ----------------------------------------------------------
+  // CARI SEMUA TANGGAL
+  // ----------------------------------------------------------
+
+  const tanggalList =
+    cariTanggalPelayanan(teksNormal);
+
+  if (tanggalList.length === 0) {
+    console.warn(
+      "Tidak ditemukan tanggal pada PDF."
+    );
+
+    return [];
+  }
+
+  console.log(
+    "Jumlah tanggal ditemukan:",
+    tanggalList.length
+  );
+
+  // ----------------------------------------------------------
+  // BUAT BLOK PER TANGGAL
+  // ----------------------------------------------------------
+
+  const hasil: PelayananPublikPreview[] = [];
+
+  for (
+    let i = 0;
+    i < tanggalList.length;
+    i++
+  ) {
+    const tanggalInfo =
+      tanggalList[i];
+
+    const posisiMulai =
+      tanggalInfo.index;
+
+    const posisiAkhir =
+      i + 1 < tanggalList.length
+        ? tanggalList[i + 1].index
+        : teksNormal.length;
+
+    let blok = teksNormal.slice(
+      posisiMulai,
+      posisiAkhir
+    );
+
+    // --------------------------------------------------------
+    // Hindari mengambil bagian laporan / footer PDF
+    // --------------------------------------------------------
+
+    const batasLaporan =
+      blok.search(
+        /catatan|format\s+laporan\s+atensi/i
+      );
+
+    if (batasLaporan >= 0) {
+      blok = blok.slice(
+        0,
+        batasLaporan
+      );
+    }
+
+    const data =
+      parseBlokPelayanan(
+        blok,
+        tanggalInfo.tanggal
+      );
+
+    if (!data) continue;
+
+    // --------------------------------------------------------
+    // Validasi minimal
+    // --------------------------------------------------------
+
+    const adaData =
+      Boolean(
+        data.duta_layanan ||
+          data.pelayanan_publik ||
+          data.maganghub ||
+          data.pengawas ||
+          data.koordinator
+      );
+
+    if (!adaData) {
+      continue;
+    }
+
+    hasil.push(data);
+  }
+
+  // ----------------------------------------------------------
+  // Hapus tanggal duplikat
+  // ----------------------------------------------------------
+
+  const hasilUnik =
+    Array.from(
+      new Map(
+        hasil.map((item) => [
+          item.tanggal,
+          item,
+        ])
+      ).values()
+    );
+
+  // ----------------------------------------------------------
+  // Urutkan tanggal
+  // ----------------------------------------------------------
+
+  hasilUnik.sort((a, b) =>
+    a.tanggal.localeCompare(
+      b.tanggal
+    )
+  );
+
+  // ----------------------------------------------------------
+  // LOG
+  // ----------------------------------------------------------
+
+  console.log(
+    "=========================================="
   );
 
   console.log(
-    "TOTAL HASIL PARSER:",
-    dataSeptember2026.length
+    "PERIODE:",
+    periode.namaBulan,
+    periode.tahun
   );
 
-  console.table(dataSeptember2026);
+  console.log(
+    "JUMLAH JADWAL:",
+    hasilUnik.length
+  );
 
-  return dataSeptember2026;
-};
+  console.table(hasilUnik);
+
+  console.log(
+    "=========================================="
+  );
+
+  return hasilUnik;
+}
 // ============================================================
 // BACA TEXT PDF
 // ============================================================

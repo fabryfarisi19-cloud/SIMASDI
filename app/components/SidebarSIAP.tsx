@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
@@ -45,6 +46,20 @@ const menus = [
 
 export default function SidebarSIAP() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const roleRaw =
+    (session as any)?.role ||
+    (session as any)?.user?.role ||
+    (session as any)?.user?.jabatan ||
+    "";
+
+  const role = String(roleRaw).trim();
+
+  // AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIAP
+  if (role === "Kiosk") {
+    return null;
+  }
   const [open, setOpen] = useState(false);
 useEffect(() => {
   const resize = () => {
