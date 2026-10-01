@@ -476,7 +476,22 @@ export default function Sidebar() {
     (session as any)?.username ||
     (session as any)?.user?.username ||
     "";
+  /* =========================================================
+     REDIRECT KHUSUS AKUN BUKU TAMU
+     ========================================================= */
 
+  useEffect(() => {
+    if (
+      role === "Buku Tamu" &&
+      pathname !== "/kiosk/buku-tamu"
+    ) {
+      console.log(
+        "SIDEBAR REDIRECT BUKU TAMU → /kiosk/buku-tamu"
+      );
+
+      router.replace("/kiosk/buku-tamu");
+    }
+  }, [role, pathname, router]);
   /*
    * Petugas memang tidak menerima notifikasi.
    */

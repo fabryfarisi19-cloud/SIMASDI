@@ -124,7 +124,7 @@ console.log("ROLE LOGIN =", role);
 // MODUL KHUSUS
 // ==========================================
 case "Kiosk":
-  router.push("/kiosk/buku-tamu");
+  router.push("/siantar/kiosk");
   break;
 
 case "Buku Tamu":

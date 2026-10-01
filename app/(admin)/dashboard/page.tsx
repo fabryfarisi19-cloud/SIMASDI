@@ -61,24 +61,33 @@ export default function DashboardPage() {
   const [jadwalPelayananBesok, setJadwalPelayananBesok] =
     useState<any>(null);
 
-  const router = useRouter();
+const router = useRouter();
+const { data: session, status } = useSession();
 
-  const { data: session, status } = useSession();
-
-  const sessionData = session as any;
+const sessionData = session as any;
   const user = sessionData?.user as any;
 
-  const roleAsli =
-    sessionData?.role ||
-    user?.role ||
-    user?.jabatan ||
-    "";
+const roleAsli =
+  sessionData?.role ||
+  user?.role ||
+  user?.jabatan ||
+  "";
 
-  const namaUser =
-    user?.name ||
-    user?.nama ||
-    "Pengguna";
+const roleNormal = String(roleAsli).trim().toLowerCase();
 
+const namaUser =
+  user?.name ||
+  user?.nama ||
+  "Pengguna";
+
+useEffect(() => {
+  if (
+    status === "authenticated" &&
+    roleNormal === "buku tamu"
+  ) {
+    router.replace("/kiosk/buku-tamu");
+  }
+}, [status, roleNormal, router]);
   /*
    * ============================================================
    * JAM DAN TANGGAL
@@ -835,51 +844,67 @@ export default function DashboardPage() {
    * ============================================================
    */
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("grafik-surat-masuk")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "surat_masuk",
-        },
-        () => {
-          loadGrafik();
-          loadDashboard();
-          loadAgenda();
-        }
-      )
-      .subscribe();
+ useEffect(() => {
+  // =========================
+  // BUKU TAMU TIDAK PERLU
+  // MEMUAT DATA DASHBOARD
+  // =========================
 
-    updateJam();
+  if (
+    status === "authenticated" &&
+    roleNormal === "buku tamu"
+  ) {
+    return;
+  }
 
-    loadGrafik();
-    loadDashboard();
-    loadAgenda();
-    loadSuratTerbaru();
-    loadJadwalApel();
-    loadJadwalPelayanan();
+  const channel = supabase
+    .channel("grafik-surat-masuk")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "surat_masuk",
+      },
+      () => {
+        loadGrafik();
+        loadDashboard();
+        loadAgenda();
+      }
+    )
+    .subscribe();
 
-    const interval = setInterval(
-      updateJam,
-      1000
+  updateJam();
+
+  loadGrafik();
+  loadDashboard();
+  loadAgenda();
+  loadSuratTerbaru();
+  loadJadwalApel();
+  loadJadwalPelayanan();
+
+  const interval = setInterval(
+    updateJam,
+    1000
+  );
+
+  return () => {
+    clearInterval(interval);
+
+    supabase.removeChannel(
+      channel
     );
-
-    return () => {
-      clearInterval(interval);
-
-      supabase.removeChannel(
-        channel
-      );
-    };
-  }, []);
-
+  };
+}, [status, roleNormal]);
   if (status === "loading") {
     return null;
   }
-
+if (
+  status === "authenticated" &&
+  roleNormal === "buku tamu"
+) {
+  return null;
+}
   /*
    * ============================================================
    * TYPE
@@ -900,11 +925,6 @@ export default function DashboardPage() {
    * ============================================================
    */
 
-  const role = String(
-    roleAsli
-  )
-    .trim()
-    .toLowerCase();
 
   const roleDenganPengumumanJadwal = [
     "petugas",
@@ -945,20 +965,20 @@ export default function DashboardPage() {
 
   console.log(
     "DASHBOARD ROLE NORMAL =",
-    role
+    roleNormal
   );
 
   console.log(
     "TAMPILKAN PENGUMUMAN =",
     roleDenganPengumumanJadwal.includes(
-      role
+    roleNormal
     )
   );
 
   console.log(
     "AKAN RENDER PENGUMUMAN =",
     roleDenganPengumumanJadwal.includes(
-      role
+      roleNormal
     )
   );
 
@@ -970,7 +990,7 @@ export default function DashboardPage() {
 
   if (
     roleDenganPengumumanJadwal.includes(
-      role
+     roleNormal
     )
   ) {
     const tanggalHariIni =

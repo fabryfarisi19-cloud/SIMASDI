@@ -54,13 +54,12 @@ export default function SidebarSIAP() {
     (session as any)?.user?.jabatan ||
     "";
 
-  const role = String(roleRaw).trim();
+ const role = String(roleRaw).trim();
 
-  // AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIAP
-  if (role === "Kiosk") {
-    return null;
-  }
-  const [open, setOpen] = useState(false);
+const [open, setOpen] = useState(false);
+
+// AKUN KIOSK TIDAK MENAMPILKAN SIDEBAR SIAP
+
 useEffect(() => {
   const resize = () => {
     if (window.innerWidth >= 768) {
@@ -72,6 +71,10 @@ useEffect(() => {
 
   return () => window.removeEventListener("resize", resize);
 }, []);
+if (role === "Kiosk") {
+  return null;
+}
+
   return (
     <>
       {/* Header HP */}
