@@ -120,21 +120,24 @@ console.log("ROLE LOGIN =", role);
   // ==========================================
   // MODUL KHUSUS
   // ==========================================
-  case "Kiosk":
-    router.push("/siantar/kiosk");
-    break;
+ // ==========================================
+// MODUL KHUSUS
+// ==========================================
+case "Kiosk":
+  router.push("/kiosk/buku-tamu");
+  break;
 
-  case "Buku Tamu":
-    router.push("/kiosk/buku-tamu");
-    break;
+case "Buku Tamu":
+  router.push("/kiosk/buku-tamu");
+  break;
 
-  case "Display":
-    router.push("/display");
-    break;
+case "Display":
+  router.push("/display");
+  break;
 
-  default:
-    router.push("/dashboard");
-    break;
+default:
+  router.push("/dashboard");
+  break;
 }
       } catch (error) {
         console.error("Login gagal:", error);
