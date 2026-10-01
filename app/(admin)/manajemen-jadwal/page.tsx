@@ -47,6 +47,12 @@ const daftarJabatan = [
   "Kasubsi Registrasi Dewasa",
   "Kasubsi Bimker Anak",
   "Kasubbag Tata Usaha",
+
+  // Jabatan yang muncul pada PDF
+  "Pengelola Layanan Peng.",
+  "Pengadministrasi Perk.",
+
+  // Jabatan lain
   "Pengelola Lay. Pengadaan",
   "Pengolah Data dan Inform.",
   "Penata Layanan Op.",
@@ -130,7 +136,6 @@ function parseTanggal(line: string): string | null {
 // ============================================================
 // PARSER BARIS PETUGAS
 // ============================================================
-
 function parseBarisPetugas(line: string): {
   nama_petugas: string;
   jabatan: string;
@@ -138,20 +143,14 @@ function parseBarisPetugas(line: string): {
 } | null {
   let teks = line.trim();
 
-  // Contoh:
-  // 1. Haposan Pohan PK Madya Pembina Apel
   teks = teks.replace(/^\d+\.\s*/, "");
-
   if (!teks) return null;
 
   // Cari tugas dari belakang
   const tugas = daftarTugas.find((item) => teks.endsWith(item));
-
   if (!tugas) return null;
 
-  teks = teks
-    .slice(0, -tugas.length)
-    .trim();
+  teks = teks.slice(0, -tugas.length).trim();
 
   // Cari jabatan terpanjang terlebih dahulu
   const jabatan = [...daftarJabatan]
@@ -160,9 +159,7 @@ function parseBarisPetugas(line: string): {
 
   if (!jabatan) return null;
 
-  const nama = teks
-    .slice(0, -jabatan.length)
-    .trim();
+  const nama = teks.slice(0, -jabatan.length).trim();
 
   if (!nama) return null;
 
@@ -172,7 +169,6 @@ function parseBarisPetugas(line: string): {
     tugas,
   };
 }
-
 // ============================================================
 // PARSER PDF
 // ============================================================
