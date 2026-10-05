@@ -20,27 +20,34 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from("buku_tamu")
-      .select(`
-        id,
-        nomor_kunjungan,
-        tanggal_kunjungan,
-        jam_kunjungan,
-        jenis_pengunjung,
-        nama,
-        nik,
-        no_hp,
-        alamat,
-        instansi,
-        jabatan,
-        jenis_keperluan,
-        keperluan,
-        pengguna_tujuan_id,
-        bertemu_dengan,
-        jabatan_tujuan,
-        tanda_tangan,
-        keterangan,
-        created_at
-      `)
+    .select(`
+  id,
+  nomor_kunjungan,
+  tanggal_kunjungan,
+  jam_kunjungan,
+  jenis_pengunjung,
+  nama,
+  nama_klien,
+  no_hp,
+  alamat,
+  jenis_kelamin,
+  tanggal_lahir,
+  status_program,
+  pasal,
+  asal_instansi,
+  tanggal_lapor,
+  tanggal_kembali,
+  instansi,
+  jabatan,
+  jenis_keperluan,
+  keperluan,
+  pengguna_tujuan_id,
+  bertemu_dengan,
+  jabatan_tujuan,
+  tanda_tangan,
+  keterangan,
+  created_at
+`)
       .order("jam_kunjungan", {
         ascending: false,
       });
@@ -56,11 +63,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (search) {
-      query = query.or(
-        `nama.ilike.%${search}%,nik.ilike.%${search}%,instansi.ilike.%${search}%,nomor_kunjungan.ilike.%${search}%`
-      );
-    }
+if (search) {
+  query = query.or(
+    `nama.ilike.%${search}%,nama_klien.ilike.%${search}%,asal_instansi.ilike.%${search}%,instansi.ilike.%${search}%,nomor_kunjungan.ilike.%${search}%`
+  );
+}
 
     const { data, error } = await query;
 
@@ -154,22 +161,27 @@ export async function POST(request: NextRequest) {
     // =====================================================
 
     const body = await request.json();
-
-    const {
-      jenis_pengunjung,
-      nama,
-      nik,
-      no_hp,
-      alamat,
-      instansi,
-      jabatan,
-      jenis_keperluan,
-      keperluan,
-      pengguna_tujuan_id,
-      tanda_tangan,
-      keterangan,
-    } = body;
-
+const {
+  jenis_pengunjung,
+  nama,
+  nama_klien,
+  no_hp,
+  alamat,
+  jenis_kelamin,
+  tanggal_lahir,
+  status_program,
+  pasal,
+  asal_instansi,
+  tanggal_lapor,
+  tanggal_kembali,
+  instansi,
+  jabatan,
+  jenis_keperluan,
+  keperluan,
+  pengguna_tujuan_id,
+  tanda_tangan,
+  keterangan,
+} = body;
     // -------------------------------------------------
     // VALIDASI JENIS PENGUNJUNG
     // -------------------------------------------------
@@ -207,19 +219,38 @@ export async function POST(request: NextRequest) {
     // -------------------------------------------------
     // VALIDASI NAMA
     // -------------------------------------------------
+const isKlien =
+  jenis_pengunjung === "KLIEN_DEWASA" ||
+  jenis_pengunjung === "KLIEN_ANAK";
 
-    if (!nama || !String(nama).trim()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Nama lengkap wajib diisi",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
+if (isKlien) {
+  if (
+    !nama_klien ||
+    !String(nama_klien).trim()
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Nama klien wajib diisi",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+} else {
+  if (!nama || !String(nama).trim()) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Nama pengunjung wajib diisi",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+}
     // -------------------------------------------------
     // VALIDASI KEPERLUAN
     // -------------------------------------------------
@@ -364,18 +395,65 @@ export async function POST(request: NextRequest) {
     // -------------------------------------------------
 
     const { data, error } = await supabaseAdmin
-      .from("buku_tamu")
-      .insert({
-        nomor_kunjungan: nomorKunjungan,
+  .from("buku_tamu")
+.insert({
+  nomor_kunjungan: nomorKunjungan,
 
-        jenis_pengunjung,
+  jenis_pengunjung,
 
-        nama: String(nama).trim(),
+  nama:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? String(nama_klien || nama).trim()
+      : String(nama).trim(),
 
-        nik:
-          nik && String(nik).trim()
-            ? String(nik).trim()
-            : null,
+  nama_klien:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? String(nama_klien || "").trim()
+      : null,
+
+  jenis_kelamin:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? jenis_kelamin || null
+      : null,
+
+  tanggal_lahir:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? tanggal_lahir || null
+      : null,
+
+  status_program:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? status_program || null
+      : null,
+
+  pasal:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? pasal || null
+      : null,
+
+  asal_instansi:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? asal_instansi || null
+      : null,
+
+  tanggal_lapor:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? tanggal_lapor || null
+      : null,
+
+  tanggal_kembali:
+    jenis_pengunjung === "KLIEN_DEWASA" ||
+    jenis_pengunjung === "KLIEN_ANAK"
+      ? tanggal_kembali || null
+      : null,
 
         no_hp:
           no_hp && String(no_hp).trim()

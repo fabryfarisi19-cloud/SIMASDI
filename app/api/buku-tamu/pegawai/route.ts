@@ -84,20 +84,20 @@ export async function GET() {
     // =====================================================
     // ROLE YANG TIDAK BOLEH MENJADI TUJUAN TAMU
     // =====================================================
-    const roleDikecualikan = [
-      "PPNPN",
-      "KIOSK",
-      "DISPLAY TV",
-      "TV",
-      "PETUGAS LOKET",
-      "PETUGAS PIKET",
-      "ADMIN",
-    ];
+   const roleDikecualikan = [
+  "PPNPN",
+  "KIOSK",
+  "DISPLAY TV",
+  "TV",
+  "PETUGAS LOKET",
+  "PETUGAS PIKET",
+  "ADMIN",
+];
 
     // =====================================================
     // FILTER PEGAWAI
     // =====================================================
-  const hasil = (data || []).filter((pegawai) => {
+ const hasil = (data || []).filter((pegawai) => {
   const role = String(pegawai.role || "")
     .trim()
     .toUpperCase();
@@ -111,8 +111,11 @@ export async function GET() {
     return false;
   }
 
-  // Khusus Petugas Loket berdasarkan NAMA
-  if (nama === "PETUGAS LOKET") {
+  // Khusus berdasarkan NAMA
+  if (
+    nama === "PETUGAS LOKET" ||
+    nama === "DISPLAY TV"
+  ) {
     return false;
   }
 

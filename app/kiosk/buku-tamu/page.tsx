@@ -20,9 +20,17 @@ type Pegawai = {
 type FormData = {
   jenis_pengunjung: JenisPengunjung;
   nama: string;
+  nama_klien: string;
   nik: string;
   no_hp: string;
   alamat: string;
+  jenis_kelamin: string;
+  tanggal_lahir: string;
+  status_program: string;
+  pasal: string;
+  asal_instansi: string;
+  tanggal_lapor: string;
+  tanggal_kembali: string;
   instansi: string;
   jabatan: string;
   jenis_keperluan: string;
@@ -35,9 +43,17 @@ type FormData = {
 const initialForm: FormData = {
   jenis_pengunjung: "",
   nama: "",
+  nama_klien: "",
   nik: "",
   no_hp: "",
   alamat: "",
+  jenis_kelamin: "",
+  tanggal_lahir: "",
+  status_program: "",
+  pasal: "",
+  asal_instansi: "",
+  tanggal_lapor: "",
+  tanggal_kembali: "",
   instansi: "",
   jabatan: "",
   jenis_keperluan: "",
@@ -424,36 +440,88 @@ export default function BukuTamuKioskPage() {
   ========================================================= */
 
   function validateForm() {
-    if (!form.nama.trim()) {
-      return "Nama pengunjung wajib diisi.";
+  const isKlien =
+    form.jenis_pengunjung === "KLIEN_DEWASA" ||
+    form.jenis_pengunjung === "KLIEN_ANAK";
+
+  // ==========================================
+  // VALIDASI KLIEN
+  // ==========================================
+
+  if (isKlien) {
+    if (!form.nama_klien.trim()) {
+      return "Nama klien wajib diisi.";
     }
 
-    if (!form.jenis_keperluan) {
-      return "Jenis keperluan wajib dipilih.";
+    if (!form.jenis_kelamin) {
+      return "Jenis kelamin wajib dipilih.";
     }
 
-    if (!form.keperluan.trim()) {
-      return "Keperluan wajib diisi.";
+    if (!form.tanggal_lahir) {
+      return "Tanggal lahir wajib diisi.";
     }
 
-    if (!form.pengguna_tujuan_id) {
-      return "Pegawai yang dituju wajib dipilih.";
+    if (!form.status_program) {
+      return "Status program wajib dipilih.";
     }
 
-    if (
-      form.jenis_pengunjung ===
-        "TAMU_DINAS" &&
-      !form.instansi.trim()
-    ) {
-      return "Instansi wajib diisi untuk Tamu Dinas.";
+    if (!form.pasal.trim()) {
+      return "PASAL wajib diisi.";
     }
 
-    if (!form.tanda_tangan) {
-      return "Tanda tangan wajib diisi.";
+    if (!form.asal_instansi.trim()) {
+      return "Asal instansi wajib diisi.";
     }
 
-    return "";
+    if (!form.tanggal_lapor) {
+      return "Tanggal lapor wajib diisi.";
+    }
+
+    if (!form.tanggal_kembali) {
+      return "Tanggal kembali wajib diisi.";
+    }
   }
+
+  // ==========================================
+  // VALIDASI TAMU DINAS
+  // ==========================================
+
+  if (
+    form.jenis_pengunjung === "TAMU_DINAS" &&
+    !form.nama.trim()
+  ) {
+    return "Nama pengunjung wajib diisi.";
+  }
+
+  if (
+    form.jenis_pengunjung === "TAMU_DINAS" &&
+    !form.instansi.trim()
+  ) {
+    return "Instansi wajib diisi untuk Tamu Dinas.";
+  }
+
+  // ==========================================
+  // VALIDASI UMUM
+  // ==========================================
+
+  if (!form.jenis_keperluan) {
+    return "Jenis keperluan wajib dipilih.";
+  }
+
+  if (!form.keperluan.trim()) {
+    return "Keperluan wajib diisi.";
+  }
+
+  if (!form.pengguna_tujuan_id) {
+    return "Pegawai yang dituju wajib dipilih.";
+  }
+
+  if (!form.tanda_tangan) {
+    return "Tanda tangan wajib diisi.";
+  }
+
+  return "";
+}
 
   /* =========================================================
      SIMPAN
@@ -1002,54 +1070,250 @@ export default function BukuTamuKioskPage() {
                   gap: "20px",
                 }}
               >
-                {/* NAMA */}
+                {/* =================================================
+    DATA KLIEN
+================================================= */}
 
-                <div
-                  style={{
-                    gridColumn:
-                      "1 / -1",
-                  }}
-                >
-                  <label style={labelStyle}>
-                    Nama Pengunjung *
-                  </label>
+{(
+  form.jenis_pengunjung === "KLIEN_DEWASA" ||
+  form.jenis_pengunjung === "KLIEN_ANAK"
+) && (
+  <>
+    {/* NAMA KLIEN */}
 
-                  <input
-                    value={form.nama}
-                    onChange={(e) =>
-                      updateForm(
-                        "nama",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Masukkan nama lengkap"
-                    style={inputStyle}
-                  />
-                </div>
+    <div
+      style={{
+        gridColumn: "1 / -1",
+      }}
+    >
+      <label style={labelStyle}>
+        Nama Klien *
+      </label>
 
-                {/* NIK */}
+      <input
+        value={form.nama_klien}
+        onChange={(e) => {
+          updateForm(
+            "nama_klien",
+            e.target.value
+          );
 
-                <div>
-                  <label style={labelStyle}>
-                    NIK
-                    {form.jenis_pengunjung ===
-                      "KLIEN_DEWASA" &&
-                      " *"}
-                  </label>
+          updateForm(
+            "nama",
+            e.target.value
+          );
+        }}
+        placeholder="Masukkan nama lengkap klien"
+        style={inputStyle}
+      />
+    </div>
 
-                  <input
-                    value={form.nik}
-                    onChange={(e) =>
-                      updateForm(
-                        "nik",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Nomor NIK"
-                    inputMode="numeric"
-                    style={inputStyle}
-                  />
-                </div>
+    {/* JENIS KELAMIN */}
+
+    <div>
+      <label style={labelStyle}>
+        Jenis Kelamin *
+      </label>
+
+      <select
+        value={form.jenis_kelamin}
+        onChange={(e) =>
+          updateForm(
+            "jenis_kelamin",
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      >
+        <option value="">
+          Pilih jenis kelamin
+        </option>
+
+        <option value="Laki-laki">
+          Laki-laki
+        </option>
+
+        <option value="Perempuan">
+          Perempuan
+        </option>
+      </select>
+    </div>
+
+    {/* TANGGAL LAHIR */}
+
+    <div>
+      <label style={labelStyle}>
+        Tanggal Lahir *
+      </label>
+
+      <input
+        type="date"
+        value={form.tanggal_lahir}
+        onChange={(e) =>
+          updateForm(
+            "tanggal_lahir",
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      />
+    </div>
+
+    {/* STATUS PROGRAM */}
+
+    <div>
+      <label style={labelStyle}>
+        Status Program *
+      </label>
+
+      <select
+        value={form.status_program}
+        onChange={(e) =>
+          updateForm(
+            "status_program",
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      >
+        <option value="">
+          Pilih status program
+        </option>
+
+        <option value="PB">
+          PB
+        </option>
+
+        <option value="DIVERSI">
+          Diversi
+        </option>
+
+        <option value="CB">
+          CB
+        </option>
+
+        <option value="CMB">
+          CMB
+        </option>
+     
+  <option value="PERINTIS">PERINTIS</option>
+   </select>
+    </div>
+    {/* PASAL */}
+
+    <div>
+      <label style={labelStyle}>
+        PASAL *
+      </label>
+
+      <input
+        value={form.pasal}
+        onChange={(e) =>
+          updateForm(
+            "pasal",
+            e.target.value
+          )
+        }
+        placeholder="Contoh: Pasal 351 KUHP"
+        style={inputStyle}
+      />
+    </div>
+
+    {/* ASAL INSTANSI */}
+
+    <div
+      style={{
+        gridColumn: "1 / -1",
+      }}
+    >
+      <label style={labelStyle}>
+        Asal Instansi *
+      </label>
+
+      <input
+        value={form.asal_instansi}
+        onChange={(e) =>
+          updateForm(
+            "asal_instansi",
+            e.target.value
+          )
+        }
+        placeholder="Contoh: Bapas / Lapas / Kepolisian / Kejaksaan"
+        style={inputStyle}
+      />
+    </div>
+
+    {/* TANGGAL LAPOR */}
+
+    <div>
+      <label style={labelStyle}>
+        Tanggal Lapor *
+      </label>
+
+      <input
+        type="date"
+        value={form.tanggal_lapor}
+        onChange={(e) =>
+          updateForm(
+            "tanggal_lapor",
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      />
+    </div>
+
+    {/* TANGGAL KEMBALI */}
+
+    <div>
+      <label style={labelStyle}>
+        Tanggal Kembali *
+      </label>
+
+      <input
+        type="date"
+        value={form.tanggal_kembali}
+        onChange={(e) =>
+          updateForm(
+            "tanggal_kembali",
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      />
+    </div>
+  </>
+)}
+
+{/* =================================================
+    DATA TAMU DINAS
+================================================= */}
+
+{form.jenis_pengunjung === "TAMU_DINAS" && (
+  <div
+    style={{
+      gridColumn: "1 / -1",
+    }}
+  >
+    <label style={labelStyle}>
+      Nama Pengunjung *
+    </label>
+
+    <input
+      value={form.nama}
+      onChange={(e) =>
+        updateForm(
+          "nama",
+          e.target.value
+        )
+      }
+      placeholder="Masukkan nama lengkap"
+      style={inputStyle}
+    />
+  </div>
+)}
+
+{/* NIK HANYA TIDAK DITAMPILKAN LAGI */}
 
                 {/* HP */}
 
@@ -1816,13 +2080,17 @@ export default function BukuTamuKioskPage() {
           fontSize: "14px",
         }}
       >
-        <div style={printLabelStyle}>
-          Nama
-        </div>
+      <div style={printLabelStyle}>
+  {form.jenis_pengunjung === "TAMU_DINAS"
+    ? "Nama Pengunjung"
+    : "Nama Klien"}
+</div>
 
-        <div style={printValueStyle}>
-          {form.nama || "-"}
-        </div>
+<div style={printValueStyle}>
+  {form.jenis_pengunjung === "TAMU_DINAS"
+    ? form.nama || "-"
+    : form.nama_klien || "-"}
+</div>
 
         <div style={printLabelStyle}>
           Jenis Pengunjung
@@ -1841,19 +2109,68 @@ export default function BukuTamuKioskPage() {
             "TAMU_DINAS" &&
             "Tamu Dinas"}
         </div>
+{(
+  form.jenis_pengunjung === "KLIEN_DEWASA" ||
+  form.jenis_pengunjung === "KLIEN_ANAK"
+) && (
+  <>
+    <div style={printLabelStyle}>
+      Jenis Kelamin
+    </div>
 
-        {form.nik && (
-          <>
-            <div style={printLabelStyle}>
-              NIK
-            </div>
+    <div style={printValueStyle}>
+      {form.jenis_kelamin || "-"}
+    </div>
 
-            <div style={printValueStyle}>
-              {form.nik}
-            </div>
-          </>
-        )}
+    <div style={printLabelStyle}>
+      Tanggal Lahir
+    </div>
 
+    <div style={printValueStyle}>
+      {form.tanggal_lahir || "-"}
+    </div>
+
+    <div style={printLabelStyle}>
+      Status Program
+    </div>
+
+    <div style={printValueStyle}>
+      {form.status_program || "-"}
+    </div>
+
+    <div style={printLabelStyle}>
+      PASAL
+    </div>
+
+    <div style={printValueStyle}>
+      {form.pasal || "-"}
+    </div>
+
+    <div style={printLabelStyle}>
+      Asal Instansi
+    </div>
+
+    <div style={printValueStyle}>
+      {form.asal_instansi || "-"}
+    </div>
+
+    <div style={printLabelStyle}>
+      Tanggal Lapor
+    </div>
+
+    <div style={printValueStyle}>
+      {form.tanggal_lapor || "-"}
+    </div>
+
+    <div style={printLabelStyle}>
+      Tanggal Kembali
+    </div>
+
+    <div style={printValueStyle}>
+      {form.tanggal_kembali || "-"}
+    </div>
+  </>
+)}
         {form.instansi && (
           <>
             <div style={printLabelStyle}>

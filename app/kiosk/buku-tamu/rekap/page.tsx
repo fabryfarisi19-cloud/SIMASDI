@@ -17,14 +17,27 @@ type DataKunjungan = {
   tanggal_kunjungan: string;
   jam_kunjungan: string;
   jenis_pengunjung: string;
+
   nama: string;
-  nik: string | null;
+  nama_klien: string | null;
+
+  jenis_kelamin: string | null;
+  tanggal_lahir: string | null;
+  status_program: string | null;
+  pasal: string | null;
+  asal_instansi: string | null;
+  tanggal_lapor: string | null;
+  tanggal_kembali: string | null;
+
   no_hp: string | null;
   alamat: string | null;
+
   instansi: string | null;
   jabatan: string | null;
+
   jenis_keperluan: string;
   keperluan: string | null;
+
   bertemu_dengan: string | null;
   jabatan_tujuan: string | null;
 };
@@ -698,143 +711,241 @@ useEffect(() => {
         {/* TABEL */}
         <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-800 text-left text-white">
-                  <th className="px-4 py-3 text-center">
-                    No
-                  </th>
+           <table className="w-full min-w-[1800px] border-collapse text-sm">
+  <thead>
+    <tr className="bg-slate-800 text-left text-white">
+      <th className="px-4 py-3 text-center">
+        No
+      </th>
 
-                  <th className="px-4 py-3">
-                    Nomor Kunjungan
-                  </th>
+      <th className="px-4 py-3">
+        Nomor Kunjungan
+      </th>
 
-                  <th className="px-4 py-3">
-                    Tanggal
-                  </th>
+      <th className="px-4 py-3">
+        Tanggal
+      </th>
 
-                  <th className="px-4 py-3">
-                    Jam
-                  </th>
+      <th className="px-4 py-3">
+        Jam
+      </th>
 
-                  <th className="px-4 py-3">
-                    Jenis Pengunjung
-                  </th>
+      <th className="px-4 py-3">
+        Jenis Pengunjung
+      </th>
 
-                  <th className="px-4 py-3">
-                    Nama
-                  </th>
+      <th className="px-4 py-3">
+        Nama
+      </th>
 
-                  <th className="px-4 py-3">
-                    NIK
-                  </th>
+      <th className="px-4 py-3">
+        Jenis Kelamin
+      </th>
 
-                  <th className="px-4 py-3">
-                    Instansi
-                  </th>
+      <th className="px-4 py-3">
+        Tanggal Lahir
+      </th>
 
-                  <th className="px-4 py-3">
-                    Keperluan
-                  </th>
+      <th className="px-4 py-3">
+        Status Program
+      </th>
 
-                  <th className="px-4 py-3">
-                    Bertemu Dengan
-                  </th>
-                </tr>
-              </thead>
+      <th className="px-4 py-3">
+        PASAL
+      </th>
 
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={10}
-                      className="px-4 py-10 text-center text-slate-500"
-                    >
-                      Memuat data rekap...
-                    </td>
-                  </tr>
-                ) : data.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={10}
-                      className="px-4 py-10 text-center text-slate-500"
-                    >
-                      Tidak ada data kunjungan pada
-                      periode dan filter yang dipilih.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
-                    >
-                      <td className="px-4 py-3 text-center">
-                        {index + 1}
-                      </td>
+      <th className="px-4 py-3">
+        Asal Instansi
+      </th>
 
-                      <td className="px-4 py-3 font-semibold text-slate-800">
-                        {item.nomor_kunjungan}
-                      </td>
+      <th className="px-4 py-3">
+        Tanggal Lapor
+      </th>
 
-                      <td className="px-4 py-3">
-                        {formatTanggal(
-                          item.tanggal_kunjungan
-                        )}
-                      </td>
+      <th className="px-4 py-3">
+        Tanggal Kembali
+      </th>
 
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {formatJam(
-                          item.jam_kunjungan
-                        )}
-                      </td>
+      <th className="px-4 py-3">
+        No. HP
+      </th>
 
-                      <td className="px-4 py-3">
-                        {labelJenis(
-                          item.jenis_pengunjung
-                        )}
-                      </td>
+      <th className="px-4 py-3">
+        Alamat
+      </th>
 
-                      <td className="px-4 py-3 font-medium">
-                        {item.nama || "-"}
-                      </td>
+      <th className="px-4 py-3">
+        Instansi
+      </th>
 
-                      <td className="px-4 py-3">
-                        {item.nik || "-"}
-                      </td>
+      <th className="px-4 py-3">
+        Jabatan
+      </th>
 
-                      <td className="px-4 py-3">
-                        {item.instansi || "-"}
-                      </td>
+      <th className="px-4 py-3">
+        Keperluan
+      </th>
 
-                      <td className="px-4 py-3">
-                        <div className="font-medium">
-                          {item.jenis_keperluan ||
-                            "-"}
-                        </div>
+      <th className="px-4 py-3">
+        Bertemu Dengan
+      </th>
+    </tr>
+  </thead>
 
-                        <div className="mt-1 text-xs text-slate-500">
-                          {item.keperluan || "-"}
-                        </div>
-                      </td>
+  <tbody>
+    {loading ? (
+      <tr>
+        <td
+          colSpan={19}
+          className="px-4 py-10 text-center text-slate-500"
+        >
+          Memuat data rekap...
+        </td>
+      </tr>
+    ) : data.length === 0 ? (
+      <tr>
+        <td
+          colSpan={19}
+          className="px-4 py-10 text-center text-slate-500"
+        >
+          Tidak ada data kunjungan pada
+          periode dan filter yang dipilih.
+        </td>
+      </tr>
+    ) : (
+      data.map((item, index) => {
+        const isKlien =
+          item.jenis_pengunjung ===
+            "KLIEN_DEWASA" ||
+          item.jenis_pengunjung ===
+            "KLIEN_ANAK";
 
-                      <td className="px-4 py-3">
-                        <div className="font-medium">
-                          {item.bertemu_dengan ||
-                            "-"}
-                        </div>
+        return (
+          <tr
+            key={item.id}
+            className="border-b border-slate-100 hover:bg-slate-50"
+          >
+            <td className="px-4 py-3 text-center">
+              {index + 1}
+            </td>
 
-                        {item.jabatan_tujuan && (
-                          <div className="mt-1 text-xs text-slate-500">
-                            {item.jabatan_tujuan}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <td className="px-4 py-3 font-semibold text-slate-800">
+              {item.nomor_kunjungan}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {formatTanggal(
+                item.tanggal_kunjungan
+              )}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {formatJam(item.jam_kunjungan)}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {labelJenis(
+                item.jenis_pengunjung
+              )}
+            </td>
+
+            <td className="px-4 py-3 font-medium whitespace-nowrap">
+              {isKlien
+                ? item.nama_klien || item.nama || "-"
+                : item.nama || "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {isKlien
+                ? item.jenis_kelamin || "-"
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {isKlien
+                ? formatTanggal(
+                    item.tanggal_lahir || ""
+                  )
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {isKlien
+                ? item.status_program || "-"
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {isKlien
+                ? item.pasal || "-"
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {isKlien
+                ? item.asal_instansi || "-"
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {isKlien
+                ? formatTanggal(
+                    item.tanggal_lapor || ""
+                  )
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {isKlien
+                ? formatTanggal(
+                    item.tanggal_kembali || ""
+                  )
+                : "-"}
+            </td>
+
+            <td className="px-4 py-3 whitespace-nowrap">
+              {item.no_hp || "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {item.alamat || "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {item.instansi || "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              {item.jabatan || "-"}
+            </td>
+
+            <td className="px-4 py-3">
+              <div className="font-medium">
+                {item.jenis_keperluan || "-"}
+              </div>
+
+              <div className="mt-1 text-xs text-slate-500">
+                {item.keperluan || "-"}
+              </div>
+            </td>
+
+            <td className="px-4 py-3">
+              <div className="font-medium">
+                {item.bertemu_dengan || "-"}
+              </div>
+
+              {item.jabatan_tujuan && (
+                <div className="mt-1 text-xs text-slate-500">
+                  {item.jabatan_tujuan}
+                </div>
+              )}
+            </td>
+          </tr>
+        );
+      })
+    )}
+  </tbody>
+</table>
           </div>
 
           <div className="border-t border-slate-100 px-4 py-4 text-sm text-slate-500">

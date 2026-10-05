@@ -231,23 +231,30 @@ export async function GET(request: NextRequest) {
      */
     let query = supabaseAdmin
       .from("buku_tamu")
-      .select(`
-        id,
-        nomor_kunjungan,
-        tanggal_kunjungan,
-        jam_kunjungan,
-        jenis_pengunjung,
-        nama,
-        nik,
-        no_hp,
-        alamat,
-        instansi,
-        jabatan,
-        jenis_keperluan,
-        keperluan,
-        bertemu_dengan,
-        jabatan_tujuan
-      `)
+     .select(`
+  id,
+  nomor_kunjungan,
+  tanggal_kunjungan,
+  jam_kunjungan,
+  jenis_pengunjung,
+  nama,
+  nama_klien,
+  jenis_kelamin,
+  tanggal_lahir,
+  status_program,
+  pasal,
+  asal_instansi,
+  tanggal_lapor,
+  tanggal_kembali,
+  no_hp,
+  alamat,
+  instansi,
+  jabatan,
+  jenis_keperluan,
+  keperluan,
+  bertemu_dengan,
+  jabatan_tujuan
+`)
       .gte(
         "tanggal_kunjungan",
         tanggalMulai
