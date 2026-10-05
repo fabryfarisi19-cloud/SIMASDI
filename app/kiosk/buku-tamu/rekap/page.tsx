@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { useSession } from "next-auth/react";
 type ModeRekap = "hari" | "bulan" | "tahun";
 
 type JenisPengunjung =
@@ -110,6 +110,22 @@ function labelJenis(jenis: string) {
 }
 
 export default function RekapBukuTamuPage() {
+    const { data: session, status } = useSession();
+
+  const sessionData = session as any;
+  const user = sessionData?.user as any;
+
+  const roleAsli =
+    sessionData?.role ||
+    user?.role ||
+    user?.jabatan ||
+    "";
+
+  const role = String(roleAsli).trim().toLowerCase();
+
+  const bolehAkses =
+    role === "admin" ||
+    role === "petugas";
   const sekarang = new Date();
 
   const [mode, setMode] = useState<ModeRekap>("hari");
@@ -221,10 +237,12 @@ export default function RekapBukuTamuPage() {
       setLoading(false);
     }
   }, [mode, tanggal, bulan, tahun, jenis]);
+useEffect(() => {
+  if (status !== "authenticated") return;
+  if (!bolehAkses) return;
 
-  useEffect(() => {
-    loadRekap();
-  }, [loadRekap]);
+  loadRekap();
+}, [status, bolehAkses, loadRekap]);
 
   const periodeLabel = useMemo(() => {
     if (mode === "hari") {
@@ -261,7 +279,25 @@ export default function RekapBukuTamuPage() {
     jenis === "SEMUA"
       ? "Semua Jenis Pengunjung"
       : labelJenis(jenis);
+  if (status === "loading") {
+    return null;
+  }
 
+  if (!bolehAkses) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
+        <div className="rounded-xl bg-white p-8 text-center shadow">
+          <h1 className="text-xl font-bold text-red-600">
+            Akses Ditolak
+          </h1>
+
+          <p className="mt-2 text-slate-600">
+            Rekap Buku Tamu hanya dapat diakses oleh Admin dan Petugas.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <main className="min-h-screen bg-slate-100 p-4 md:p-6">
       <div className="mx-auto max-w-7xl">

@@ -33,6 +33,7 @@ import {
   Info,
   Wrench,
   FileOutput,
+    BookUser,
 } from "lucide-react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -244,7 +245,15 @@ const menu: MenuItem[] = [
       "Petugas",
     ],
   },
-
+  {
+    nama: "Rekap Buku Tamu",
+    href: "/buku-tamu/rekap",
+    icon: BookUser,
+    roles: [
+      "Admin",
+      "Petugas",
+    ],
+  },
   {
     nama: "Jadwal Petugas Apel",
     href: "/jadwal-apel",

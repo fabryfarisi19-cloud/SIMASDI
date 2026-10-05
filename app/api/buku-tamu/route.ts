@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
@@ -102,6 +104,55 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // =====================================================
+    // CEK LOGIN DAN ROLE
+    // Hanya akun Buku Tamu yang boleh menyimpan kunjungan
+    // =====================================================
+
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Anda harus login terlebih dahulu",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const sessionData = session as any;
+    const user = sessionData?.user as any;
+
+    const roleAsli =
+      sessionData?.role ||
+      user?.role ||
+      user?.jabatan ||
+      "";
+
+    const role = String(roleAsli)
+      .trim()
+      .toLowerCase();
+
+    if (role !== "buku tamu") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Akses ditolak. Hanya akun Buku Tamu yang dapat menyimpan data kunjungan.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // =====================================================
+    // BODY
+    // =====================================================
+
     const body = await request.json();
 
     const {

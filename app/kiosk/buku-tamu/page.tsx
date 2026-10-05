@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type JenisPengunjung =
   | "KLIEN_DEWASA"
@@ -46,6 +48,24 @@ const initialForm: FormData = {
 };
 
 export default function BukuTamuKioskPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const sessionData = session as any;
+  const user = sessionData?.user as any;
+
+  const roleAsli =
+    sessionData?.role ||
+    user?.role ||
+    user?.jabatan ||
+    "";
+
+  const role = String(roleAsli)
+    .trim()
+    .toLowerCase();
+
+  const bolehAkses = role === "buku tamu";
+
   const [step, setStep] = useState<"pilih" | "form" | "sukses">("pilih");
 
   const [form, setForm] = useState<FormData>(initialForm);
@@ -63,14 +83,36 @@ export default function BukuTamuKioskPage() {
 
   const drawingRef = useRef(false);
   const hasSignatureRef = useRef(false);
+  /* =========================================================
+     PENGAMAN AKSES
+     HANYA AKUN BUKU TAMU
+  ========================================================= */
 
+  useEffect(() => {
+    if (status === "loading") {
+      return;
+    }
+
+    if (!session) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!bolehAkses) {
+      router.replace("/dashboard");
+    }
+  }, [status, session, bolehAkses, router]);
   /* =========================================================
      LOAD PEGAWAI
   ========================================================= */
 
-  useEffect(() => {
-    loadPegawai();
-  }, []);
+ useEffect(() => {
+  if (!bolehAkses) {
+    return;
+  }
+
+  loadPegawai();
+}, [bolehAkses]);
 
   async function loadPegawai() {
     try {
@@ -526,7 +568,13 @@ export default function BukuTamuKioskPage() {
   /* =========================================================
      RENDER
   ========================================================= */
+  if (status === "loading") {
+    return null;
+  }
 
+  if (!session || !bolehAkses) {
+    return null;
+  }
   return (
     <>
       <style jsx global>{`

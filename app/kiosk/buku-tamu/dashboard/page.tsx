@@ -1,5 +1,5 @@
 "use client";
-
+import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import {
   RefreshCw,
@@ -41,6 +41,22 @@ type Kunjungan = {
 };
 
 export default function DashboardBukuTamuPage() {
+  const { data: session, status } = useSession();
+
+const sessionData = session as any;
+const user = sessionData?.user as any;
+
+const roleAsli =
+  sessionData?.role ||
+  user?.role ||
+  user?.jabatan ||
+  "";
+
+const role = String(roleAsli).trim().toLowerCase();
+
+const bolehAkses =
+  role === "admin" ||
+  role === "petugas";
   const router = useRouter();
 
   const [statistik, setStatistik] = useState<Statistik>({
@@ -200,7 +216,14 @@ export default function DashboardBukuTamuPage() {
         "bg-emerald-50 text-emerald-600",
     },
   ];
+if (status === "loading") {
+  return null;
+}
 
+if (!bolehAkses) {
+  router.replace("/dashboard");
+  return null;
+}
   return (
     <main className="min-h-screen bg-slate-100">
       {/* HEADER */}
@@ -274,17 +297,7 @@ export default function DashboardBukuTamuPage() {
 
   Rekap Buku Tamu
 </button>
-              <button
-                type="button"
-                onClick={() =>
-                  router.push("/kiosk/buku-tamu")
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                <ArrowLeft size={16} />
-
-                Form Buku Tamu
-              </button>
+             
             </div>
           </div>
         </div>

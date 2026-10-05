@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
@@ -14,9 +16,53 @@ const JENIS_VALID = [
   "KLIEN_ANAK",
   "TAMU_DINAS",
 ] as const;
-
 export async function GET(request: NextRequest) {
   try {
+    // =====================================================
+    // CEK LOGIN DAN HAK AKSES
+    // Hanya Admin dan Petugas yang boleh melihat rekap
+    // =====================================================
+
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Anda harus login untuk mengakses rekap Buku Tamu.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const sessionData = session as any;
+    const user = sessionData?.user as any;
+
+    const roleAsli =
+      sessionData?.role ||
+      user?.role ||
+      user?.jabatan ||
+      "";
+
+    const role = String(roleAsli)
+      .trim()
+      .toLowerCase();
+
+    const bolehAkses =
+      role === "admin" ||
+      role === "petugas";
+
+    if (!bolehAkses) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Akses ditolak. Rekap Buku Tamu hanya dapat diakses oleh Admin dan Petugas.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const mode = searchParams.get("mode") || "hari";
