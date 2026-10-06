@@ -51,6 +51,7 @@ const daftarJabatan = [
   // Jabatan yang muncul pada PDF
   "Pengelola Layanan Peng.",
   "Pengadministrasi Perk.",
+ "Penjaga Tahanan",
 
   // Jabatan lain
   "Pengelola Lay. Pengadaan",
@@ -143,23 +144,37 @@ function parseBarisPetugas(line: string): {
 } | null {
   let teks = line.trim();
 
+  // Hapus nomor di awal, contoh: "1. Nama ..."
   teks = teks.replace(/^\d+\.\s*/, "");
+
   if (!teks) return null;
 
-  // Cari tugas dari belakang
-  const tugas = daftarTugas.find((item) => teks.endsWith(item));
+  // Cari tugas dari bagian PALING AKHIR
+  const tugas = daftarTugas
+    .sort((a, b) => b.length - a.length)
+    .find((item) => teks.endsWith(item));
+
   if (!tugas) return null;
 
-  teks = teks.slice(0, -tugas.length).trim();
+  // Buang tugas
+  teks = teks
+    .slice(0, -tugas.length)
+    .trim();
 
-  // Cari jabatan terpanjang terlebih dahulu
-  const jabatan = [...daftarJabatan]
+  // Cari jabatan dari bagian PALING AKHIR
+  const jabatan = [
+    ...daftarJabatan,
+    "Penjaga Tahanan",
+  ]
     .sort((a, b) => b.length - a.length)
     .find((item) => teks.endsWith(item));
 
   if (!jabatan) return null;
 
-  const nama = teks.slice(0, -jabatan.length).trim();
+  // Buang jabatan
+  const nama = teks
+    .slice(0, -jabatan.length)
+    .trim();
 
   if (!nama) return null;
 
