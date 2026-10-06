@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   AlertCircle,
   Camera,
@@ -74,7 +75,11 @@ const STATUS = [
   "Ditolak",
 ];
 
-const ROLE_KELOLA = ["admin umum", "kaur umum"];
+const ROLE_KELOLA = [
+  "admin",
+  "admin umum",
+  "kaur umum",
+];
 
 const ROLE_LIHAT_SEMUA = [
   "admin",
@@ -153,6 +158,7 @@ function getStatusSummary(data: Pengaduan[], status: string) {
 
 export default function PengaduanSarprasPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
+  const { data: session } = useSession();
   const [loadingUser, setLoadingUser] = useState(true);
 
   const [data, setData] = useState<Pengaduan[]>([]);
@@ -185,10 +191,18 @@ export default function PengaduanSarprasPage() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const role = normalizeRole(user?.role);
+ const roleRaw =
+  (session as any)?.role ||
+  (session as any)?.user?.role ||
+ (user as any)?.jabatan ||
+  user?.role ||
+(user as any)?.jabatan ||
+  "";
 
-  const bolehKelola = ROLE_KELOLA.includes(role);
-  const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
+const role = normalizeRole(roleRaw);
+
+const bolehKelola = ROLE_KELOLA.includes(role);
+const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
 
   /* =========================================================
      BACA USER
@@ -1356,8 +1370,8 @@ export default function PengaduanSarprasPage() {
                       </h3>
 
                       <p className="text-xs text-slate-500">
-                        Hanya Kaur Umum dan Admin Umum
-                        yang dapat memperbarui laporan.
+                       Hanya Admin, Kaur Umum, dan Admin Umum
+yang dapat memperbarui laporan.
                       </p>
                     </div>
                   </div>
@@ -1454,10 +1468,10 @@ export default function PengaduanSarprasPage() {
 
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           Anda dapat melihat detail
-                          pengaduan, tetapi perubahan
-                          status dan tindak lanjut hanya
-                          dapat dilakukan oleh Kaur Umum
-                          atau Admin Umum.
+                          pengaduan, tetapiperubahan
+status dan tindak lanjut hanya
+dapat dilakukan oleh Admin,
+Kaur Umum, atau Admin Umum.
                         </p>
                       </div>
                     </div>
@@ -1476,29 +1490,106 @@ export default function PengaduanSarprasPage() {
                 Tutup
               </button>
 
-              {bolehKelola && (
-                <button
-                  type="button"
-                  onClick={handleUpdate}
-                  disabled={savingDetail}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {savingDetail ? (
-                    <>
-                      <Loader2
-                        size={17}
-                        className="animate-spin"
-                      />
-                      Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={17} />
-                      Simpan Perubahan
-                    </>
-                  )}
-                </button>
-              )}
+             {bolehKelola && (
+  <button
+    type="button"
+    disabled={savingDetail}
+    onClick={async () => {
+      if (
+        selected.status ===
+        "Menunggu Perbaikan/Pihak Ketiga"
+      ) {
+        const yakin = window.confirm(
+          `Tandai laporan ${selected.nomor_laporan} sebagai Selesai?`
+        );
+
+        if (!yakin) return;
+
+        try {
+          setSavingDetail(true);
+
+          const response = await fetch(
+            "/api/pengaduan-sarpras",
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                id: selected.id,
+                status: "Selesai",
+                catatan_petugas:
+                  "Perbaikan/penanganan telah selesai.",
+                tindak_lanjut:
+                  "Pengaduan telah selesai ditangani.",
+                ditangani_oleh:
+                  user?.nama ||
+                  user?.username ||
+                  null,
+              }),
+            }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ||
+                "Gagal menandai pengaduan sebagai selesai."
+            );
+          }
+
+          alert(
+            `Laporan ${selected.nomor_laporan} berhasil ditandai sebagai Selesai.`
+          );
+
+          setShowDetail(false);
+          setSelected(null);
+
+          await loadData();
+        } catch (error: any) {
+          console.error(
+            "Gagal menandai selesai:",
+            error
+          );
+
+          alert(
+            error?.message ||
+              "Gagal menandai pengaduan sebagai selesai."
+          );
+        } finally {
+          setSavingDetail(false);
+        }
+
+        return;
+      }
+
+      handleUpdate();
+    }}
+    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {savingDetail ? (
+      <>
+        <Loader2
+          size={17}
+          className="animate-spin"
+        />
+        Memproses...
+      </>
+    ) : selected.status ===
+      "Menunggu Perbaikan/Pihak Ketiga" ? (
+      <>
+        <CheckCircle2 size={17} />
+        Tandai Selesai
+      </>
+    ) : (
+      <>
+        <CheckCircle2 size={17} />
+        Simpan Perubahan
+      </>
+    )}
+  </button>
+)}
             </div>
           </div>
         </div>

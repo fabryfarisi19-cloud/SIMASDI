@@ -40,6 +40,7 @@ const ROLE_LIHAT_SEMUA = [
 ];
 
 const ROLE_KELOLA = [
+  "admin",
   "admin umum",
   "kaur umum",
 ];
@@ -589,12 +590,14 @@ export async function POST(request: Request) {
         await supabaseAdmin
           .from("pengguna")
           .select("username, nama, role")
-          .in("role", [
-            "Kaur Umum",
-            "Admin Umum",
-            "kaur umum",
-            "admin umum",
-          ])
+         .in("role", [
+  "Admin",
+  "admin",
+  "Kaur Umum",
+  "kaur umum",
+  "Admin Umum",
+  "admin umum",
+])
           .eq("status", "Aktif");
 
       if (
@@ -733,7 +736,7 @@ export async function PATCH(request: Request) {
         {
           success: false,
           message:
-            "Hanya Kaur Umum dan Admin Umum yang dapat memproses pengaduan.",
+          "Hanya Admin, Kaur Umum, dan Admin Umum yang dapat memproses pengaduan."
         },
         { status: 403 }
       );

@@ -233,7 +233,16 @@ const menu: MenuItem[] = [
       "PPNPN",
     ],
   },
-
+{
+  nama: "Approval Pengaduan",
+  href: "/pengaduan-sarpras/approval",
+  icon: CheckCircle2,
+  roles: [
+    "Admin",
+    "Admin Umum",
+    "Kaur Umum",
+  ],
+},
   {
     nama: "SIAP",
     href: "/siantar",
