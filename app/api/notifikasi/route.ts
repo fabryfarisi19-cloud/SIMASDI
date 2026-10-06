@@ -206,7 +206,7 @@ if (/^\d{18}$/.test(nip)) {
             nip_penerima: nip,
             judul: "🎂 Selamat Ulang Tahun",
             pesan: `Selamat ulang tahun, ${pengguna.nama}. Semoga senantiasa diberikan kesehatan, kebahagiaan, dan kesuksesan dalam menjalankan tugas.`,
-            tipe: "info",
+        tipe: "ulang_tahun",
             dibaca: false,
             referensi_id: null,
             referensi_kode:
@@ -514,17 +514,15 @@ export async function PATCH(request: Request) {
      * -------------------------------------------------------
      */
     if (semua) {
-      const { error } =
-        await supabaseAdmin
-          .from("notifikasi")
-          .update({
-            dibaca: true,
-          })
-          .eq(
-            "nip_penerima",
-            pengguna.username
-          )
-          .eq("dibaca", false);
+   const { error } =
+  await supabaseAdmin
+    .from("notifikasi")
+    .delete()
+    .eq(
+      "nip_penerima",
+      pengguna.username
+    )
+    .eq("dibaca", false);
 
       if (error) {
         console.error(
@@ -616,40 +614,38 @@ export async function PATCH(request: Request) {
      * UPDATE SATU NOTIFIKASI
      * -------------------------------------------------------
      */
-    const { error } =
-      await supabaseAdmin
-        .from("notifikasi")
-        .update({
-          dibaca: true,
-        })
-        .eq("id", id)
-        .eq(
-          "nip_penerima",
-          pengguna.username
-        );
+ const { error } =
+  await supabaseAdmin
+    .from("notifikasi")
+    .delete()
+    .eq("id", id)
+    .eq(
+      "nip_penerima",
+      pengguna.username
+    );
 
-    if (error) {
-      console.error(
-        "ERROR UPDATE NOTIFIKASI:",
-        error
-      );
+if (error) {
+  console.error(
+    "ERROR HAPUS NOTIFIKASI:",
+    error
+  );
 
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Gagal menandai notifikasi",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
+  return NextResponse.json(
+    {
+      success: false,
       message:
-        "Notifikasi telah dibaca",
-    });
+        "Gagal menghapus notifikasi",
+      error: error.message,
+    },
+    { status: 500 }
+  );
+}
+
+return NextResponse.json({
+  success: true,
+  message:
+    "Notifikasi telah dihapus",
+});
   } catch (error: any) {
     console.error(
       "ERROR PATCH NOTIFIKASI:",
