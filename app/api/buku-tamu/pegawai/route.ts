@@ -84,9 +84,10 @@ export async function GET() {
     // =====================================================
     // ROLE YANG TIDAK BOLEH MENJADI TUJUAN TAMU
     // =====================================================
-   const roleDikecualikan = [
+const roleDikecualikan = [
   "PPNPN",
   "KIOSK",
+  "BUKU TAMU",
   "DISPLAY TV",
   "TV",
   "PETUGAS LOKET",
