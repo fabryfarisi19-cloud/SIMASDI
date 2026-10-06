@@ -34,6 +34,8 @@ import {
   Wrench,
   FileOutput,
     BookUser,
+      Fingerprint,
+      ClipboardList,
 } from "lucide-react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -58,6 +60,22 @@ type Notifikasi = {
 };
 
 const menu: MenuItem[] = [
+    {
+    nama: "Absen Finger",
+    href: "/absensi-finger",
+    icon: Fingerprint,
+    roles: [
+      "Pengelola Kepegawaian",
+    ],
+  },
+  {
+  nama: "Rekap Kehadiran",
+  href: "/rekap-kehadiran",
+  icon: ClipboardList,
+  roles: [
+    "Pengelola Kepegawaian",
+  ],
+},
   {
     nama: "Dashboard",
     href: "/dashboard",
@@ -769,64 +787,70 @@ export default function Sidebar() {
      BACA SATU NOTIFIKASI
      ========================================================= */
 
-  const bacaNotifikasi = async (
-    item: Notifikasi
-  ) => {
-    if (!menerimaNotifikasi) {
-      return;
+ const bacaNotifikasi = async (
+  item: Notifikasi
+) => {
+  if (!menerimaNotifikasi) {
+    return;
+  }
+
+  try {
+    // Tandai sudah dibaca
+    if (!item.dibaca) {
+      await fetch("/api/notifikasi", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: item.id,
+        }),
+      });
     }
 
-    try {
-      if (!item.dibaca) {
-        await fetch(
-          "/api/notifikasi",
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              id: item.id,
-            }),
-          }
-        );
-      }
+    setNotifikasi((prev) =>
+      prev.map((n) =>
+        n.id === item.id
+          ? {
+              ...n,
+              dibaca: true,
+            }
+          : n
+      )
+    );
 
-      setNotifikasi((prev) =>
-        prev.map((n) =>
-          n.id === item.id
-            ? {
-                ...n,
-                dibaca: true,
-              }
-            : n
-        )
+    // =====================================================
+    // TENTUKAN TUJUAN BERDASARKAN KODE REFERENSI
+    // =====================================================
+
+    const kode =
+      item.referensi_kode || "";
+
+    if (kode.startsWith("PS-")) {
+      // Pengaduan Sarpras
+      router.push(
+        "/pengaduan-sarpras/approval"
       );
-
-      /*
-       * Jika notifikasi berasal dari
-       * Pinjam Mobil Dinas, buka halaman
-       * Pinjam Mobil Dinas.
-       */
-      if (
-        item.referensi_id &&
-        item.referensi_kode
-      ) {
-        router.push(
-          "/pinjam-mobil"
-        );
-      }
-
-      setBukaNotifikasi(false);
-    } catch (error) {
-      console.error(
-        "ERROR BACA NOTIFIKASI:",
-        error
+    } else if (
+      kode.startsWith("PMD-")
+    ) {
+      // Pinjam Mobil Dinas
+      router.push(
+        "/pinjam-mobil"
       );
     }
-  };
 
+    // Notifikasi lain, misalnya ULTah,
+    // tidak melakukan navigasi.
+
+    setBukaNotifikasi(false);
+  } catch (error) {
+    console.error(
+      "ERROR BACA NOTIFIKASI:",
+      error
+    );
+  }
+};
   /* =========================================================
      BACA SEMUA
      ========================================================= */
