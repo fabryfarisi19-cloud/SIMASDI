@@ -116,7 +116,112 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
+/*
+ * -------------------------------------------------------
+ * NOTIFIKASI ULANG TAHUN PEGAWAI
+ *
+ * Tanggal lahir diambil dari 8 digit pertama NIP:
+ * YYYYMMDD
+ *
+ * Contoh:
+ * 198506152010011001
+ * └──────┘
+ * 19850615 = 15 Juni 1985
+ * -------------------------------------------------------
+ */
+const nip = pengguna.username || "";
 
+// Pastikan username merupakan NIP 18 digit
+if (/^\d{18}$/.test(nip)) {
+  const tanggalSekarang = new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }
+  ).formatToParts(new Date());
+
+  const tahunSekarang =
+    tanggalSekarang.find(
+      (p) => p.type === "year"
+    )?.value || "";
+
+  const bulanSekarang =
+    tanggalSekarang.find(
+      (p) => p.type === "month"
+    )?.value || "";
+
+  const hariSekarang =
+    tanggalSekarang.find(
+      (p) => p.type === "day"
+    )?.value || "";
+
+  const tanggalLahir = nip.substring(0, 8);
+
+  const bulanLahir = tanggalLahir.substring(4, 6);
+  const hariLahir = tanggalLahir.substring(6, 8);
+
+  /*
+   * Cek apakah hari dan bulan ulang tahun
+   * sama dengan hari ini.
+   */
+  if (
+    bulanLahir === bulanSekarang &&
+    hariLahir === hariSekarang
+  ) {
+    /*
+     * Kode unik berdasarkan NIP + tahun.
+     *
+     * Tujuannya agar notifikasi ulang tahun
+     * tidak dibuat berulang-ulang setiap Bell
+     * melakukan refresh.
+     */
+    const referensiKodeUlangTahun =
+      `ULTAH-${tahunSekarang}-${nip}`;
+
+    const { data: notifikasiUlangTahun } =
+      await supabaseAdmin
+        .from("notifikasi")
+        .select("id")
+        .eq(
+          "nip_penerima",
+          nip
+        )
+        .eq(
+          "referensi_kode",
+          referensiKodeUlangTahun
+        )
+        .maybeSingle();
+
+    /*
+     * Jika belum ada, buat notifikasi.
+     */
+    if (!notifikasiUlangTahun) {
+      const { error: errorUlangTahun } =
+        await supabaseAdmin
+          .from("notifikasi")
+          .insert({
+            nip_penerima: nip,
+            judul: "🎂 Selamat Ulang Tahun",
+            pesan: `Selamat ulang tahun, ${pengguna.nama}. Semoga senantiasa diberikan kesehatan, kebahagiaan, dan kesuksesan dalam menjalankan tugas.`,
+            tipe: "info",
+            dibaca: false,
+            referensi_id: null,
+            referensi_kode:
+              referensiKodeUlangTahun,
+          });
+
+      if (errorUlangTahun) {
+        console.error(
+          "ERROR BUAT NOTIFIKASI ULANG TAHUN:",
+          errorUlangTahun
+        );
+      }
+    }
+  }
+}
     /*
      * -------------------------------------------------------
      * AMBIL NOTIFIKASI
