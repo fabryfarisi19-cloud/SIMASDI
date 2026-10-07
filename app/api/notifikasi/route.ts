@@ -244,30 +244,37 @@ if (errorPegawai) {
         `${referensiKodeDasar}-${nipPenerima}`;
 
       const {
-        data: notifikasiSudahAda,
-        error: cekError,
-      } = await supabaseAdmin
-        .from("notifikasi")
-        .select("id")
-        .eq(
-          "nip_penerima",
-          nipPenerima
-        )
-        .eq(
-          "referensi_kode",
-          referensiKode
-        )
-        .maybeSingle();
+  data: riwayatSudahAda,
+  error: cekRiwayatError,
+} = await supabaseAdmin
+  .from("notifikasi_riwayat")
+  .select("id")
+  .eq(
+    "nip_penerima",
+    nipPenerima
+  )
+  .eq(
+    "referensi_kode",
+    referensiKode
+  )
+  .maybeSingle();
 
-      if (cekError) {
-        console.error(
-          "ERROR CEK NOTIFIKASI ULANG TAHUN:",
-          cekError
-        );
-        continue;
-      }
+if (cekRiwayatError) {
+  console.error(
+    "ERROR CEK RIWAYAT NOTIFIKASI ULANG TAHUN:",
+    cekRiwayatError
+  );
+  continue;
+}
 
-      if (!notifikasiSudahAda) {
+    if (cekRiwayatError) {
+  console.error(
+    "ERROR CEK RIWAYAT NOTIFIKASI ULANG TAHUN:",
+    cekRiwayatError
+  );
+  continue;
+}
+    if (!riwayatSudahAda) {
         const { error: insertError } =
           await supabaseAdmin
             .from("notifikasi")
@@ -292,6 +299,22 @@ if (errorPegawai) {
             insertError
           );
         }
+        else {
+  const { error: riwayatError } =
+    await supabaseAdmin
+      .from("notifikasi_riwayat")
+      .insert({
+        nip_penerima: nipPenerima,
+        referensi_kode: referensiKode,
+      });
+
+  if (riwayatError) {
+    console.error(
+      "ERROR SIMPAN RIWAYAT NOTIFIKASI ULANG TAHUN:",
+      riwayatError
+    );
+  }
+}
       }
     }
   }
