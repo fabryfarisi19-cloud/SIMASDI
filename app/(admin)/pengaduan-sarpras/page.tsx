@@ -973,7 +973,7 @@ if (!tanggal) {
       ===================================================== */}
 
       {showForm && (
-   <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm md:items-center md:p-5">
+   <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-slate-950/60 p-0  md:items-center md:p-5">
           <div className="flex max-h-[95vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-2xl md:rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
@@ -1237,7 +1237,7 @@ if (!tanggal) {
       ===================================================== */}
 
       {showDetail && selected && (
-       <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm md:items-center md:p-5">
+       <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-slate-950/60 p-0 md:items-center md:p-5">
           <div className="flex max-h-[95vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl md:max-w-3xl md:rounded-2xl">
             {/* HEADER */}
             <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">

@@ -1863,7 +1863,7 @@ export default function ArsipKepegawaianPage() {
               </div>
             </div>
 
-            <div className="min-w-0 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm sm:px-5 sm:py-4 lg:max-w-sm">
+            <div className="min-w-0 rounded-2xl bg-white/10 px-4 py-3  sm:px-5 sm:py-4 lg:max-w-sm">
               <div className="flex min-w-0 items-center gap-3">
                 <CircleUserRound
                   size={23}
@@ -2414,7 +2414,7 @@ export default function ArsipKepegawaianPage() {
             MODAL UPLOAD
         ====================================================== */}
         {showUpload && (
-          <div className="fixed inset-0 z-[99999] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="fixed inset-0 z-[99999] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 sm:items-center sm:p-4">
             <div className="relative my-2 flex max-h-[96dvh] w-full min-w-0 max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:my-0 sm:max-h-[92dvh] sm:rounded-3xl">
 
               {/* =================================================
