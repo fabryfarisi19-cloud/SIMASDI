@@ -123,101 +123,175 @@ export async function GET(request: Request) {
  * Tanggal lahir diambil dari 8 digit pertama NIP:
  * YYYYMMDD
  *
- * Contoh:
- * 198506152010011001
- * └──────┘
- * 19850615 = 15 Juni 1985
+ * Penerima:
+ * 1. Pegawai yang sedang berulang tahun
+ * 2. Admin
+ * 3. Kaur Umum
  * -------------------------------------------------------
  */
+
 const nip = pengguna.username || "";
 
-// Pastikan username merupakan NIP 18 digit
-if (/^\d{18}$/.test(nip)) {
-  const tanggalSekarang = new Intl.DateTimeFormat(
-    "en-CA",
-    {
-      timeZone: "Asia/Jakarta",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }
-  ).formatToParts(new Date());
+// Ambil tanggal Jakarta
+const tanggalSekarang = new Intl.DateTimeFormat(
+  "en-CA",
+  {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }
+).formatToParts(new Date());
 
-  const tahunSekarang =
-    tanggalSekarang.find(
-      (p) => p.type === "year"
-    )?.value || "";
+const tahunSekarang =
+  tanggalSekarang.find(
+    (p) => p.type === "year"
+  )?.value || "";
 
-  const bulanSekarang =
-    tanggalSekarang.find(
-      (p) => p.type === "month"
-    )?.value || "";
+const bulanSekarang =
+  tanggalSekarang.find(
+    (p) => p.type === "month"
+  )?.value || "";
 
-  const hariSekarang =
-    tanggalSekarang.find(
-      (p) => p.type === "day"
-    )?.value || "";
+const hariSekarang =
+  tanggalSekarang.find(
+    (p) => p.type === "day"
+  )?.value || "";
 
-  const tanggalLahir = nip.substring(0, 8);
+/*
+ * Cari pegawai yang ulang tahun hari ini.
+ *
+ * Username harus NIP 18 digit dan
+ * 8 digit pertama berformat YYYYMMDD.
+ */
+const { data: pegawaiUlangTahun, error: errorPegawai } =
+  await supabaseAdmin
+    .from("pengguna")
+    .select("id, nama, username, role")
+    .like("username", "______________%");
 
-  const bulanLahir = tanggalLahir.substring(4, 6);
-  const hariLahir = tanggalLahir.substring(6, 8);
+if (errorPegawai) {
+  console.error(
+    "ERROR CARI PEGAWAI ULANG TAHUN:",
+    errorPegawai
+  );
+} else if (pegawaiUlangTahun) {
+  const daftarUlangTahun =
+    pegawaiUlangTahun.filter((pegawai) => {
+      const nipPegawai =
+        pegawai.username || "";
+
+      if (!/^\d{18}$/.test(nipPegawai)) {
+        return false;
+      }
+
+      const bulanLahir =
+        nipPegawai.substring(4, 6);
+
+      const hariLahir =
+        nipPegawai.substring(6, 8);
+
+      return (
+        bulanLahir === bulanSekarang &&
+        hariLahir === hariSekarang
+      );
+    });
 
   /*
-   * Cek apakah hari dan bulan ulang tahun
-   * sama dengan hari ini.
+   * Proses setiap pegawai yang ulang tahun hari ini.
    */
-  if (
-    bulanLahir === bulanSekarang &&
-    hariLahir === hariSekarang
-  ) {
-    /*
-     * Kode unik berdasarkan NIP + tahun.
-     *
-     * Tujuannya agar notifikasi ulang tahun
-     * tidak dibuat berulang-ulang setiap Bell
-     * melakukan refresh.
-     */
-    const referensiKodeUlangTahun =
-      `ULTAH-${tahunSekarang}-${nip}`;
+  for (const pegawai of daftarUlangTahun) {
+    const nipUlangTahun =
+      pegawai.username;
 
-    const { data: notifikasiUlangTahun } =
+    const referensiKodeDasar =
+      `ULTAH-${tahunSekarang}-${nipUlangTahun}`;
+
+    /*
+     * Penerima:
+     * - Pegawai yang ulang tahun
+     * - Admin
+     * - Kaur Umum
+     */
+    const penerima = new Set<string>();
+
+    penerima.add(nipUlangTahun);
+
+    const { data: adminKaurUmum } =
       await supabaseAdmin
+        .from("pengguna")
+        .select("username, role")
+        .in("role", [
+          "Admin",
+          "Kaur Umum",
+        ]);
+
+    if (adminKaurUmum) {
+      for (const penerimaData of adminKaurUmum) {
+        if (penerimaData.username) {
+          penerima.add(
+            penerimaData.username
+          );
+        }
+      }
+    }
+
+    /*
+     * Buat notifikasi untuk setiap penerima.
+     */
+    for (const nipPenerima of penerima) {
+      const referensiKode =
+        `${referensiKodeDasar}-${nipPenerima}`;
+
+      const {
+        data: notifikasiSudahAda,
+        error: cekError,
+      } = await supabaseAdmin
         .from("notifikasi")
         .select("id")
         .eq(
           "nip_penerima",
-          nip
+          nipPenerima
         )
         .eq(
           "referensi_kode",
-          referensiKodeUlangTahun
+          referensiKode
         )
         .maybeSingle();
 
-    /*
-     * Jika belum ada, buat notifikasi.
-     */
-    if (!notifikasiUlangTahun) {
-      const { error: errorUlangTahun } =
-        await supabaseAdmin
-          .from("notifikasi")
-          .insert({
-            nip_penerima: nip,
-            judul: "🎂 Selamat Ulang Tahun",
-            pesan: `Selamat ulang tahun, ${pengguna.nama}. Semoga senantiasa diberikan kesehatan, kebahagiaan, dan kesuksesan dalam menjalankan tugas.`,
-        tipe: "ulang_tahun",
-            dibaca: false,
-            referensi_id: null,
-            referensi_kode:
-              referensiKodeUlangTahun,
-          });
-
-      if (errorUlangTahun) {
+      if (cekError) {
         console.error(
-          "ERROR BUAT NOTIFIKASI ULANG TAHUN:",
-          errorUlangTahun
+          "ERROR CEK NOTIFIKASI ULANG TAHUN:",
+          cekError
         );
+        continue;
+      }
+
+      if (!notifikasiSudahAda) {
+        const { error: insertError } =
+          await supabaseAdmin
+            .from("notifikasi")
+            .insert({
+              nip_penerima:
+                nipPenerima,
+              judul:
+                "🎂 Ulang Tahun Pegawai",
+              pesan:
+                `Hari ini adalah ulang tahun ${pegawai.nama}. Semoga senantiasa diberikan kesehatan, kebahagiaan, dan kesuksesan dalam menjalankan tugas.`,
+              tipe:
+                "ulang_tahun",
+              dibaca: false,
+              referensi_id: null,
+              referensi_kode:
+                referensiKode,
+            });
+
+        if (insertError) {
+          console.error(
+            "ERROR BUAT NOTIFIKASI ULANG TAHUN:",
+            insertError
+          );
+        }
       }
     }
   }
