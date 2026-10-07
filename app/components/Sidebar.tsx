@@ -65,7 +65,8 @@ const menu: MenuItem[] = [
     href: "/absensi-finger",
     icon: Fingerprint,
     roles: [
-      "Pengelola Kepegawaian",
+      "APK", "Pelaksana", "PK MADYA",
+
     ],
   },
   {
@@ -172,6 +173,8 @@ const menu: MenuItem[] = [
       "PK Pertama",
       "APK",
       "Arsiparis",
+      "Pelaksana", "PK MADYA",
+
     ],
   },
 
@@ -215,6 +218,8 @@ const menu: MenuItem[] = [
       "PK Pertama",
       "APK",
       "Arsiparis",
+      "Pelaksana", "PK MADYA",
+
     ],
   },
 
@@ -249,6 +254,8 @@ const menu: MenuItem[] = [
       "APK",
       "Arsiparis",
       "PPNPN",
+      "Pelaksana", "PK MADYA",
+
     ],
   },
 {
@@ -348,6 +355,8 @@ const menu: MenuItem[] = [
       "APK",
       "Arsiparis",
       "PPNPN",
+      "Pelaksana", "PK MADYA",
+
     ],
   },
 
@@ -403,6 +412,8 @@ const menu: MenuItem[] = [
       "Arsiparis",
       "Pengelola Kepegawaian",
       "PPNPN",
+      "Pelaksana",
+      "PK MADYA",
     ],
   },
 
@@ -448,6 +459,8 @@ const menu: MenuItem[] = [
       "Arsiparis",
       "Pengelola Kepegawaian",
       "PPNPN",
+      "Pelaksana", "PK MADYA",
+
     ],
   },
 
@@ -481,6 +494,8 @@ const menu: MenuItem[] = [
       "Admin",
       "Pengelola Kepegawaian",
       "PPNPN",
+      "Pelaksana",
+      "PK MADYA",
     ],
   },
 
