@@ -787,7 +787,7 @@ export default function Sidebar() {
      BACA SATU NOTIFIKASI
      ========================================================= */
 
- const bacaNotifikasi = async (
+const bacaNotifikasi = async (
   item: Notifikasi
 ) => {
   if (!menerimaNotifikasi) {
@@ -795,9 +795,9 @@ export default function Sidebar() {
   }
 
   try {
-    // Tandai sudah dibaca
-    if (!item.dibaca) {
-      await fetch("/api/notifikasi", {
+    const response = await fetch(
+      "/api/notifikasi",
+      {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -805,17 +805,23 @@ export default function Sidebar() {
         body: JSON.stringify({
           id: item.id,
         }),
-      });
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      console.error(
+        "Gagal menghapus notifikasi:",
+        result
+      );
+      return;
     }
 
+    // Hapus langsung dari tampilan
     setNotifikasi((prev) =>
-      prev.map((n) =>
-        n.id === item.id
-          ? {
-              ...n,
-              dibaca: true,
-            }
-          : n
+      prev.filter(
+        (n) => n.id !== item.id
       )
     );
 
@@ -840,7 +846,7 @@ export default function Sidebar() {
       );
     }
 
-    // Notifikasi lain, misalnya ULTah,
+    // Notifikasi lain, misalnya ULTAH,
     // tidak melakukan navigasi.
 
     setBukaNotifikasi(false);
@@ -892,12 +898,8 @@ export default function Sidebar() {
           return;
         }
 
-        setNotifikasi((prev) =>
-          prev.map((item) => ({
-            ...item,
-            dibaca: true,
-          }))
-        );
+     // Hapus semua notifikasi langsung dari tampilan
+setNotifikasi([]);
       } catch (error) {
         console.error(
           "ERROR BACA SEMUA:",
