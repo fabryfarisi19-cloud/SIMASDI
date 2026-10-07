@@ -48,21 +48,30 @@ const daftarJabatan = [
   "Kasubsi Registrasi Dewasa",
   "Kasubsi Bimker Anak",
   "Kasubbag Tata Usaha",
+
+  // Jabatan yang sering muncul pada PDF
+  "Pengelola Layanan Peng.",
+  "Pengadministrasi Perk.",
+
   "Pengelola Lay. Pengadaan",
   "Pengolah Data dan Inform.",
   "Penata Layanan Op.",
   "Pengadministrasi Perkant.",
+  "Pengadministrasi Umum",
+
   "Arsiparis Pertama",
   "Petugas Jaga",
+  "Penjaga Tahanan",
+
   "PK Pertama",
   "PK Muda",
   "PK Madya",
+
   "Kasi BKA",
   "Kasi BKD",
   "Kabapas",
   "Kaur Umum",
 ];
-
 function bersihkanTeks(teks: string) {
   return teks
     .replace(/\r/g, "")
@@ -266,7 +275,12 @@ export async function POST(request: NextRequest) {
     }
 
     const hasil = ekstrakJadwal(teks);
-
+console.log(
+  "CEK PETUGAS TRIO:",
+  hasil.filter((item) =>
+    item.nama_petugas.toLowerCase().includes("trio")
+  )
+);
     console.log(
       "IMPORT JADWAL APEL - jumlah data:",
       hasil.length
