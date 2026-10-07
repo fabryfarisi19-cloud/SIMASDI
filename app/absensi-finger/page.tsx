@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Absensi = {
   id: string;
@@ -21,6 +22,7 @@ type Lokasi = {
 };
 
 export default function AbsensiFingerPage() {
+  const router = useRouter();
   const [absensi, setAbsensi] = useState<Absensi | null>(null);
   const [lokasi, setLokasi] = useState<Lokasi | null>(null);
 
@@ -116,6 +118,7 @@ setAbsensi(result.data || null);
         setLoading(false);
       },
       {
+    
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 0,
@@ -213,6 +216,13 @@ setAbsensi(result.data || null);
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-6">
+            <button
+    type="button"
+   onClick={() => router.push("/dashboard")}
+    className="mb-4 rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+  >
+    ← Kembali ke Dashboard
+  </button>
           <h1 className="text-2xl font-bold text-slate-800">
             Absensi Finger
           </h1>
