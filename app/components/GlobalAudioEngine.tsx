@@ -458,9 +458,8 @@ export default function GlobalAudioEngine() {
 
     const kunci0800 =
       `${tanggal}-08:00`;
-
-    const kunci1000 =
-      `${tanggal}-10:00`;
+const kunci0700 =
+  `${tanggal}-07:00`;
 
     // =======================================================
     // 07:50 - NAMA PETUGAS
@@ -516,25 +515,24 @@ export default function GlobalAudioEngine() {
       await pengumuman0800();
     }
 
-    // =======================================================
-    // 10:00 - INDONESIA RAYA
-    // =======================================================
-    if (
-      waktuSekarang === "10:00" &&
-      sudahDiputarRef.current.p1000 !==
-        kunci1000
-    ) {
-      sudahDiputarRef.current.p1000 =
-        kunci1000;
+ // =======================================================
+// 07:00 - INDONESIA RAYA
+// =======================================================
+if (
+  waktuSekarang === "07:00" &&
+  sudahDiputarRef.current.p0700 !==
+    kunci0700
+) {
+  sudahDiputarRef.current.p0700 =
+    kunci0700;
 
-      console.log(
-        "🇮🇩 Menjalankan Indonesia Raya 10:00"
-      );
+  console.log(
+    "🇮🇩 Menjalankan Indonesia Raya 07:00"
+  );
 
-      await putarIndonesiaRaya();
-    }
-  }
-
+  await putarIndonesiaRaya();
+}
+}
   // =========================================================
   // AKTIFKAN AUDIO
   // =========================================================
