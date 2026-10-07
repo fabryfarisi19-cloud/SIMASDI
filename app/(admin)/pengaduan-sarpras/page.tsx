@@ -173,9 +173,9 @@ export default function PengaduanSarprasPage() {
   const [showDetail, setShowDetail] = useState(false);
 
   const [selected, setSelected] = useState<Pengaduan | null>(null);
-
-  const [kategori, setKategori] = useState("");
-  const [lokasi, setLokasi] = useState("");
+const [kategori, setKategori] = useState("");
+const [tanggal, setTanggal] = useState("");
+const [lokasi, setLokasi] = useState("");
   const [uraian, setUraian] = useState("");
 
   const [foto, setFoto] = useState<File | null>(null);
@@ -382,6 +382,7 @@ const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
 
   function resetForm() {
     setKategori("");
+    setTanggal("");
     setLokasi("");
     setUraian("");
     removeFoto();
@@ -444,7 +445,10 @@ const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
       alert("Kategori wajib dipilih.");
       return;
     }
-
+if (!tanggal) {
+  alert("Tanggal pengaduan wajib diisi.");
+  return;
+}
     if (!lokasi.trim()) {
       alert("Lokasi wajib diisi.");
       return;
@@ -470,10 +474,11 @@ const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
 
       const fotoUrl = await uploadFoto(foto);
 
-      const payload = {
-        kategori,
-        lokasi: lokasi.trim(),
-        uraian: uraian.trim(),
+     const payload = {
+  kategori,
+  tanggal,
+  lokasi: lokasi.trim(),
+  uraian: uraian.trim(),
         foto_url: fotoUrl,
         pengguna_id:
           user.penggunaId !== undefined
@@ -1034,7 +1039,20 @@ const bolehLihatSemua = ROLE_LIHAT_SEMUA.includes(role);
                     />
                   </div>
                 </div>
+{/* TANGGAL */}
+<div>
+  <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+    Tanggal Pengaduan
+  </label>
 
+  <input
+    type="date"
+    value={tanggal}
+    onChange={(e) => setTanggal(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+    required
+  />
+</div>
                 {/* LOKASI */}
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">

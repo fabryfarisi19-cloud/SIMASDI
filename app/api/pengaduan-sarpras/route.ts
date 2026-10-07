@@ -415,13 +415,17 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    const kategori = String(
-      body?.kategori || ""
-    ).trim();
+   const kategori = String(
+  body?.kategori || ""
+).trim();
 
-    const lokasi = String(
-      body?.lokasi || ""
-    ).trim();
+const tanggal = String(
+  body?.tanggal || ""
+).trim();
+
+const lokasi = String(
+  body?.lokasi || ""
+).trim();
 
     const uraian = String(
       body?.uraian || ""
@@ -458,7 +462,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
+if (!tanggal) {
+  return NextResponse.json(
+    {
+      success: false,
+      message:
+        "Tanggal pengaduan wajib diisi.",
+    },
+    { status: 400 }
+  );
+}
     if (!lokasi) {
       return NextResponse.json(
         {
@@ -522,6 +535,7 @@ export async function POST(request: Request) {
         .insert({
           nomor_laporan:
             nomorLaporan,
+  tanggal,
 
           /*
            * pengguna.id pada tabel pengguna
