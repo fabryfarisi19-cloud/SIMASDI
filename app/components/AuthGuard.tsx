@@ -57,7 +57,15 @@ export default function AuthGuard({
         return;
       }
     }
-
+// Rekap Kehadiran hanya untuk Pengelola Kepegawaian
+if (
+  pathname === "/rekap-kehadiran" &&
+  role !== "Pengelola Kepegawaian"
+) {
+  setAuthorized(false);
+  router.replace("/dashboard");
+  return;
+}
     // Petugas tidak boleh membuka halaman Pengguna
     if (
       pathname === "/pengguna" &&

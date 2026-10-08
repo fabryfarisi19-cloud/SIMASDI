@@ -40,13 +40,26 @@ type Statistik = {
 export default function RekapKehadiranPage() {
   const sekarang = new Date();
 
-  const [bulan, setBulan] = useState(
-    String(sekarang.getMonth() + 1).padStart(2, "0")
-  );
+const formatterIndonesia = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Jakarta",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
 
-  const [tahun, setTahun] = useState(
-    String(sekarang.getFullYear())
-  );
+const tanggalIndonesia = formatterIndonesia.formatToParts(sekarang);
+
+const tahunIndonesia =
+  tanggalIndonesia.find((item) => item.type === "year")?.value ||
+  String(sekarang.getFullYear());
+
+const bulanIndonesia =
+  tanggalIndonesia.find((item) => item.type === "month")?.value ||
+  String(sekarang.getMonth() + 1).padStart(2, "0");
+
+const [bulan, setBulan] = useState(bulanIndonesia);
+
+const [tahun, setTahun] = useState(tahunIndonesia);
 
   const [data, setData] = useState<RekapItem[]>([]);
   const [statistik, setStatistik] = useState<Statistik>({
