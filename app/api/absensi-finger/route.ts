@@ -194,7 +194,19 @@ export async function POST(request: NextRequest) {
     const penggunaId =
       user.penggunaId ||
       user.id;
+const nip = String(user.username || "").trim();
 
+if (!NIP_ABSENSI_FINGER.includes(nip)) {
+  return NextResponse.json(
+    {
+      success: false,
+      code: "ABSENSI_NOT_ALLOWED",
+      message:
+        "Fitur Absen Finger sementara hanya diperuntukkan bagi pegawai yang telah ditetapkan.",
+    },
+    { status: 403 }
+  );
+}
     if (!penggunaId) {
       return NextResponse.json(
         {

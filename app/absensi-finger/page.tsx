@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
+const AbsensiMap = dynamic(
+  () => import("@/app/components/AbsensiMap"),
+  { ssr: false }
+);
 type Absensi = {
   id: string;
   tanggal: string;
@@ -307,7 +312,12 @@ setAbsensi(result.data || null);
             📍 Perbarui Lokasi
           </button>
         </div>
-
+{lokasi && (
+  <AbsensiMap
+    latitude={lokasi.latitude}
+    longitude={lokasi.longitude}
+  />
+)}
         {/* Pesan */}
         {pesan && (
           <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
