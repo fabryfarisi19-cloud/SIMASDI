@@ -36,6 +36,7 @@ import {
     BookUser,
       Fingerprint,
       ClipboardList,
+        Video,
 } from "lucide-react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -306,6 +307,13 @@ const menu: MenuItem[] = [
     icon: CalendarRange,
     roles: ["Admin"],
   },
+
+{
+  nama: "Video Informasi",
+  href: "/video-informasi",
+  icon: Video,
+  roles: ["Admin"],
+},
 
   {
     nama: "TV Apel",

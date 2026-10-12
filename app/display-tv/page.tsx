@@ -19,6 +19,40 @@ export default function DisplayTV() {
 const [menunggu, setMenunggu] = useState<WaitingQueue[]>([]);
 const [jam, setJam] = useState("");
 const [audioAktif, setAudioAktif] = useState(false);
+const [videoAktifUrl, setVideoAktifUrl] = useState("/videoanak1.mp4");
+
+useEffect(() => {
+  let masihAktif = true;
+
+  async function muatVideoAktif() {
+    try {
+      const response = await fetch("/api/video-aktif", {
+        cache: "no-store",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        return;
+      }
+
+      if (masihAktif) {
+        setVideoAktifUrl(
+          result.data?.url || "/videoanak1.mp4"
+        );
+      }
+    } catch (error) {
+      console.error("Gagal memuat video aktif:", error);
+    }
+  }
+
+  void muatVideoAktif();
+
+  return () => {
+    masihAktif = false;
+  };
+}, []);
+
   useEffect(() => {
     loadData();
 const timer = setInterval(() => {
@@ -157,7 +191,7 @@ const timer = setInterval(() => {
 <div className="relative bg-black flex items-center justify-center">
 
           <video
-            src="/video-5s.mp4"
+           src={videoAktifUrl}
             autoPlay
             muted
             loop

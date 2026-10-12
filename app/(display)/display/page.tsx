@@ -33,13 +33,67 @@ export default function DisplayTV() {
   const [blink, setBlink] = useState(false);
   const [lastCalled, setLastCalled] = useState("");
   const [audioAktif, setAudioAktif] = useState(false);
+  const [videoAktifUrl, setVideoAktifUrl] = useState("/videoanak1.mp4");
  
 
  
   const videoInfoRef = useRef<HTMLVideoElement | null>(null);
 
+const videoSedangDiputarRef = useRef(false);
+
+useEffect(() => {
+  let masihAktif = true;
+
+  async function muatVideoAktif() {
+    try {
+      const response = await fetch("/api/video-aktif", {
+        cache: "no-store",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        return;
+      }
+
+      if (masihAktif) {
+        setVideoAktifUrl(
+          result.data?.url || "/videoanak1.mp4"
+        );
+      }
+    } catch (error) {
+      console.error("Gagal memuat video aktif:", error);
+    }
+  }
+
+  void muatVideoAktif();
+
+  const intervalVideo = setInterval(() => {
+    void muatVideoAktif();
+  }, 10000);
+
+  return () => {
+    masihAktif = false;
+    clearInterval(intervalVideo);
+  };
+}, []);
+
 
   const audioAktifRef = useRef(false);
+
+useEffect(() => {
+  const video = videoInfoRef.current;
+  if (!video) return;
+
+  video.muted = !audioAktifRef.current;
+  video.volume = 1;
+
+  if (audioAktifRef.current && !sedangPanggilRef.current) {
+    video.play().catch((error) => {
+      console.error("Gagal melanjutkan video dengan suara:", error);
+    });
+  }
+}, [videoAktifUrl]);
 
   /*
    * Menyimpan nomor panggilan terakhir.
@@ -69,48 +123,58 @@ export default function DisplayTV() {
   // AKTIFKAN AUDIO
   // =========================================================
 
-  const aktifkanAudio = async () => {
-    console.log("🔊 AKTIFKAN AUDIO");
+ 
+const aktifkanAudio = async () => {
+  console.log("🔊 AKTIFKAN AUDIO");
+
+  const video = videoInfoRef.current;
+
+  if (!video) {
+    console.error("❌ Elemen video belum tersedia");
+    return;
+  }
+
+  if (sedangPanggilRef.current) {
+    console.log("⏸️ Panggilan antrean sedang berlangsung");
+    return;
+  }
+
+  try {
+    // Aktifkan suara video secara langsung.
+    video.muted = false;
+    video.volume = 1;
+
+    // Mulai atau lanjutkan video dari klik pengguna.
+   await video.play();
+
+console.log("🔎 Pemeriksaan audio video:", {
+  muted: video.muted,
+  volume: video.volume,
+  paused: video.paused,
+  currentTime: video.currentTime,
+ audioBytes: (video as HTMLVideoElement & {
+  webkitAudioDecodedByteCount?: number;
+}).webkitAudioDecodedByteCount,
+  src: video.currentSrc,
+});
 
     setAudioAktif(true);
     audioAktifRef.current = true;
 
-    /*
-     * Unlock audio browser melalui interaksi pengguna.
-     */
-    try {
-      const audio = new Audio();
+    console.log("✅ Video berjalan dengan suara");
+  } catch (error) {
+    console.error(
+      "❌ Video gagal diputar dengan suara:",
+      error
+    );
 
-      audio.volume = 0;
+    setAudioAktif(false);
+    audioAktifRef.current = false;
+  }
+};
 
-      await audio.play();
 
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = 1;
-
-      console.log("✅ AUDIO BROWSER BERHASIL DIUNLOCK");
-    } catch (error) {
-      console.log("ℹ️ Unlock audio:", error);
-    }
-
-    /*
-     * Aktifkan kembali video informasi.
-     */
-    setTimeout(async () => {
-      try {
-        await videoInfoRef.current?.play();
-
-        console.log("▶️ Video informasi berjalan");
-      } catch (error) {
-        console.error(
-          "❌ Video informasi gagal diputar:",
-          error
-        );
-      }
-    }, 300);
-  };
-
+ 
   // =========================================================
   // TING TONG
   // =========================================================
@@ -312,9 +376,14 @@ export default function DisplayTV() {
       /*
        * Hentikan video informasi sementara.
        */
-      if (videoInfoRef.current) {
-        videoInfoRef.current.pause();
-      }
+   
+if (videoInfoRef.current) {
+  videoSedangDiputarRef.current =
+    !videoInfoRef.current.paused;
+
+  videoInfoRef.current.pause();
+}
+
 
       /*
        * 1. Ting-tong
@@ -352,24 +421,29 @@ export default function DisplayTV() {
        */
       await putarTTS(teks);
 
-      /*
-       * 5. Jalankan kembali video.
-       */
-    if (videoInfoRef.current) {
-        try {
-          await videoInfoRef.current.play();
+    /*
+ * 5. Jalankan kembali video hanya jika
+ * sebelumnya memang sedang diputar.
+ */
+if (
+  videoSedangDiputarRef.current &&
+  videoInfoRef.current
+) {
+  try {
+    await videoInfoRef.current.play();
 
-          console.log(
-            "▶️ Video informasi dilanjutkan"
-          );
-        } catch (error) {
-          console.error(
-            "❌ Video gagal dilanjutkan:",
-            error
-          );
-        }
-      }
+    console.log(
+      "▶️ Video informasi dilanjutkan"
+    );
+  } catch (error) {
+    console.error(
+      "❌ Video gagal dilanjutkan:",
+      error
+    );
+  }
+}
 
+videoSedangDiputarRef.current = false;
       console.log(
         "✅ PANGGILAN SELESAI"
       );
@@ -390,9 +464,9 @@ export default function DisplayTV() {
   // LOAD DATA
   // =========================================================
 
-  async function loadData() {
-    const hariIni = getHariIni();
+  const hariIni = getHariIni();
 
+  async function loadData() {
     // =======================================================
     // SETTING SIANTAR
     // =======================================================
@@ -470,7 +544,7 @@ export default function DisplayTV() {
          */
         setBlink(true);
 
-        setTimeout(() => {
+             setTimeout(() => {
           setBlink(false);
         }, 3000);
 
@@ -911,6 +985,17 @@ export default function DisplayTV() {
 
         <div className="col-span-6 flex flex-col bg-[#0B1F4D] border-l-2 border-white/20">
 
+{/* TOMBOL AKTIFKAN AUDIO */}
+<div className="flex justify-center bg-blue-950 px-4 py-3">
+ <button
+  type="button"
+  onClick={() => void aktifkanAudio()}
+  className="cursor-pointer rounded-xl bg-yellow-400 px-6 py-3 text-lg font-bold text-black hover:bg-yellow-300"
+>
+  {audioAktif ? "🔊 Audio Aktif" : "🔊 Aktifkan Audio"}
+</button>
+</div>
+
           {/* HEADER VIDEO */}
 
           <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-center py-5 border-b border-white/30">
@@ -930,16 +1015,16 @@ export default function DisplayTV() {
 
           <div className="flex-1 overflow-hidden px-2 pb-2 pt-2">
 
-            <video
-              ref={videoInfoRef}
-              src="/videoanak1.mp4"
-              autoPlay
-              muted={false}
-              loop
-              playsInline
-              controls={true}
-              className="w-full h-full object-cover rounded-xl bg-blue-900"
-            />
+          <video
+  ref={videoInfoRef}
+  src={videoAktifUrl}
+  autoPlay
+  muted={false}
+  loop
+  playsInline
+  controls={true}
+  className="w-full h-full object-cover rounded-xl bg-blue-900"
+/>
 
           </div>
 
