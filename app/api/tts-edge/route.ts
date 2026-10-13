@@ -3,7 +3,8 @@ import { EdgeTTS } from "node-edge-tts";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
-
+export const runtime = "nodejs";
+export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   try {
     const { text } = await req.json();
