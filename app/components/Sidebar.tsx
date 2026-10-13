@@ -516,6 +516,42 @@ const menu: MenuItem[] = [
       "Kaur Keuangan",
     ],
   },
+  
+  {
+    nama: "Pengajuan Dinas & Cuti",
+    href: "/pengajuan-kepegawaian",
+    icon: FileText,
+    roles: [
+     "Kabapas",
+      "Kaur Keuangan",
+      "Kasubag TU",
+      "Kasi BKA",
+      "Kasi BKD",
+      "Kasubsi Bimker Anak",
+      "Kasubsi Bimker Dewasa",
+      "Kasubsi Registrasi Dewasa",
+      "Kasubsi Bimkemas Anak",
+      "Kasubsi Bimkemas Dewasa",
+      "Kasubsi Registrasi Anak",
+      "Kaur Kepegawaian",
+      "Kaur Umum",
+      "Admin Umum",
+      "Staf",
+      "Pegawai",
+      "Admin Keuangan",
+      "PK Madya",
+      "PK Muda",
+      "PK Pertama",
+      "APK",
+      "Arsiparis",
+      "Admin",
+      "Pengelola Kepegawaian",
+      "PPNPN",
+      "Pelaksana",
+      "PK MADYA",
+    ],
+  },
+
 ];
 
 export default function Sidebar() {
