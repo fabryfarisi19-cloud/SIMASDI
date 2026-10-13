@@ -985,16 +985,6 @@ videoSedangDiputarRef.current = false;
 
         <div className="col-span-6 flex flex-col bg-[#0B1F4D] border-l-2 border-white/20">
 
-{/* TOMBOL AKTIFKAN AUDIO */}
-<div className="flex justify-center bg-blue-950 px-4 py-3">
- <button
-  type="button"
-  onClick={() => void aktifkanAudio()}
-  className="cursor-pointer rounded-xl bg-yellow-400 px-6 py-3 text-lg font-bold text-black hover:bg-yellow-300"
->
-  {audioAktif ? "🔊 Audio Aktif" : "🔊 Aktifkan Audio"}
-</button>
-</div>
 
           {/* HEADER VIDEO */}
 
