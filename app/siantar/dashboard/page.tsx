@@ -51,7 +51,7 @@ async function loadData() {
   });
 }    
   return (
-    <main className="p-8">
+ <main className="p-8 md:pl-16 lg:pl-20">
       <HeaderLaporan title="Dashboard SIAP" />
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">

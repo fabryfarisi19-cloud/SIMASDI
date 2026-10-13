@@ -28,7 +28,7 @@ export default function SiantarLayout({
         className={
           hideSidebar
             ? "min-h-screen"
-            : "min-h-screen ml-64"
+            : "min-h-screen ml-72"
         }
       >
         {children}
