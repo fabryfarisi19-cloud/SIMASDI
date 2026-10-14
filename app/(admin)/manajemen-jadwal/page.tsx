@@ -1218,23 +1218,30 @@ const loadJadwalPublikasi = async () => {
   setLoadingPublikasi(true);
 
   try {
-    const { data, error } = await supabase
-      .from("jadwal_piket_publikasi")
-      .select(
-        "id, tanggal, fotografer, videografer, pembuat_konten_1, pembuat_konten_2"
-      )
-      .gte("tanggal", "2026-10-01")
-      .lte("tanggal", "2026-10-31")
-      .order("tanggal", { ascending: true });
+    const response = await fetch(
+      "/api/jadwal-piket-publikasi",
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
 
-    if (error) {
-      console.error("Gagal memuat jadwal publikasi:", error);
+    const hasil = await response.json();
+
+    if (!response.ok || !hasil.success) {
+      console.error(
+        "Gagal memuat jadwal publikasi:",
+        hasil.error
+      );
       return;
     }
 
-    setJadwalPublikasi(data ?? []);
+    setJadwalPublikasi(hasil.data ?? []);
   } catch (error) {
-    console.error("Kesalahan memuat jadwal publikasi:", error);
+    console.error(
+      "Kesalahan memuat jadwal publikasi:",
+      error
+    );
   } finally {
     setLoadingPublikasi(false);
   }
