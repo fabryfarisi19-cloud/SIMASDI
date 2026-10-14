@@ -86,6 +86,16 @@ type PelayananPublikPreview = {
   pengawas: string;
   koordinator: string;
 };
+
+type JadwalPiketPublikasi = {
+  id: number;
+  tanggal: string;
+  fotografer: string | null;
+  videografer: string | null;
+  pembuat_konten_1: string | null;
+  pembuat_konten_2: string | null;
+};
+
 // ============================================================
 // KONSTANTA
 // ============================================================
@@ -1096,6 +1106,13 @@ const [formPelayanan, setFormPelayanan] = useState({
 });
 
 const [savingPelayanan, setSavingPelayanan] = useState(false);
+
+const [jadwalPublikasi, setJadwalPublikasi] =
+  useState<JadwalPiketPublikasi[]>([]);
+
+const [loadingPublikasi, setLoadingPublikasi] =
+  useState(false);
+
 const [filePdfPelayanan, setFilePdfPelayanan] =
   useState<File | null>(null);
 
@@ -1145,6 +1162,9 @@ const loadJadwalPelayanan = async () => {
 useEffect(() => {
   loadJadwalPelayanan();
 }, []);
+
+
+
 const simpanJadwalPelayanan = async () => {
   if (!formPelayanan.tanggal) {
     alert("Tanggal wajib diisi.");
@@ -1193,6 +1213,35 @@ const simpanJadwalPelayanan = async () => {
     setSavingPelayanan(false);
   }
 };
+
+const loadJadwalPublikasi = async () => {
+  setLoadingPublikasi(true);
+
+  try {
+    const { data, error } = await supabase
+      .from("jadwal_piket_publikasi")
+      .select(
+        "id, tanggal, fotografer, videografer, pembuat_konten_1, pembuat_konten_2"
+      )
+      .gte("tanggal", "2026-10-01")
+      .lte("tanggal", "2026-10-31")
+      .order("tanggal", { ascending: true });
+
+    if (error) {
+      console.error("Gagal memuat jadwal publikasi:", error);
+      return;
+    }
+
+    setJadwalPublikasi(data ?? []);
+  } catch (error) {
+    console.error("Kesalahan memuat jadwal publikasi:", error);
+  } finally {
+    setLoadingPublikasi(false);
+  }
+};
+useEffect(() => {
+  loadJadwalPublikasi();
+}, []);
   // ==========================================================
   // PILIH / BACA PDF
   // ==========================================================
@@ -2275,6 +2324,96 @@ if (jumlah < hasilPreview.length) {
           )}
               </div>
       </div>
+      
+      {/* =====================================================
+          JADWAL PIKET PUBLIKASI OKTOBER 2026
+      ====================================================== */}
+
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex items-center gap-3 mb-2">
+          <CalendarDays className="text-blue-700" size={24} />
+
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">
+              Jadwal Piket Publikasi Oktober 2026
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Pembaharuan Piket Pembuatan Berita, Infografis,
+              dan Videografis Bulan Oktober 2026.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          {loadingPublikasi ? (
+            <div className="py-10 flex items-center justify-center gap-3 text-blue-600">
+              <Loader2 size={22} className="animate-spin" />
+              <span>Memuat jadwal piket publikasi...</span>
+            </div>
+          ) : jadwalPublikasi.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+              <CalendarDays
+                size={36}
+                className="mx-auto text-gray-400 mb-3"
+              />
+              <p className="font-semibold text-gray-600">
+                Data jadwal publikasi Oktober 2026 belum tersedia
+                atau belum dapat dibaca dari database.
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left">No.</th>
+                      <th className="px-4 py-3 text-left">Tanggal</th>
+                      <th className="px-4 py-3 text-left">Fotografer</th>
+                      <th className="px-4 py-3 text-left">Videografer</th>
+                      <th className="px-4 py-3 text-left">
+                        Pembuat Konten 1*
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        Pembuat Konten 2*
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {jadwalPublikasi.map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className="border-t hover:bg-blue-50"
+                      >
+                        <td className="px-4 py-3 text-gray-500">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap font-semibold">
+                          {formatTanggalIndonesia(item.tanggal)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {item.fotografer || "-"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {item.videografer || "-"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {item.pembuat_konten_1 || "-"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {item.pembuat_konten_2 || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 
