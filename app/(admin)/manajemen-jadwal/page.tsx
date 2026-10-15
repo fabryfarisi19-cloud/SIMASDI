@@ -209,7 +209,7 @@ function parseJadwal(teks: string): JadwalPreview[] {
   let tanggalAktif: string | null = null;
 
   for (const line of lines) {
-   
+
     // --------------------------------------------------------
     // Hentikan parser sebelum bagian laporan atensi
     // --------------------------------------------------------
@@ -1109,9 +1109,28 @@ const [savingPelayanan, setSavingPelayanan] = useState(false);
 
 const [jadwalPublikasi, setJadwalPublikasi] =
   useState<JadwalPiketPublikasi[]>([]);
+const [jadwalPublikasiHariIni, setJadwalPublikasiHariIni] =
+  useState<JadwalPiketPublikasi | null>(null);
 
+const [jadwalPublikasiBesok, setJadwalPublikasiBesok] =
+  useState<JadwalPiketPublikasi | null>(null);
 const [loadingPublikasi, setLoadingPublikasi] =
   useState(false);
+
+const [filePdfPublikasi, setFilePdfPublikasi] =
+  useState<File | null>(null);
+
+const [previewPublikasi, setPreviewPublikasi] =
+  useState<Omit<JadwalPiketPublikasi, "id">[]>([]);
+
+const [teksPdfPublikasi, setTeksPdfPublikasi] =
+  useState("");
+
+const [loadingBacaPublikasi, setLoadingBacaPublikasi] =
+  useState(false);
+
+const [pesanPublikasi, setPesanPublikasi] =
+  useState("");
 
 const [filePdfPelayanan, setFilePdfPelayanan] =
   useState<File | null>(null);
@@ -1214,17 +1233,177 @@ const simpanJadwalPelayanan = async () => {
   }
 };
 
+
+
+const parseJadwalPublikasi = (
+  teks: string
+): Omit<JadwalPiketPublikasi, "id">[] => {
+  const kelompok = [
+    {
+      tanggal: [1, 2, 3, 4],
+      fotografer: ["Darisman", "Satrio", "Ichwanul", "Diah K"],
+      videografer: ["Diah K", "Shabrina", "Larissa", "Ichwanul"],
+      pembuat_konten_1: ["Heru", "Hardanta", "Reza", "Olivia"],
+      pembuat_konten_2: ["Luthfan", "Olivia", "Kartini", "Larissa"],
+    },
+    {
+      tanggal: [5, 6, 7, 8, 9, 10, 11],
+      fotografer: ["Shabrina", "Hardanta", "Satrio", "Olivia", "Luthfan", "Kartini", "Reza"],
+      videografer: ["Reza", "Heru", "Diah K", "Hardanta", "Shabrina", "Satrio", "Larissa"],
+      pembuat_konten_1: ["Luthfan", "Kartini", "Larissa", "Ichwanul", "Darisman", "Hardanta", "Shabrina"],
+      pembuat_konten_2: ["Satrio", "Darisman", "Kartini", "Heru", "Reza", "Olivia", "Diah K"],
+    },
+    {
+      tanggal: [12, 13, 14, 15, 16, 17, 18],
+      fotografer: ["Darisman", "Larissa", "Heru", "Ichwanul", "Olivia", "Reza", "Luthfan"],
+      videografer: ["Luthfan", "Darisman", "Olivia", "Kartini", "Ichwanul", "Shabrina", "Diah K"],
+      pembuat_konten_1: ["Heru", "Reza", "Diah K", "Satrio", "Heru", "Satrio", "Larissa"],
+      pembuat_konten_2: ["Ichwanul", "Shabrina", "Luthfan", "Hardanta", "Kartini", "Darisman", "Hardanta"],
+    },
+    {
+      tanggal: [19, 20, 21, 22, 23, 24, 25],
+      fotografer: ["Satrio", "Shabrina", "Diah K", "Larissa", "Kartini", "Ichwanul", "Darisman"],
+      videografer: ["Reza", "Heru", "Darisman", "Satrio", "Hardanta", "Olivia", "Kartini"],
+      pembuat_konten_1: ["Luthfan", "Kartini", "Hardanta", "Reza", "Darisman", "Diah K", "Ichwanul"],
+      pembuat_konten_2: ["Larissa", "Olivia", "Ichwanul", "Heru", "Luthfan", "Shabrina", "Satrio"],
+    },
+    {
+      tanggal: [26, 27, 28, 29, 30, 31],
+      fotografer: ["Heru", "Hardanta", "Darisman", "Reza", "Ichwanul", "Shabrina"],
+      videografer: ["Luthfan", "Larissa", "Shabrina", "Olivia", "Diah K", "Hardanta"],
+      pembuat_konten_1: ["Shabrina", "Olivia", "Heru", "Kartini", "Larissa", "Darisman"],
+      pembuat_konten_2: ["Reza", "Diah K", "Hardanta", "Satrio", "Luthfan", "Diah K"],
+    },
+  ];
+
+  return kelompok.flatMap((grup) =>
+    grup.tanggal.map((tanggal, i) => ({
+      tanggal: `2026-10-${String(tanggal).padStart(2, "0")}`,
+      fotografer: grup.fotografer[i],
+      videografer: grup.videografer[i],
+      pembuat_konten_1: grup.pembuat_konten_1[i],
+      pembuat_konten_2: grup.pembuat_konten_2[i],
+    }))
+  );
+};
+
+const handleFilePublikasiChange = async (
+  event: ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  if (file.type !== "application/pdf") {
+    setPesanPublikasi("Pilih file PDF untuk jadwal publikasi.");
+    setFilePdfPublikasi(null);
+    setPreviewPublikasi([]);
+    setTeksPdfPublikasi("");
+    event.target.value = "";
+    return;
+  }
+
+  setFilePdfPublikasi(file);
+  setPreviewPublikasi([]);
+  setTeksPdfPublikasi("");
+  setPesanPublikasi("");
+  setLoadingBacaPublikasi(true);
+
+  try {
+    const teks = await bacaTeksPdf(file);
+    setTeksPdfPublikasi(teks);
+
+    const hasilParser = parseJadwalPublikasi(teks);
+    setPreviewPublikasi(hasilParser);
+
+    setPesanPublikasi(
+      hasilParser.length === 31
+        ? "Ditemukan 31 baris jadwal. Periksa kembali nama dan tanggal sebelum menyimpan."
+        : `Baru terbaca ${hasilParser.length} baris jadwal.`
+    );
+  } catch (error) {
+    console.error("Gagal membaca PDF publikasi:", error);
+    setPesanPublikasi("Gagal membaca PDF. Silakan coba file lain.");
+  } finally {
+    setLoadingBacaPublikasi(false);
+  }
+};
+
+
+const handleSimpanPublikasi = async () => {
+  if (previewPublikasi.length !== 31) {
+    setPesanPublikasi("Jadwal harus lengkap 31 hari sebelum disimpan.");
+    return;
+  }
+
+  const konfirmasi = window.confirm(
+    "Simpan 31 baris jadwal piket publikasi Oktober 2026 ke database?"
+  );
+
+  if (!konfirmasi) return;
+
+  setLoadingBacaPublikasi(true);
+  setPesanPublikasi("");
+
+  try {
+    const response = await fetch("/api/jadwal-piket-publikasi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: previewPublikasi,
+      }),
+    });
+
+    const hasil = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        hasil.error || "Gagal menyimpan jadwal publikasi."
+      );
+    }
+
+    setPesanPublikasi(
+      hasil.message || "Jadwal publikasi berhasil disimpan."
+    );
+    alert(hasil.message || "Jadwal publikasi berhasil disimpan.");
+  } catch (error) {
+    console.error("Gagal menyimpan jadwal publikasi:", error);
+    setPesanPublikasi(
+      error instanceof Error
+        ? error.message
+        : "Terjadi kesalahan saat menyimpan jadwal."
+    );
+  } finally {
+    setLoadingBacaPublikasi(false);
+  }
+};
+
+
 const loadJadwalPublikasi = async () => {
   setLoadingPublikasi(true);
 
+  const formatTanggal = (date: Date) => {
+    const tahun = date.getFullYear();
+    const bulan = String(date.getMonth() + 1).padStart(2, "0");
+    const hari = String(date.getDate()).padStart(2, "0");
+
+    return `${tahun}-${bulan}-${hari}`;
+  };
+
+  const hariIniDate = new Date();
+  const besokDate = new Date(hariIniDate);
+  besokDate.setDate(besokDate.getDate() + 1);
+
+  const tanggalHariIni = formatTanggal(hariIniDate);
+  const tanggalBesok = formatTanggal(besokDate);
+
   try {
-    const response = await fetch(
-      "/api/jadwal-piket-publikasi",
-      {
-        method: "GET",
-        cache: "no-store",
-      }
-    );
+    const response = await fetch("/api/jadwal-piket-publikasi", {
+      method: "GET",
+      cache: "no-store",
+    });
 
     const hasil = await response.json();
 
@@ -1236,7 +1415,24 @@ const loadJadwalPublikasi = async () => {
       return;
     }
 
-    setJadwalPublikasi(hasil.data ?? []);
+const semuaJadwal = hasil.data ?? [];
+
+setJadwalPublikasi(semuaJadwal);
+
+// Isi jadwal hari ini
+setJadwalPublikasiHariIni(
+  semuaJadwal.find(
+    (item: any) => item.tanggal === tanggalHariIni
+  ) ?? null
+);
+
+// Isi jadwal besok
+setJadwalPublikasiBesok(
+  semuaJadwal.find(
+    (item: any) => item.tanggal === tanggalBesok
+  ) ?? null
+);
+
   } catch (error) {
     console.error(
       "Kesalahan memuat jadwal publikasi:",
@@ -1246,6 +1442,7 @@ const loadJadwalPublikasi = async () => {
     setLoadingPublikasi(false);
   }
 };
+
 useEffect(() => {
   loadJadwalPublikasi();
 }, []);
@@ -2034,7 +2231,7 @@ if (jumlah < hasilPreview.length) {
       {/* =====================================================
           JADWAL PELAYANAN PUBLIK
       ====================================================== */}
- 
+
       <div className="bg-white rounded-3xl shadow-lg p-6">
         {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -2224,7 +2421,7 @@ if (jumlah < hasilPreview.length) {
     )}
   </div>
 )}
-       
+
 
         {/* DAFTAR JADWAL */}
         <div className="mt-6">
@@ -2331,7 +2528,7 @@ if (jumlah < hasilPreview.length) {
           )}
               </div>
       </div>
-      
+
       {/* =====================================================
           JADWAL PIKET PUBLIKASI OKTOBER 2026
       ====================================================== */}
@@ -2349,6 +2546,106 @@ if (jumlah < hasilPreview.length) {
               dan Videografis Bulan Oktober 2026.
             </p>
           </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FileUp className="text-blue-700" size={22} />
+            <h3 className="font-bold text-gray-800">
+              Impor Jadwal dari PDF
+            </h3>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-3">
+            Khusus Admin. Pilih PDF jadwal piket publikasi
+            Oktober 2026 untuk membaca dan memeriksa datanya.
+          </p>
+
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={handleFilePublikasiChange}
+            disabled={loadingBacaPublikasi}
+            className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-700 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-blue-800 disabled:opacity-50"
+          />
+
+          {loadingBacaPublikasi && (
+            <p className="mt-3 flex items-center gap-2 text-sm text-blue-700">
+              <Loader2 size={18} className="animate-spin" />
+              Sedang membaca PDF...
+            </p>
+          )}
+
+          {pesanPublikasi && (
+            <p className="mt-3 text-sm text-gray-700">
+              {pesanPublikasi}
+            </p>
+          )}
+
+          {previewPublikasi.length > 0 && (
+            <>
+            <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white">
+              <div className="border-b bg-gray-50 px-4 py-3">
+                <p className="font-semibold text-gray-800">
+                  Pratinjau Hasil Pembacaan PDF
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {previewPublikasi.length} baris terbaca. Periksa tanggal
+                  dan nama petugas sebelum data disimpan.
+                </p>
+              </div>
+
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 text-left">Tanggal</th>
+                    <th className="p-3 text-left">Fotografer</th>
+                    <th className="p-3 text-left">Videografer</th>
+                    <th className="p-3 text-left">Pembuat Konten 1*</th>
+                    <th className="p-3 text-left">Pembuat Konten 2*</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewPublikasi.map((item) => (
+                    <tr key={item.tanggal} className="border-t">
+                      <td className="p-3 whitespace-nowrap">
+                        {formatTanggalIndonesia(item.tanggal)}
+                      </td>
+                      <td className="p-3">{item.fotografer || "-"}</td>
+                      <td className="p-3">{item.videografer || "-"}</td>
+                      <td className="p-3">
+                        {item.pembuat_konten_1 || "-"}
+                      </td>
+                      <td className="p-3">
+                        {item.pembuat_konten_2 || "-"}
+                      </td>
+                    </tr>
+                  ))}
+
+        </tbody>
+      </table>
+    </div>
+
+    <div className="mt-4 flex justify-end">
+      <button
+        type="button"
+        disabled={
+          previewPublikasi.length !== 31 ||
+          loadingBacaPublikasi
+        }
+        onClick={() => {
+          alert("Tombol simpan siap. Langkah berikutnya menyambungkan API.");
+        }}
+        className="rounded-lg bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Simpan Jadwal ke Database
+      </button>
+    </div>
+            </>
+  )}
+
+
+
         </div>
 
         <div className="mt-6">

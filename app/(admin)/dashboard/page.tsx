@@ -30,8 +30,11 @@ import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+
 export default function DashboardPage() {
+
   const [jam, setJam] = useState("");
+
   const [tanggal, setTanggal] = useState("");
 
   const [dataGrafik, setDataGrafik] = useState<
@@ -60,6 +63,13 @@ export default function DashboardPage() {
 
   const [jadwalPelayananBesok, setJadwalPelayananBesok] =
     useState<any>(null);
+const [jadwalPublikasiHariIni, setJadwalPublikasiHariIni] =
+  useState<any>(null);
+
+const [jadwalPublikasiBesok, setJadwalPublikasiBesok] =
+  useState<any>(null);
+  const [jadwalPublikasi, setJadwalPublikasi] =
+  useState<any[]>([]);
 
 const router = useRouter();
 const { data: session, status } = useSession();
@@ -521,6 +531,7 @@ useEffect(() => {
         loadSuratTerbaru(),
         loadJadwalApel(),
         loadJadwalPelayanan(),
+        loadJadwalPublikasi(),
       ]);
     } catch (error) {
       console.error(
@@ -529,6 +540,72 @@ useEffect(() => {
       );
     }
   };
+
+/*
+ * ============================================================
+ * JADWAL PIKET PUBLIKASI OKTOBER 2026
+ * ============================================================
+ */
+
+
+const loadJadwalPublikasi = async () => {
+  const formatTanggal = (date: Date) => {
+    const tahun = date.getFullYear();
+    const bulan = String(date.getMonth() + 1).padStart(2, "0");
+    const hari = String(date.getDate()).padStart(2, "0");
+
+    return `${tahun}-${bulan}-${hari}`;
+  };
+
+  const hariIniDate = new Date();
+  const besokDate = new Date(hariIniDate);
+  besokDate.setDate(besokDate.getDate() + 1);
+
+  const tanggalHariIni = formatTanggal(hariIniDate);
+  const tanggalBesok = formatTanggal(besokDate);
+
+  try {
+    const [hasilHariIni, hasilBesok] = await Promise.all([
+      supabase
+        .from("jadwal_piket_publikasi")
+        .select("*")
+        .eq("tanggal", tanggalHariIni)
+        .maybeSingle(),
+
+      supabase
+        .from("jadwal_piket_publikasi")
+        .select("*")
+        .eq("tanggal", tanggalBesok)
+        .maybeSingle(),
+    ]);
+
+    if (hasilHariIni.error) {
+      console.error(
+        "Gagal mengambil jadwal publikasi hari ini:",
+        hasilHariIni.error
+      );
+    }
+
+    if (hasilBesok.error) {
+      console.error(
+        "Gagal mengambil jadwal publikasi besok:",
+        hasilBesok.error
+      );
+    }
+
+    setJadwalPublikasiHariIni(hasilHariIni.data ?? null);
+    setJadwalPublikasiBesok(hasilBesok.data ?? null);
+
+    setJadwalPublikasi(
+      [hasilHariIni.data, hasilBesok.data].filter(Boolean)
+    );
+  } catch (error) {
+    console.error(
+      "Gagal memuat jadwal piket publikasi:",
+      error
+    );
+  }
+};
 
   /*
    * ============================================================
@@ -844,6 +921,8 @@ useEffect(() => {
    * ============================================================
    */
 
+
+  // kode lama tetap di bawah
  useEffect(() => {
   // =========================
   // BUKU TAMU TIDAK PERLU
@@ -882,7 +961,7 @@ useEffect(() => {
   loadSuratTerbaru();
   loadJadwalApel();
   loadJadwalPelayanan();
-
+loadJadwalPublikasi();
   const interval = setInterval(
     updateJam,
     1000
@@ -952,35 +1031,6 @@ if (
     "arsiparis",
     "ppnpn",
   ];
-
-  console.log(
-    "DASHBOARD USER =",
-    user
-  );
-
-  console.log(
-    "DASHBOARD ROLE ASLI =",
-    user?.role
-  );
-
-  console.log(
-    "DASHBOARD ROLE NORMAL =",
-    roleNormal
-  );
-
-  console.log(
-    "TAMPILKAN PENGUMUMAN =",
-    roleDenganPengumumanJadwal.includes(
-    roleNormal
-    )
-  );
-
-  console.log(
-    "AKAN RENDER PENGUMUMAN =",
-    roleDenganPengumumanJadwal.includes(
-      roleNormal
-    )
-  );
 
   /*
    * ============================================================
@@ -1381,11 +1431,81 @@ if (
                 tanggalBesok
               }
             />
+
           </div>
         </div>
-      </div>
+
+
+        {/* JADWAL PIKET PUBLIKASI */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <h2 className="text-2xl font-black text-slate-800 mb-2">
+            Jadwal Piket Publikasi
+          </h2>
+
+          <p className="text-sm text-slate-500 mb-5">
+            Jadwal fotografer, videografer, dan pembuat konten hari ini dan besok.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {[
+              {
+                label: "Hari Ini",
+                tanggal: tanggalHariIni,
+                data: jadwalPublikasiHariIni,
+              },
+              {
+                label: "Besok",
+                tanggal: tanggalBesok,
+                data: jadwalPublikasiBesok,
+              },
+            ].map((jadwal) => (
+              <div
+                key={jadwal.label}
+                className="rounded-3xl border border-blue-100 bg-blue-50/70 p-5"
+              >
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                  {jadwal.label}
+                </p>
+
+                <p className="font-bold text-slate-800 mb-4">
+                  {formatTanggal(jadwal.tanggal)}
+                </p>
+
+                {jadwal.data ? (
+                  <div className="space-y-2">
+                    {[
+                      ["Fotografer", jadwal.data.fotografer],
+                      ["Videografer", jadwal.data.videografer],
+                      ["Pembuat Konten 1", jadwal.data.pembuat_konten_1],
+                      ["Pembuat Konten 2", jadwal.data.pembuat_konten_2],
+                    ].map(([tugas, nama]) => (
+                      <div
+                        key={tugas}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-xl bg-white border border-blue-100 px-4 py-3"
+                      >
+                        <span className="text-sm font-semibold text-slate-500">
+                          {tugas}
+                        </span>
+                        <span className="text-sm font-bold text-slate-800 sm:text-right">
+                          {nama || "-"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    Tidak ada jadwal piket publikasi pada tanggal ini.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+  </div>
     );
   }
+
 
   /*
    * ============================================================
@@ -1721,6 +1841,87 @@ if (
           </div>
         </div>
       </div>
+
+      {/* ================= JADWAL PIKET PUBLIKASI ================= */}
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+        <h2 className="text-2xl font-black text-slate-800 mb-2">
+          Jadwal Piket Publikasi
+        </h2>
+
+        <p className="text-sm text-slate-500 mb-5">
+          Jadwal fotografer, videografer, dan pembuat konten.
+        </p>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-blue-50 text-left">
+             <th className="border p-3">Hari</th>
+<th className="border p-3">Tanggal</th>
+<th className="border p-3">Fotografer</th>
+<th className="border p-3">Videografer</th>
+<th className="border p-3">Pembuat Konten 1</th>
+<th className="border p-3">Pembuat Konten 2</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {jadwalPublikasi.length > 0 ? (
+                jadwalPublikasi.map((item, index) => (
+                  <tr
+                    key={item.id ?? index}
+                    className="hover:bg-blue-50"
+                  >
+                   <td className="border p-3">
+  {item.tanggal ===
+  new Date().getFullYear() +
+    "-" +
+    String(new Date().getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(new Date().getDate()).padStart(2, "0")
+    ? "Hari Ini"
+    : "Besok"}
+</td>
+                    <td className="border p-3 whitespace-nowrap">
+                      {item.tanggal
+                        ? new Date(
+                            `${item.tanggal}T00:00:00`
+                          ).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "-"}
+                    </td>
+                    <td className="border p-3">
+                      {item.fotografer || "-"}
+                    </td>
+                    <td className="border p-3">
+                      {item.videografer || "-"}
+                    </td>
+                    <td className="border p-3">
+                      {item.pembuat_konten_1 || "-"}
+                    </td>
+                    <td className="border p-3">
+                      {item.pembuat_konten_2 || "-"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="border p-4 text-center text-slate-500"
+                  >
+                    Jadwal piket publikasi belum tersedia.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
       {/* ================= SURAT MASUK TERBARU ================= */}
 
