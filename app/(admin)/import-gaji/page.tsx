@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import * as XLSX from "xlsx";
 import {
   Upload,
@@ -27,6 +28,32 @@ type HasilImport = {
 };
 
 export default function ImportGajiPage() {
+    const { data: session, status } = useSession();
+
+  const role = String(
+    (session as any)?.role ??
+      (session as any)?.user?.role ??
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+    const bolehImport =
+    role === "kaur keuangan" ||
+    role === "admin keuangan";
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (!bolehImport) {
+      window.location.href = "/dashboard";
+    }
+  }, [status, bolehImport]);
   const [file, setFile] = useState<File | null>(null);
   const [dataExcel, setDataExcel] = useState<DataGaji[]>([]);
   const [pesan, setPesan] = useState("");
@@ -278,7 +305,13 @@ export default function ImportGajiPage() {
     "Pangkat/ Golongan",
     "Rekening",
   ];
+  if (status === "loading") {
+    return <div className="p-6">Memeriksa akses...</div>;
+  }
 
+  if (status === "unauthenticated" || !bolehImport) {
+    return null;
+  }
   return (
     <div className="p-6">
       <div className="mb-6">

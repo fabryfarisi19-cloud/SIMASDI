@@ -76,21 +76,31 @@ if (
       return;
     }
 
-    // Kaur Keuangan boleh membuka:
-    // Dashboard, Publikasi, Rincian Gaji,
-    // Rubah Password, dan Import Slip Gaji
+    // Kaur Keuangan boleh membuka halaman sesuai menu yang diberikan
     if (
       role === "Kaur Keuangan" &&
-      !pathname.startsWith("/dashboard") &&
-      !pathname.startsWith("/publikasi") &&
-      !pathname.startsWith("/rincian-gaji") &&
-      !pathname.startsWith("/rubah-password") &&
-      !pathname.startsWith("/import-gaji")
+      ![
+        "/dashboard",
+        "/publikasi",
+        "/rincian-gaji",
+        "/rubah-password",
+        "/import-gaji",
+        "/nomor-surat",
+        "/pinjam-mobil",
+        "/pengaduan-sarpras",
+        "/arsip-kepegawaian",
+        "/pegawai-teladan",
+      ].some(
+        (path) =>
+          pathname === path ||
+          pathname.startsWith(path + "/")
+      )
     ) {
       setAuthorized(false);
       router.replace("/dashboard");
       return;
     }
+
 
     setAuthorized(true);
   }, [pathname, router, session, status]);

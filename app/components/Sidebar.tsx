@@ -622,9 +622,14 @@ export default function Sidebar() {
       return false;
     }
 
+ 
     if (item.href === "/import-gaji") {
-      return username === "199408232017121004";
+      return (
+        role === "Kaur Keuangan" ||
+        role === "Admin Keuangan"
+      );
     }
+
 
     return true;
   });
@@ -637,7 +642,28 @@ export default function Sidebar() {
     "MENU TERFILTER =",
     menuTerfilter.map((item) => item.nama)
   );
-
+console.log(
+  "CEK AKSES KAUR KEUANGAN =",
+  menu
+    .filter((item) =>
+      [
+        "/nomor-surat",
+        "/pinjam-mobil",
+        "/pengaduan-sarpras",
+        "/arsip-kepegawaian",
+        "/pegawai-teladan",
+      ].includes(item.href)
+    )
+    .map((item) => ({
+      nama: item.nama,
+      roleAktif: role,
+      roles: item.roles,
+      diizinkan: item.roles?.includes(role),
+      tampil: menuTerfilter.some(
+        (m) => m.href === item.href
+      ),
+    }))
+);
   /* =========================================================
      LOAD USER LOCAL STORAGE
      ========================================================= */

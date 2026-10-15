@@ -357,10 +357,13 @@ const roleLogin = String(
 ).trim().toLowerCase();
 
 
+
 if (
   !penggunaLogin ||
+  String(penggunaLogin.status || "").trim().toLowerCase() !== "aktif" ||
   !["admin keuangan", "kaur keuangan"].includes(roleLogin)
 ) {
+
   return NextResponse.json(
     {
       error:
