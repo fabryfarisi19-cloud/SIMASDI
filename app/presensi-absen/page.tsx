@@ -42,7 +42,7 @@ const [aksesAbsensi, setAksesAbsensi] = useState(true);
   // ==========================================
   async function loadAbsensi() {
     try {
-      const response = await fetch("/api/absensi-finger", {
+      const response = await fetch("/api/presensi-absen", {
         cache: "no-store",
       });
 
@@ -147,7 +147,7 @@ setAbsensi(result.data || null);
     setProses(true);
 
     try {
-      const response = await fetch("/api/absensi-finger", {
+      const response = await fetch("/api/presensi-absen", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

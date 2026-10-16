@@ -6,11 +6,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 
 const TIMEZONE = "Asia/Jakarta";
-const NIP_ABSENSI_FINGER = [
-  "196802081997032001", // Manawati
-  "198305052009122007", // Dwi Asti
-  "197103261993032001", // Thiurma
-];
+
 // ==========================================
 // Helper: tanggal & waktu Indonesia
 // ==========================================
@@ -79,32 +75,8 @@ export async function GET() {
     const penggunaId =
       user.penggunaId ||
       user.id;
-      const username = String(user.username || "").trim();
 
-if (!NIP_ABSENSI_FINGER.includes(username)) {
-  return NextResponse.json(
-    {
-      success: false,
-      code: "ABSENSI_NOT_ALLOWED",
-      message:
-        "Fitur Absen Finger sementara hanya diperuntukkan bagi pegawai yang telah ditetapkan.",
-    },
-    { status: 403 }
-  );
-}
-const nip = String(user.username || "").trim();
 
-if (!NIP_ABSENSI_FINGER.includes(nip)) {
-  return NextResponse.json(
-    {
-      success: false,
-      code: "ABSENSI_NOT_ALLOWED",
-      message:
-        "Fitur Absen Finger sementara hanya diperuntukkan bagi pegawai yang telah ditetapkan.",
-    },
-    { status: 403 }
-  );
-}
     if (!penggunaId) {
       return NextResponse.json(
         {
@@ -194,19 +166,7 @@ export async function POST(request: NextRequest) {
     const penggunaId =
       user.penggunaId ||
       user.id;
-const nip = String(user.username || "").trim();
 
-if (!NIP_ABSENSI_FINGER.includes(nip)) {
-  return NextResponse.json(
-    {
-      success: false,
-      code: "ABSENSI_NOT_ALLOWED",
-      message:
-        "Fitur Absen Finger sementara hanya diperuntukkan bagi pegawai yang telah ditetapkan.",
-    },
-    { status: 403 }
-  );
-}
     if (!penggunaId) {
       return NextResponse.json(
         {

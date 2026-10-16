@@ -356,8 +356,6 @@ const roleLogin = String(
   penggunaLogin?.role || ""
 ).trim().toLowerCase();
 
-
-
 if (
   !penggunaLogin ||
   String(penggunaLogin.status || "").trim().toLowerCase() !== "aktif" ||
