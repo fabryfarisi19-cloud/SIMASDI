@@ -1,10 +1,40 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    // Hanya admin dan petugas yang boleh melihat dashboard
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak" },
+        { status: 401 }
+      );
+    }
+
+    const sessionData = session as any;
+    const user = sessionData?.user as any;
+
+    const role = String(
+      sessionData?.role ||
+        user?.role ||
+        user?.jabatan ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!["admin", "petugas"].includes(role)) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak" },
+        { status: 403 }
+      );
+    }
+
     const sekarang = new Date();
 
     // Format tanggal Indonesia

@@ -1,89 +1,9 @@
+
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-export async function GET() {
-  try {
-    // =====================================================
-    // CEK LOGIN DAN ROLE
-    // Hanya akun Buku Tamu yang boleh mengambil daftar pegawai
-    // =====================================================
 
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Anda harus login terlebih dahulu",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const sessionData = session as any;
-    const user = sessionData?.user as any;
-
-    const roleAsli =
-      sessionData?.role ||
-      user?.role ||
-      user?.jabatan ||
-      "";
-
-    const role = String(roleAsli)
-      .trim()
-      .toLowerCase();
-
-    if (role !== "buku tamu") {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Akses ditolak. Hanya akun Buku Tamu yang dapat mengambil daftar pegawai.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
-    // =====================================================
-    // AMBIL DATA PEGAWAI
-    // =====================================================
-
-    const { data, error } = await supabaseAdmin
-      .from("pengguna")
-      .select(`
-        id,
-        nama,
-        username,
-        role
-      `)
-      .order("nama", {
-        ascending: true,
-      });
-
-    if (error) {
-      console.error("GET PEGAWAI BUKU TAMU:", error);
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: error.message,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    // =====================================================
-    // ROLE YANG TIDAK BOLEH MENJADI TUJUAN TAMU
-    // =====================================================
 const roleDikecualikan = [
   "PPNPN",
   "KIOSK",
@@ -95,38 +15,65 @@ const roleDikecualikan = [
   "ADMIN",
 ];
 
-    // =====================================================
-    // FILTER PEGAWAI
-    // =====================================================
- const hasil = (data || []).filter((pegawai) => {
-  const role = String(pegawai.role || "")
-    .trim()
-    .toUpperCase();
+export async function GET() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("pengguna")
+      .select("id, nama, role")
+      .order("nama", { ascending: true });
 
-  const nama = String(pegawai.nama || "")
-    .trim()
-    .toUpperCase();
+    if (error) {
+      console.error("GET PEGAWAI BUKU TAMU:", error);
 
-  // Berdasarkan ROLE
-  if (roleDikecualikan.includes(role)) {
-    return false;
-  }
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Gagal mengambil daftar pegawai",
+        },
+        { status: 500 }
+      );
+    }
 
-  // Khusus berdasarkan NAMA
-  if (
-    nama === "PETUGAS LOKET" ||
-    nama === "DISPLAY TV"
-  ) {
-    return false;
-  }
+    const hasil = (data || [])
+      .filter((pegawai) => {
+        const role = String(pegawai.role || "")
+          .trim()
+          .toUpperCase();
 
-  return true;
-});
+        const nama = String(pegawai.nama || "")
+          .trim()
+          .toUpperCase();
 
-return NextResponse.json({
-  success: true,
-  data: hasil,
-});
+        if (roleDikecualikan.includes(role)) {
+          return false;
+        }
+
+        if (
+          nama === "PETUGAS LOKET" ||
+          nama === "DISPLAY TV"
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .map((pegawai) => ({
+        id: pegawai.id,
+        nama: pegawai.nama,
+        role: pegawai.role,
+      }));
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: hasil,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (error) {
     console.error("GET PEGAWAI ERROR:", error);
 
@@ -135,9 +82,7 @@ return NextResponse.json({
         success: false,
         message: "Gagal mengambil daftar pegawai",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

@@ -5,6 +5,42 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
+const LOKASI_BAPAS = {
+  latitude: -6.205056,
+  longitude: 106.787444,
+};
+
+const RADIUS_AKSES_METER = 10;
+
+function hitungJarakMeter(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000;
+  const rad = (derajat: number) =>
+    (derajat * Math.PI) / 180;
+
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(lat1)) *
+      Math.cos(rad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  return (
+    2 *
+    R *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    )
+  );
+}
+
 // =====================================================
 // GET
 // Mengambil daftar buku tamu
@@ -12,6 +48,32 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+if (!session) {
+  return NextResponse.json(
+    { success: false, message: "Akses ditolak" },
+    { status: 401 }
+  );
+}
+
+const sessionData = session as any;
+const user = sessionData?.user as any;
+const role = String(
+  sessionData?.role ||
+    user?.role ||
+    user?.jabatan ||
+    ""
+)
+  .trim()
+  .toLowerCase();
+
+if (!["admin", "petugas"].includes(role)) {
+  return NextResponse.json(
+    { success: false, message: "Akses ditolak" },
+    { status: 403 }
+  );
+}
     const { searchParams } = new URL(request.url);
 
     const tanggal = searchParams.get("tanggal");
@@ -71,19 +133,19 @@ if (search) {
 
     const { data, error } = await query;
 
-    if (error) {
-      console.error("GET BUKU TAMU:", error);
+   if (error) {
+  console.error("GET BUKU TAMU:", error);
 
-      return NextResponse.json(
-        {
-          success: false,
-          message: error.message,
-        },
-        {
-          status: 500,
-        }
-      );
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Gagal mengambil data buku tamu.",
+    },
+    {
+      status: 500,
     }
+  );
+}
 
     return NextResponse.json({
       success: true,
@@ -111,48 +173,50 @@ if (search) {
 
 export async function POST(request: NextRequest) {
   try {
+   
     // =====================================================
-    // CEK LOGIN DAN ROLE
-    // Hanya akun Buku Tamu yang boleh menyimpan kunjungan
+    // BODY DAN VALIDASI LOKASI
+    // Formulir publik melalui QR Code
     // =====================================================
 
-    const session = await getServerSession(authOptions);
+    const body = await request.json();
 
-    if (!session) {
+    const latitude = body?.latitude;
+    const longitude = body?.longitude;
+
+    if (
+      typeof latitude !== "number" ||
+      typeof longitude !== "number" ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Anda harus login terlebih dahulu",
+          message: "Lokasi perangkat tidak valid. Periksa GPS dan coba kembali.",
         },
-        {
-          status: 401,
-        }
+        { status: 400 }
       );
     }
 
-    const sessionData = session as any;
-    const user = sessionData?.user as any;
+    const jarak = hitungJarakMeter(
+      LOKASI_BAPAS.latitude,
+      LOKASI_BAPAS.longitude,
+      latitude,
+      longitude
+    );
 
-    const roleAsli =
-      sessionData?.role ||
-      user?.role ||
-      user?.jabatan ||
-      "";
-
-    const role = String(roleAsli)
-      .trim()
-      .toLowerCase();
-
-    if (role !== "buku tamu") {
+    if (jarak > RADIUS_AKSES_METER) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Akses ditolak. Hanya akun Buku Tamu yang dapat menyimpan data kunjungan.",
+          message: "Pengisian hanya diizinkan dalam radius 10 meter dari Bapas.",
         },
-        {
-          status: 403,
-        }
+        { status: 403 }
       );
     }
 
@@ -160,7 +224,6 @@ export async function POST(request: NextRequest) {
     // BODY
     // =====================================================
 
-    const body = await request.json();
 const {
   jenis_pengunjung,
   nama,
@@ -518,19 +581,16 @@ if (isKlien) {
       );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message:
-          "Kunjungan berhasil dicatat",
-        data,
-        nomor_kunjungan:
-          nomorKunjungan,
-      },
-      {
-        status: 201,
-      }
-    );
+  return NextResponse.json(
+  {
+    success: true,
+    message: "Kunjungan berhasil dicatat",
+    nomor_kunjungan: nomorKunjungan,
+  },
+  {
+    status: 201,
+  }
+);
   } catch (error) {
     console.error(
       "POST BUKU TAMU ERROR:",
