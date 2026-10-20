@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -64,8 +64,7 @@ const LOKASI_BAPAS = {
   latitude: -6.205056,
   longitude: 106.787444,
 };
-
-const RADIUS_AKSES_METER = 10;
+const RADIUS_AKSES_METER = 25;
 
 function hitungJarakMeter(
   lat1: number,
@@ -197,7 +196,7 @@ function periksaLokasi() {
 
       if (
         jarak <= RADIUS_AKSES_METER &&
-        akurasi <= RADIUS_AKSES_METER
+        akurasi <= 10
       ) {
         setLokasiStatus("diizinkan");
         setLokasiPesan(
@@ -210,7 +209,7 @@ function periksaLokasi() {
             jarak
           )} meter dengan akurasi GPS ±${Math.round(
             akurasi
-          )} meter. Akses membutuhkan jarak dan akurasi maksimal 10 meter.`
+          )} meter. Akses membutuhkan jarak maksimal 25 meter dan akurasi GPS maksimal 10 meter.`
         );
       }
     },

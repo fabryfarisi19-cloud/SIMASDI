@@ -10,7 +10,7 @@ const LOKASI_BAPAS = {
   longitude: 106.787444,
 };
 
-const RADIUS_AKSES_METER = 10;
+const RADIUS_AKSES_METER = 25;
 
 function hitungJarakMeter(
   lat1: number,
