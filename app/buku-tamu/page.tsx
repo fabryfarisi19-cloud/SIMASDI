@@ -196,7 +196,7 @@ function periksaLokasi() {
 
       if (
         jarak <= RADIUS_AKSES_METER &&
-        akurasi <= 10
+       akurasi <= 30
       ) {
         setLokasiStatus("diizinkan");
         setLokasiPesan(
@@ -209,7 +209,7 @@ function periksaLokasi() {
             jarak
           )} meter dengan akurasi GPS ±${Math.round(
             akurasi
-          )} meter. Akses membutuhkan jarak maksimal 25 meter dan akurasi GPS maksimal 10 meter.`
+          )} meter. Akses membutuhkan jarak maksimal 25 meter dan akurasi GPS maksimal 30 meter.`
         );
       }
     },
