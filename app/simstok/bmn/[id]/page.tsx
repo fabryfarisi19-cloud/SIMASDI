@@ -245,7 +245,7 @@ async function loadRiwayatMutasi() {
           </h2>
 
         
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
 
 
             <Info
@@ -331,7 +331,7 @@ async function loadRiwayatMutasi() {
 {/* DATA KENDARAAN DINAS */}
 {bmn.kategori === "Kendaraan Dinas" && (
 
-<div className="col-span-1 sm:col-span-2 mt-4 min-w-0 w-full border-2 border-blue-100 rounded-2xl p-4 sm:p-6 bg-blue-50">
+<div className="col-span-full mt-4 min-w-0 w-full max-w-full overflow-hidden border-2 border-blue-100 rounded-2xl p-4 sm:p-6 bg-blue-50">
 
 
     <h3 className="text-xl font-bold text-blue-900 mb-6">
@@ -607,12 +607,12 @@ function Info({
   value: any;
 }) {
   return (
-    <div className="min-w-0 w-full">
+    <div className="block w-full min-w-0 max-w-full overflow-hidden">
       <p className="text-sm text-gray-500 mb-1">
         {label}
       </p>
 
-      <p className="text-base md:text-lg font-semibold text-slate-800 whitespace-normal break-words [overflow-wrap:anywhere] leading-relaxed min-w-0">
+      <p className="block w-full min-w-0 max-w-full text-base md:text-lg font-semibold text-slate-800 leading-relaxed whitespace-normal break-all">
         {value !== null && value !== undefined && value !== ""
           ? String(value)
           : "-"}
