@@ -978,48 +978,79 @@ useEffect(() => {
         </div>
       </div>
 
-      <style jsx global>{`
-        @media print {
-          @page {
-            size: landscape;
-            margin: 12mm;
-          }
+    
+<style jsx global>{`
+  @media print {
+    @page {
+      size: A4 landscape;
+      margin: 5mm;
+    }
 
-          body {
-            background: white !important;
-          }
+    html,
+    body {
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      overflow: visible !important;
+    }
 
-          body * {
-            visibility: visible;
-          }
+    body * {
+      visibility: visible !important;
+    }
 
-          .print\\:hidden {
-            display: none !important;
-          }
+    .print\\:hidden {
+      display: none !important;
+    }
 
-          .print\\:block {
-            display: block !important;
-          }
+    .print\\:block {
+      display: block !important;
+    }
 
-          table {
-            font-size: 9px !important;
-          }
+    main {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
 
-          th,
-          td {
-            padding: 5px !important;
-          }
+    table {
+      width: 100% !important;
+      max-width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse !important;
+      font-size: 6px !important;
+    }
 
-          .shadow-sm {
-            box-shadow: none !important;
-          }
+    thead {
+      display: table-header-group;
+    }
 
-          main {
-            padding: 0 !important;
-          }
-        }
-      `}</style>
-    </main>
+    tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    th,
+    td {
+      padding: 2px !important;
+      font-size: 6px !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      white-space: normal !important;
+    }
+
+    .shadow-sm {
+      box-shadow: none !important;
+    }
+
+    * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+`}</style>
+  </main>
   );
 }
-

@@ -324,6 +324,7 @@ export default function DetailMutasiPage() {
   );
 }
 
+
 function Info({
   label,
   value,
@@ -332,13 +333,15 @@ function Info({
   value: any;
 }) {
   return (
-    <div>
+    <div className="min-w-0 w-full">
       <p className="text-sm text-gray-500 mb-1">
         {label}
       </p>
 
-      <p className="text-lg font-semibold text-slate-800">
-        {value || "-"}
+      <p className="min-w-0 max-w-full text-base md:text-lg font-semibold text-slate-800 whitespace-normal break-words [overflow-wrap:anywhere] leading-relaxed">
+        {value !== null && value !== undefined && value !== ""
+          ? String(value)
+          : "-"}
       </p>
     </div>
   );

@@ -244,7 +244,9 @@ async function loadRiwayatMutasi() {
             Informasi Barang
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
+        
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+
 
             <Info
               label="Kode Barang"
@@ -591,6 +593,8 @@ async function loadRiwayatMutasi() {
     }
   }
 `}</style>
+
+
 function Info({
   label,
   value,
@@ -599,13 +603,15 @@ function Info({
   value: any;
 }) {
   return (
-    <div>
+    <div className="min-w-0 w-full">
       <p className="text-sm text-gray-500 mb-1">
         {label}
       </p>
 
-      <p className="text-lg font-semibold text-slate-800">
-        {value || "-"}
+      <p className="text-base md:text-lg font-semibold text-slate-800 whitespace-normal break-words [overflow-wrap:anywhere] leading-relaxed min-w-0">
+        {value !== null && value !== undefined && value !== ""
+          ? String(value)
+          : "-"}
       </p>
     </div>
   );
