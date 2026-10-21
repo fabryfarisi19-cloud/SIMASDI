@@ -32,10 +32,8 @@ type FormData = {
   instansi: string;
   jabatan: string;
   jenis_keperluan: string;
-  keperluan: string;
   pengguna_tujuan_id: string;
   tanda_tangan: string;
-  keterangan: string;
 };
 
 const initialForm: FormData = {
@@ -55,10 +53,8 @@ const initialForm: FormData = {
   instansi: "",
   jabatan: "",
   jenis_keperluan: "",
-  keperluan: "",
   pengguna_tujuan_id: "",
   tanda_tangan: "",
-  keterangan: "",
 };
 const LOKASI_BAPAS = {
   latitude: -6.205056,
@@ -587,24 +583,22 @@ useEffect(() => {
   // VALIDASI UMUM
   // ==========================================
 
-  if (!form.jenis_keperluan) {
-    return "Jenis keperluan wajib dipilih.";
-  }
-
-  if (!form.keperluan.trim()) {
-    return "Keperluan wajib diisi.";
-  }
-
-  if (!form.pengguna_tujuan_id) {
-    return "Pegawai yang dituju wajib dipilih.";
-  }
-
-  if (!form.tanda_tangan) {
-    return "Tanda tangan wajib diisi.";
-  }
-
-  return "";
+ 
+if (!form.jenis_keperluan) {
+  return "Jenis keperluan wajib dipilih.";
 }
+
+if (!form.pengguna_tujuan_id) {
+  return "Pegawai yang dituju wajib dipilih.";
+}
+
+if (!form.tanda_tangan) {
+  return "Tanda tangan wajib diisi.";
+}
+
+return "";
+}
+
 
   /* =========================================================
      SIMPAN
@@ -1585,7 +1579,9 @@ useEffect(() => {
                     <option value="Pembimbingan">
                       Pembimbingan
                     </option>
-
+<option value="Wajib Lapor">
+  Wajib Lapor
+</option>
                     <option value="Penelitian">
                       Penelitian
                     </option>
@@ -1754,36 +1750,6 @@ useEffect(() => {
                   )}
                 </div>
 
-                {/* KEPELUAN */}
-
-                <div
-                  style={{
-                    gridColumn:
-                      "1 / -1",
-                  }}
-                >
-                  <label style={labelStyle}>
-                    Keperluan *
-                  </label>
-
-                  <textarea
-                    value={
-                      form.keperluan
-                    }
-                    onChange={(e) =>
-                      updateForm(
-                        "keperluan",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Jelaskan keperluan kunjungan"
-                    rows={4}
-                    style={{
-                      ...inputStyle,
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
 
                 {/* PEGAWAI TERPILIH */}
 
@@ -1842,39 +1808,7 @@ useEffect(() => {
                     </div>
                   </div>
                 )}
-
-                {/* KETERANGAN */}
-
-                <div
-                  style={{
-                    gridColumn:
-                      "1 / -1",
-                  }}
-                >
-                  <label style={labelStyle}>
-                    Keterangan
-                  </label>
-
-                  <textarea
-                    value={
-                      form.keterangan
-                    }
-                    onChange={(e) =>
-                      updateForm(
-                        "keterangan",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Keterangan tambahan jika diperlukan"
-                    rows={3}
-                    style={{
-                      ...inputStyle,
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
-              </div>
-
+      </div> {/* PENUTUP FORM GRID */}
               {/* =================================================
                   TANDA TANGAN
               ================================================= */}
@@ -2330,14 +2264,6 @@ useEffect(() => {
 
         <div style={printValueStyle}>
           {form.jenis_keperluan || "-"}
-        </div>
-
-        <div style={printLabelStyle}>
-          Keperluan
-        </div>
-
-        <div style={printValueStyle}>
-          {form.keperluan || "-"}
         </div>
 
         <div style={printLabelStyle}>

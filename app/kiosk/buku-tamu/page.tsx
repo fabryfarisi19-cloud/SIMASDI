@@ -508,10 +508,6 @@ export default function BukuTamuKioskPage() {
     return "Jenis keperluan wajib dipilih.";
   }
 
-  if (!form.keperluan.trim()) {
-    return "Keperluan wajib diisi.";
-  }
-
   if (!form.pengguna_tujuan_id) {
     return "Pegawai yang dituju wajib dipilih.";
   }
@@ -1449,14 +1445,13 @@ export default function BukuTamuKioskPage() {
                       Konsultasi
                     </option>
 
-                    <option value="Koordinasi">
-                      Koordinasi
-                    </option>
-
                     <option value="Pembimbingan">
                       Pembimbingan
                     </option>
-
+<option value="Wajib Lapor">
+  Wajib Lapor
+</option>
+                  
                     <option value="Penelitian">
                       Penelitian
                     </option>
@@ -1467,6 +1462,10 @@ export default function BukuTamuKioskPage() {
 
                     <option value="Pelayanan">
                       Pelayanan
+                    </option>
+
+   <option value="Koordinasi">
+                      Koordinasi
                     </option>
 
                     <option value="Lainnya">
@@ -1625,36 +1624,6 @@ export default function BukuTamuKioskPage() {
                   )}
                 </div>
 
-                {/* KEPELUAN */}
-
-                <div
-                  style={{
-                    gridColumn:
-                      "1 / -1",
-                  }}
-                >
-                  <label style={labelStyle}>
-                    Keperluan *
-                  </label>
-
-                  <textarea
-                    value={
-                      form.keperluan
-                    }
-                    onChange={(e) =>
-                      updateForm(
-                        "keperluan",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Jelaskan keperluan kunjungan"
-                    rows={4}
-                    style={{
-                      ...inputStyle,
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
 
                 {/* PEGAWAI TERPILIH */}
 
@@ -2006,6 +1975,25 @@ export default function BukuTamuKioskPage() {
       dicatat dalam sistem.
     </p>
 
+    <a
+      href="https://star-survei3a.kemenimipas.go.id/ly/VnATpOFz"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-block",
+        marginTop: "18px",
+        padding: "13px 22px",
+        backgroundColor: "#0f766e",
+        color: "#ffffff",
+        borderRadius: "10px",
+        textDecoration: "none",
+        fontWeight: 700,
+        fontSize: "14px",
+      }}
+    >
+      Isi Survei Kepuasan Pelayanan
+    </a>
+
     {/* ================================
         NOMOR KUNJUNGAN
     ================================= */}
@@ -2205,10 +2193,6 @@ export default function BukuTamuKioskPage() {
 
         <div style={printLabelStyle}>
           Keperluan
-        </div>
-
-        <div style={printValueStyle}>
-          {form.keperluan || "-"}
         </div>
 
         <div style={printLabelStyle}>
