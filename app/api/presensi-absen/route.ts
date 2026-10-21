@@ -200,17 +200,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+   
     // --------------------------------------
     // 3. Validasi GPS
     // --------------------------------------
     if (
       typeof latitude !== "number" ||
-      typeof longitude !== "number"
+      !Number.isFinite(latitude) ||
+      typeof longitude !== "number" ||
+      !Number.isFinite(longitude)
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Lokasi GPS tidak ditemukan.",
+          message: "Koordinat GPS tidak valid atau tidak ditemukan.",
         },
         { status: 400 }
       );
@@ -225,7 +228,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Koordinat GPS tidak valid.",
+          message: "Koordinat GPS di luar rentang yang valid.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Akurasi GPS wajib berupa angka yang valid
+    if (
+      typeof accuracy !== "number" ||
+      !Number.isFinite(accuracy) ||
+      accuracy < 0
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "GPS_ACCURACY_INVALID",
+          message:
+            "Data akurasi GPS tidak valid. Silakan ambil lokasi kembali.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Tolak jika perkiraan ketidakpastian GPS lebih dari 100 meter
+    if (accuracy > 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "GPS_ACCURACY_LOW",
+          message:
+            "Akurasi GPS terlalu rendah. Silakan aktifkan lokasi dengan akurasi tinggi dan coba kembali.",
+          data: {
+            akurasi_meter: Math.round(accuracy),
+          },
         },
         { status: 400 }
       );

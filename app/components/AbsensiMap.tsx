@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -36,7 +37,7 @@ export default function AbsensiMap({
     <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
       <MapContainer
         {...({
-          center: devicePosition,
+          center: officePosition,
           zoom: 17,
           scrollWheelZoom: true,
           style: { height: "400px", width: "100%" },

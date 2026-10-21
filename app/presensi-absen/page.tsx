@@ -122,12 +122,11 @@ setAbsensi(result.data || null);
         setError(message);
         setLoading(false);
       },
-      {
-    
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
+     {
+  enableHighAccuracy: true,
+  timeout: 30000,
+  maximumAge: 0,
+}
     );
   }
 
@@ -229,7 +228,7 @@ setAbsensi(result.data || null);
     ← Kembali ke Dashboard
   </button>
           <h1 className="text-2xl font-bold text-slate-800">
-            Absensi Finger
+            Presensi Absen
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
@@ -313,12 +312,11 @@ setAbsensi(result.data || null);
           </button>
         </div>
 {lokasi && (
-  <AbsensiMap
-    latitude={lokasi.latitude}
-    longitude={lokasi.longitude}
-  />
-)}
-        {/* Pesan */}
+<AbsensiMap
+  latitude={lokasi.latitude}
+  longitude={lokasi.longitude}
+/>
+)}     {/* Pesan */}
         {pesan && (
           <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
             ✅ {pesan}
