@@ -330,13 +330,17 @@ async function loadRiwayatMutasi() {
             )}
 {/* DATA KENDARAAN DINAS */}
 {bmn.kategori === "Kendaraan Dinas" && (
-  <div className="md:col-span-2 mt-4 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
+
+<div className="col-span-1 sm:col-span-2 mt-4 min-w-0 w-full border-2 border-blue-100 rounded-2xl p-4 sm:p-6 bg-blue-50">
+
 
     <h3 className="text-xl font-bold text-blue-900 mb-6">
       🚗 Data Kendaraan Dinas
     </h3>
 
-    <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
+   
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
+
 
       <Info
         label="Jenis Kendaraan"
