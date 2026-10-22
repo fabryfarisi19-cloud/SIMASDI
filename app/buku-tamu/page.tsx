@@ -1969,6 +1969,7 @@ return "";
 
     
 {step === "sukses" && (
+    <>
   <section
     className="print-area"
     style={{
@@ -2103,7 +2104,10 @@ return "";
           letterSpacing: "2px",
         }}
       >
-        
+
+        {nomorKunjungan}
+      </div>
+    </div>
 <a
   href="https://star-survei3a.kemenimipas.go.id/ly/VnATpOFz"
   target="_blank"
@@ -2122,11 +2126,6 @@ return "";
 >
   Isi Survei Kepuasan Pelayanan
 </a>
-
-        {nomorKunjungan}
-      </div>
-    </div>
-
     {/* ================================
         DETAIL KUNJUNGAN
     ================================= */}
@@ -2400,8 +2399,72 @@ return "";
       Halaman akan kembali ke menu
       utama secara otomatis.
     </div>
+
   </section>
+
+  {/* SURVEI KEPUASAN TERPISAH DARI BUKTI KUNJUNGAN */}
+  <section
+    style={{
+      maxWidth: "700px",
+      margin: "24px auto",
+      padding: "28px 20px",
+      background: "#ffffff",
+      border: "1px solid #cbd5e1",
+      borderRadius: "20px",
+      textAlign: "center",
+      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+    }}
+  >
+    <div style={{ fontSize: "32px", marginBottom: "10px" }}>
+      ⭐
+    </div>
+
+    <h2
+      style={{
+        margin: "0 0 10px",
+        color: "#0f172a",
+        fontSize: "22px",
+        fontWeight: 800,
+      }}
+    >
+      Survei Kepuasan Pelayanan
+    </h2>
+
+    <p
+      style={{
+        margin: "0 auto 20px",
+        maxWidth: "480px",
+        color: "#64748b",
+        fontSize: "15px",
+        lineHeight: 1.7,
+      }}
+    >
+      Mohon kesediaan Anda mengisi survei kepuasan pelayanan
+      melalui STAR ASN. Masukan Anda membantu kami meningkatkan
+      kualitas pelayanan Bapas Kelas I Jakarta Barat.
+    </p>
+
+    <a
+      href="https://star-survei3a.kemenimipas.go.id/ly/VnATpOFz"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-block",
+        padding: "14px 24px",
+        background: "#0f766e",
+        color: "#ffffff",
+        borderRadius: "12px",
+        textDecoration: "none",
+        fontWeight: 700,
+        fontSize: "15px",
+      }}
+    >
+      Isi Survei Kepuasan Pelayanan ↗
+    </a>
+  </section>
+  </>
 )}
+
 
 
           {/* FOOTER */}
