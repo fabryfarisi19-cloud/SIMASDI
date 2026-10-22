@@ -262,13 +262,12 @@ if (error) {
               value={barang.tahun_perolehan}
             />
 {barang.kategori === "Kendaraan Dinas" && (
-  <div className="md:col-span-2 mt-6 border-2 border-blue-100 rounded-2xl p-6 bg-blue-50">
+<div className="col-span-1 md:col-span-2 mt-6 min-w-0 w-full max-w-full overflow-hidden border-2 border-blue-100 rounded-2xl p-4 md:p-6 bg-blue-50">
 
     <h2 className="text-xl font-bold text-blue-900 mb-6">
       🚗 Data Kendaraan Dinas
     </h2>
-
-    <div className="grid md:grid-cols-2 gap-5">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-5 min-w-0">
 
       <Item
         label="Jenis Kendaraan"
@@ -337,10 +336,15 @@ function Item({
   value: any;
 }) {
   return (
-    <div>
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="text-lg font-semibold">
-        {value || "-"}
+    <div className="min-w-0 w-full max-w-full">
+      <div className="mb-1 break-words text-sm text-gray-500">
+        {label}
+      </div>
+
+      <div className="block min-w-0 w-full max-w-full whitespace-normal break-all text-base font-semibold leading-relaxed text-slate-800 md:text-lg">
+        {value !== null && value !== undefined && value !== ""
+          ? String(value)
+          : "-"}
       </div>
     </div>
   );
