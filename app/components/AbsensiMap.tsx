@@ -34,7 +34,7 @@ export default function AbsensiMap({
   ];
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+   <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 [&_.leaflet-control-attribution]:text-[9px] [&_.leaflet-control-attribution]:opacity-70">
       <MapContainer
         {...({
           center: officePosition,
@@ -43,12 +43,13 @@ export default function AbsensiMap({
           style: { height: "400px", width: "100%" },
         } as any)}
       >
-        <TileLayer
-          {...({
-            attribution: "&copy; OpenStreetMap contributors",
-            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          } as any)}
-        />
+  <TileLayer
+  {...({
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  } as any)}
+/>
 
         {/* Radius kantor 100 meter */}
         <Circle
