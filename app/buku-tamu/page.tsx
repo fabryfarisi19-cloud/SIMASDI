@@ -2103,6 +2103,26 @@ return "";
           letterSpacing: "2px",
         }}
       >
+        
+<a
+  href="https://star-survei3a.kemenimipas.go.id/ly/VnATpOFz"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    display: "inline-block",
+    marginTop: "18px",
+    padding: "13px 22px",
+    backgroundColor: "#0f766e",
+    color: "#ffffff",
+    borderRadius: "10px",
+    textDecoration: "none",
+    fontWeight: 700,
+    fontSize: "14px",
+  }}
+>
+  Isi Survei Kepuasan Pelayanan
+</a>
+
         {nomorKunjungan}
       </div>
     </div>
