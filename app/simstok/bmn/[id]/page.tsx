@@ -245,7 +245,7 @@ async function loadRiwayatMutasi() {
           </h2>
 
         
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
 
 
             <Info
@@ -339,7 +339,7 @@ async function loadRiwayatMutasi() {
     </h3>
 
    
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 min-w-0">
 
 
       <Info
