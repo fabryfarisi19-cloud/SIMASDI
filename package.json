@@ -19,7 +19,7 @@
     "lucide-react": "^1.21.0",
     "next": "^16.2.7",
     "next-auth": "^4.24.11",
-    "node-edge-tts": "^1.2.11",
+  "node-edge-tts": "file:vendor/node-edge-tts",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
