@@ -8,6 +8,15 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  const secret = process.env.TTS_TEST_SECRET;
+  const token = req.headers.get("x-tts-test-token");
+
+  if (!secret || token !== secret) {
+    return NextResponse.json(
+      { error: "Akses pengujian ditolak" },
+      { status: 401 }
+    );
+  }
   let tempFile: string | undefined;
 
   try {
