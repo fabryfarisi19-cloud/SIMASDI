@@ -45,6 +45,12 @@ class EdgeTTS {
             agent: this.proxy ? new https_proxy_agent_1.HttpsProxyAgent(this.proxy) : undefined
         });
         return new Promise((resolve, reject) => {
+wsConnect.on('unexpected-response', (_req, res) => {
+    console.error('[TTS DIAGNOSTIK] HTTP status:', res.statusCode);
+    console.error('[TTS DIAGNOSTIK] Upgrade:', res.headers.upgrade);
+    console.error('[TTS DIAGNOSTIK] Content-Type:', res.headers['content-type']);
+    console.error('[TTS DIAGNOSTIK] Server:', res.headers.server);
+});
             wsConnect.on('open', () => {
                 wsConnect.send(`Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n
           {
