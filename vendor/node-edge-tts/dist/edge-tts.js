@@ -44,15 +44,40 @@ class EdgeTTS {
             },
             agent: this.proxy ? new https_proxy_agent_1.HttpsProxyAgent(this.proxy) : undefined
         });
-        return new Promise((resolve, reject) => {
-wsConnect.on('unexpected-response', (_req, res) => {
-    console.error('[TTS DIAGNOSTIK] HTTP status:', res.statusCode);
-    console.error('[TTS DIAGNOSTIK] Upgrade:', res.headers.upgrade);
-    console.error('[TTS DIAGNOSTIK] Content-Type:', res.headers['content-type']);
-    console.error('[TTS DIAGNOSTIK] Server:', res.headers.server);
-});
-            wsConnect.on('open', () => {
-                wsConnect.send(`Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n
+       return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+        clearTimeout(connectTimeout);
+        wsConnect.off("open", onOpen);
+        wsConnect.off("error", onError);
+        wsConnect.off("unexpected-response", onUnexpectedResponse);
+    };
+const fail = (error) => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+
+    try {
+        if (
+            wsConnect.readyState === ws_1.WebSocket.CONNECTING ||
+            wsConnect.readyState === ws_1.WebSocket.OPEN
+        ) {
+            wsConnect.terminate();
+        }
+    } catch (closeError) {
+        console.error("[TTS DIAGNOSTIK] Gagal menutup WebSocket:", closeError);
+    }
+
+    reject(error);
+};
+    const onOpen = () => {
+        if (settled) return;
+
+        settled = true;
+        cleanup();
+
+        wsConnect.send(`Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n
           {
             "context": {
               "synthesis": {
@@ -67,14 +92,32 @@ wsConnect.on('unexpected-response', (_req, res) => {
             }
           }
         `);
-                resolve(wsConnect);
-            });
-            wsConnect.on('error', (err) => {
-                reject(err);
-            });
-        });
-    }
-    _saveSubFile(subFile, text, audioPath) {
+
+        resolve(wsConnect);
+    };
+
+    const onError = (err) => {
+        console.error("[TTS DIAGNOSTIK] WebSocket error:", err.message);
+        fail(err);
+    };
+
+    const onUnexpectedResponse = (_req, res) => {
+        console.error("[TTS DIAGNOSTIK] HTTP status:", res.statusCode);
+        console.error("[TTS DIAGNOSTIK] Upgrade:", res.headers.upgrade);
+        console.error("[TTS DIAGNOSTIK] Content-Type:", res.headers["content-type"]);
+        console.error("[TTS DIAGNOSTIK] Server:", res.headers.server);
+
+        fail(new Error(`WebSocket ditolak dengan HTTP ${res.statusCode}`));
+    };
+
+    const connectTimeout = setTimeout(() => {
+        fail(new Error("Timeout saat membuka koneksi WebSocket TTS setelah 8 detik"));
+    }, 8000);
+
+    wsConnect.on("open", onOpen);
+    wsConnect.on("error", onError);
+    wsConnect.on("unexpected-response", onUnexpectedResponse);
+});
         let subPath = audioPath + '.json';
         let subChars = text.split('');
         let subCharIndex = 0;

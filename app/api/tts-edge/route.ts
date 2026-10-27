@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       lang: "id-ID",
       outputFormat: "audio-24khz-96kbitrate-mono-mp3",
       rate: "-8%",
-      pitch: "-6Hz",
+     pitch: "-15Hz",
       volume: "+0%",
      timeout: 30000,
     });
