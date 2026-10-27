@@ -11,12 +11,20 @@ export async function POST(req: NextRequest) {
   const secret = process.env.TTS_TEST_SECRET;
   const token = req.headers.get("x-tts-test-token");
 
-  if (!secret || token !== secret) {
-    return NextResponse.json(
-      { error: "Akses pengujian ditolak" },
-      { status: 401 }
-    );
-  }
+if (!secret || token !== secret) {
+  return NextResponse.json(
+    {
+      error: "Akses pengujian ditolak",
+      diagnostic: {
+        secretAvailable: Boolean(secret),
+        tokenReceived: token !== null,
+        tokenLength: token?.length ?? 0,
+        secretLength: secret?.length ?? 0,
+      },
+    },
+    { status: 401 }
+  );
+}
   let tempFile: string | undefined;
 
   try {
