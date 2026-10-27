@@ -102,6 +102,8 @@ const fail = (error) => {
     };
 
     const onUnexpectedResponse = (_req, res) => {
+        console.error("[TTS DIAGNOSTIK] URL:", wsUrl.split("?")[0]);
+        console.error("[TTS DIAGNOSTIK] Header respons:", JSON.stringify(res.headers));
         console.error("[TTS DIAGNOSTIK] HTTP status:", res.statusCode);
         console.error("[TTS DIAGNOSTIK] Upgrade:", res.headers.upgrade);
         console.error("[TTS DIAGNOSTIK] Content-Type:", res.headers["content-type"]);
