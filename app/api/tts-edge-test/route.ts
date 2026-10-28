@@ -62,14 +62,16 @@ if (!secret || token !== secret) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (error) {
+   } catch (error) {
     console.error("EDGE TTS TEST ERROR:", error);
 
     return NextResponse.json(
       {
         error: "Pengujian TTS v1.2.12 gagal",
         detail:
-          error instanceof Error ? error.message : String(error),
+          error instanceof Error
+            ? error.stack ?? error.message
+            : String(error),
       },
       { status: 500 }
     );
