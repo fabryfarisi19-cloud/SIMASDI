@@ -65,6 +65,12 @@ const sudahAnnounce = useRef<string | null>(null);
   // ================================
 async function aktifkanAudio() {
   if (!bolehAudio) return;
+
+  // Aktifkan announcer agar suara cadangan dapat digunakan.
+  setAudioAktif(true);
+
+  let url: string | null = null;
+
   try {
     const response = await fetch("/api/tts-edge", {
       method: "POST",
@@ -77,31 +83,60 @@ async function aktifkanAudio() {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `TTS gagal: ${response.status}`
-      );
+      throw new Error(`TTS gagal: HTTP ${response.status}`);
     }
 
     const blob = await response.blob();
 
-    const url = URL.createObjectURL(blob);
+    if (!blob.size) {
+      throw new Error("Audio TTS kosong");
+    }
+
+    url = URL.createObjectURL(blob);
 
     const audio = new Audio(url);
-
     audio.volume = 1;
 
-    await audio.play();
-
     audio.onended = () => {
-      URL.revokeObjectURL(url);
+      if (url) URL.revokeObjectURL(url);
     };
 
-    setAudioAktif(true);
+    audio.onerror = () => {
+      if (url) URL.revokeObjectURL(url);
+      console.error("Audio Edge TTS gagal diputar");
+    };
+
+    await audio.play();
   } catch (error) {
+    if (url) URL.revokeObjectURL(url);
+
     console.error(
-      "Gagal mengaktifkan audio SIMASDI:",
+      "Edge TTS gagal, mencoba suara browser:",
       error
     );
+
+    window.speechSynthesis.cancel();
+
+    const suara = new SpeechSynthesisUtterance(
+      "Audio SIMASDI telah diaktifkan."
+    );
+
+    suara.lang = "id-ID";
+    suara.rate = 0.88;
+    suara.pitch = 1;
+    suara.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+
+    const suaraIndonesia = voices.find(
+      (voice) => voice.lang.toLowerCase() === "id-id"
+    );
+
+    if (suaraIndonesia) {
+      suara.voice = suaraIndonesia;
+    }
+
+    window.speechSynthesis.speak(suara);
   }
 }
   // ================================
@@ -266,13 +301,50 @@ async function bicara(
     };
 
     await audio.play();
-  } catch (error) {
-    if (url) URL.revokeObjectURL(url);
+} catch (error) {
+  if (url) URL.revokeObjectURL(url);
 
-    console.error("Gagal memutar pengumuman apel:", error);
-    setelahSelesai?.();
-  }
-}
+  console.error(
+    "Edge TTS gagal, menggunakan suara browser:",
+    error
+  );
+
+  window.speechSynthesis.cancel();
+
+  const suara = new SpeechSynthesisUtterance(teks);
+  suara.lang = "id-ID";
+  suara.rate = 0.88;
+  suara.pitch = 1;
+  suara.volume = 1;
+
+  const pilihSuara = () => {
+    const voices = window.speechSynthesis.getVoices();
+
+    const suaraIndonesia = voices.find(
+      (v) =>
+        v.lang.toLowerCase() === "id-id" &&
+        /gadis|female|woman/i.test(v.name)
+    );
+
+    const suaraLokal = voices.find(
+      (v) => v.lang.toLowerCase().startsWith("id")
+    );
+
+    suara.voice = suaraIndonesia ?? suaraLokal ?? null;
+
+    suara.onend = () => setelahSelesai?.();
+    suara.onerror = () => setelahSelesai?.();
+
+    window.speechSynthesis.speak(suara);
+  };
+
+   pilihSuara();
+} // menutup catch
+} // menutup fungsi bicara
+
+// ================================
+// TAMPILAN
+// ================================
     // ================================
   // TAMPILAN
   // ================================
@@ -288,7 +360,7 @@ async function bicara(
     <>
 
 
-      <div className="fixed bottom-4 right-4 z-[9999]">
+<div className="fixed bottom-24 right-4 z-[9999]">
         <div className="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
           🔊 Announcer SIMASDI Aktif
         </div>
@@ -298,7 +370,7 @@ async function bicara(
 }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999]">
+   <div className="fixed bottom-24 right-4 z-[9999]">
       <button
         onClick={aktifkanAudio}
         className="rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white shadow-lg hover:bg-orange-600"
