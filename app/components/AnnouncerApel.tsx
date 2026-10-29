@@ -128,13 +128,17 @@ async function aktifkanAudio() {
 
     const voices = window.speechSynthesis.getVoices();
 
-    const suaraIndonesia = voices.find(
-      (voice) => voice.lang.toLowerCase() === "id-id"
-    );
+const suaraPerempuan = voices.find(
+  (voice) =>
+    voice.lang.toLowerCase().startsWith("id") &&
+    /gadis|female|woman|perempuan/i.test(voice.name)
+);
 
-    if (suaraIndonesia) {
-      suara.voice = suaraIndonesia;
-    }
+const suaraIndonesia = voices.find(
+  (voice) => voice.lang.toLowerCase().startsWith("id")
+);
+
+suara.voice = suaraPerempuan ?? suaraIndonesia ?? null;
 
     window.speechSynthesis.speak(suara);
   }
