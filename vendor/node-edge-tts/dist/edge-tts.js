@@ -33,7 +33,7 @@ class EdgeTTS {
     async _connectWebSocket() {
         const wsUrl = `wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1?Ocp-Apim-Subscription-Key=${drm_1.TRUSTED_CLIENT_TOKEN}&Sec-MS-GEC=${(0, drm_1.generateSecMsGecToken_V2)()}&Sec-MS-GEC-Version=${drm_1.SEC_MS_GEC_VERSION_V2}`;
         const wsConnect = new ws_1.WebSocket(wsUrl, {
-            host: 'speech.platform.bing.com',
+
             origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
             headers: {
                 'Pragma': 'no-cache',
