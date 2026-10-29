@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateSecMsGecToken_V2 = exports.generateSecMsGecToken = exports.TRUSTED_CLIENT_TOKEN = exports.SEC_MS_GEC_VERSION_V2 = exports.SEC_MS_GEC_VERSION = exports.CHROMIUM_FULL_VERSION = void 0;
 const node_crypto_1 = require("node:crypto");
-exports.CHROMIUM_FULL_VERSION = '143.0.3650.75';
+exports.CHROMIUM_FULL_VERSION = '155.0.4283.45';
 exports.SEC_MS_GEC_VERSION = `1-${exports.CHROMIUM_FULL_VERSION}`;
 exports.SEC_MS_GEC_VERSION_V2 = `2-${exports.CHROMIUM_FULL_VERSION}`;
 exports.TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
