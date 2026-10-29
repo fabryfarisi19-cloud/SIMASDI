@@ -20,7 +20,7 @@ export default function AnnouncerApel() {
   const [audioAktif, setAudioAktif] = useState(false);
   const [bolehAudio, setBolehAudio] = useState(false);
   const [jadwalHariIni, setJadwalHariIni] = useState<JadwalApel[]>([]);
-const sudahAnnounce = useRef<string | null>(null);
+const sudahAnnounce = useRef<Set<string>>(new Set());
 
 
   // ================================
@@ -222,15 +222,7 @@ suara.voice = suaraPerempuan ?? suaraIndonesia ?? null;
 useEffect(() => {
   if (!audioAktif || jadwalHariIni.length === 0) return;
 
-  const jamApel = jadwalHariIni[0]?.jam_apel;
-  if (!jamApel) return;
-
-  const [jam, menit] = jamApel.split(":").map(Number);
-
-  if (!Number.isFinite(jam) || !Number.isFinite(menit)) {
-    console.error("Format jam_apel tidak valid:", jamApel);
-    return;
-  }
+  const waktuPengumuman = ["07:50", "07:55", "08:00"];
 
   const periksaWaktu = () => {
     const sekarang = new Date();
@@ -241,15 +233,32 @@ useEffect(() => {
       String(sekarang.getDate()).padStart(2, "0"),
     ].join("-");
 
-    if (sudahAnnounce.current === tanggalHariIni) return;
+    const jamSekarang =
+      `${String(sekarang.getHours()).padStart(2, "0")}:` +
+      `${String(sekarang.getMinutes()).padStart(2, "0")}`;
 
-    if (
-      sekarang.getHours() === jam &&
-      sekarang.getMinutes() === menit
-    ) {
-      sudahAnnounce.current = tanggalHariIni;
-      announceApel();
-    }
+    if (!waktuPengumuman.includes(jamSekarang)) return;
+
+    const kunciPengumuman =
+      `${tanggalHariIni}-${jamSekarang}`;
+
+    if (sudahAnnounce.current.has(kunciPengumuman)) return;
+
+    // Catat lebih dahulu agar tidak berulang pada menit yang sama.
+   sudahAnnounce.current.add(kunciPengumuman);
+
+if (jamSekarang === "07:50") {
+  // Pengumuman pembuka dilanjutkan daftar nama petugas.
+  announceApel();
+} else if (jamSekarang === "07:55") {
+  bicara(
+    "Mohon perhatian. Seluruh pegawai dimohon segera menempati barisan apel. Apel akan segera dimulai."
+  );
+} else if (jamSekarang === "08:00") {
+  bicara(
+    "Mohon perhatian. Apel pegawai Bapas Kelas I Jakarta Barat dimulai sekarang."
+  );
+}
   };
 
   periksaWaktu();
@@ -266,7 +275,28 @@ async function bicara(
   setelahSelesai?: () => void
 ) {
   if (!audioAktif) return;
+  // Bunyi pembuka sebelum setiap pengumuman.
+  try {
+    const bel = new Audio("/sound/pengumuman-apel.mp3");
+    bel.volume = 1;
 
+    await new Promise<void>((resolve) => {
+      let selesai = false;
+
+      const lanjut = () => {
+        if (selesai) return;
+        selesai = true;
+        resolve();
+      };
+
+      bel.onended = lanjut;
+      bel.onerror = lanjut;
+
+      void bel.play().catch(lanjut);
+    });
+  } catch (error) {
+    console.error("Gagal memutar bunyi ting tong:", error);
+  }
   let url: string | null = null;
 
   try {
@@ -349,9 +379,6 @@ async function bicara(
 // ================================
 // TAMPILAN
 // ================================
-    // ================================
-  // TAMPILAN
-  // ================================
 
   // Akun yang tidak diizinkan tidak mendapatkan
   // tombol maupun status audio SIMASDI.
