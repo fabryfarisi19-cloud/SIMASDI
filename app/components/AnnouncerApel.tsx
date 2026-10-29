@@ -20,7 +20,7 @@ export default function AnnouncerApel() {
   const [audioAktif, setAudioAktif] = useState(false);
   const [bolehAudio, setBolehAudio] = useState(false);
   const [jadwalHariIni, setJadwalHariIni] = useState<JadwalApel[]>([]);
-const sudahAnnounce = useRef(false);
+const sudahAnnounce = useRef<string | null>(null);
 
 
   // ================================
@@ -157,67 +157,122 @@ async function aktifkanAudio() {
   // ================================
   // ANNOUNCE APEL
   // ================================
-  function announceApel() {
-    const teksAwal =
-      "Mohon perhatian. " +
-      "Kepada seluruh pegawai Bapas Kelas Satu Jakarta Barat. " +
-      "Apel pegawai akan segera dimulai. " +
-      "Mohon seluruh pegawai segera berkumpul di " +
-      `${jadwalHariIni[0]?.lokasi || "lokasi apel"}.`;
+ function announceApel() {
+  const teksAwal =
+    "Mohon perhatian. " +
+    "Kepada seluruh pegawai Bapas Kelas Satu Jakarta Barat. " +
+    "Apel pegawai akan segera dimulai. " +
+    "Mohon seluruh pegawai segera berkumpul di " +
+    `${jadwalHariIni[0]?.lokasi || "lokasi apel"}.`;
 
-    bicara(teksAwal);
-
-  setTimeout(() => {
   const petugas = jadwalHariIni
-  .map(
-    (item) =>
-      `${item.tugas}, ${item.nama_petugas}`
-  )
-  .join(". ");
+    .map((item) => `${item.tugas}, ${item.nama_petugas}`)
+    .join(". ");
 
- if (!petugas) {
-  return;
+  bicara(teksAwal, () => {
+    if (!petugas) return;
+
+    const suaraPetugas =
+      "Adapun petugas apel hari ini adalah. " +
+      petugas +
+      ".";
+
+    bicara(suaraPetugas);
+  });
 }
+useEffect(() => {
+  if (!audioAktif || jadwalHariIni.length === 0) return;
 
-  const suaraPetugas =
-    "Adapun petugas apel hari ini adalah. " +
-    petugas +
-    ".";
+  const jamApel = jadwalHariIni[0]?.jam_apel;
+  if (!jamApel) return;
 
-bicara(suaraPetugas);
-}, 9000);
+  const [jam, menit] = jamApel.split(":").map(Number);
+
+  if (!Number.isFinite(jam) || !Number.isFinite(menit)) {
+    console.error("Format jam_apel tidak valid:", jamApel);
+    return;
   }
 
+  const periksaWaktu = () => {
+    const sekarang = new Date();
+
+    const tanggalHariIni = [
+      sekarang.getFullYear(),
+      String(sekarang.getMonth() + 1).padStart(2, "0"),
+      String(sekarang.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    if (sudahAnnounce.current === tanggalHariIni) return;
+
+    if (
+      sekarang.getHours() === jam &&
+      sekarang.getMinutes() === menit
+    ) {
+      sudahAnnounce.current = tanggalHariIni;
+      announceApel();
+    }
+  };
+
+  periksaWaktu();
+
+  const interval = window.setInterval(periksaWaktu, 5000);
+
+  return () => window.clearInterval(interval);
+}, [audioAktif, jadwalHariIni]);
   // ================================
   // TEXT TO SPEECH
   // ================================
-function bicara(
+async function bicara(
   teks: string,
   setelahSelesai?: () => void
 ) {
   if (!audioAktif) return;
 
-  window.speechSynthesis.cancel();
+  let url: string | null = null;
 
-  const suara =
-    new SpeechSynthesisUtterance(teks);
+  try {
+    const response = await fetch("/api/tts-edge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: teks }),
+    });
 
-  suara.lang = "id-ID";
-  suara.rate = 0.88;
-  suara.pitch = 1;
-  suara.volume = 1;
+    if (!response.ok) {
+      throw new Error(`TTS gagal: HTTP ${response.status}`);
+    }
 
-  suara.onend = () => {
+    const blob = await response.blob();
+
+    if (!blob.size) {
+      throw new Error("Audio TTS kosong");
+    }
+
+    url = URL.createObjectURL(blob);
+
+    const audio = new Audio(url);
+    audio.volume = 1;
+
+    audio.onended = () => {
+      if (url) URL.revokeObjectURL(url);
+      setelahSelesai?.();
+    };
+
+    audio.onerror = () => {
+      if (url) URL.revokeObjectURL(url);
+      console.error("Audio pengumuman gagal diputar");
+      setelahSelesai?.();
+    };
+
+    await audio.play();
+  } catch (error) {
+    if (url) URL.revokeObjectURL(url);
+
+    console.error("Gagal memutar pengumuman apel:", error);
     setelahSelesai?.();
-  };
-
-  suara.onerror = () => {
-    setelahSelesai?.();
-  };
-
-  window.speechSynthesis.speak(suara);
+  }
 }
-
     // ================================
   // TAMPILAN
   // ================================
