@@ -1023,10 +1023,41 @@ onClick={async () => {
 
     await audio.play();
 
-  } catch (error) {
-    console.error("TTS TEST ERROR:", error);
-    alert("Gagal menjalankan TTS.");
-  }
+} catch (error) {
+  console.error("TTS TEST ERROR:", error);
+
+  window.speechSynthesis.cancel();
+
+  const suara = new SpeechSynthesisUtterance(
+    "Pengujian suara perempuan SIMASDI. Ini adalah suara cadangan."
+  );
+
+  suara.lang = "id-ID";
+  suara.rate = 0.88;
+  suara.pitch = 1;
+  suara.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+
+  const suaraPerempuan = voices.find(
+    (voice) =>
+      voice.lang.toLowerCase().startsWith("id") &&
+      /gadis|female|woman|perempuan/i.test(voice.name)
+  );
+
+  const suaraIndonesia = voices.find(
+    (voice) => voice.lang.toLowerCase().startsWith("id")
+  );
+
+  suara.voice = suaraPerempuan ?? suaraIndonesia ?? null;
+
+  suara.onerror = (event) => {
+    console.error("Suara cadangan gagal:", event);
+    alert("Edge TTS dan suara cadangan browser gagal.");
+  };
+
+  window.speechSynthesis.speak(suara);
+}
 }}
        
 >
