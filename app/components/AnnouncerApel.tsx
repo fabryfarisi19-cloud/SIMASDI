@@ -20,7 +20,7 @@ export default function AnnouncerApel() {
   const [audioAktif, setAudioAktif] = useState(false);
   const [bolehAudio, setBolehAudio] = useState(false);
   const [jadwalHariIni, setJadwalHariIni] = useState<JadwalApel[]>([]);
-const sudahAnnounce = useRef<Set<string>>(new Set());
+
 
 
   // ================================
@@ -219,54 +219,6 @@ suara.voice = suaraPerempuan ?? suaraIndonesia ?? null;
     bicara(suaraPetugas);
   });
 }
-useEffect(() => {
-  if (!audioAktif || jadwalHariIni.length === 0) return;
-
-  const waktuPengumuman = ["07:50", "07:55", "08:00"];
-
-  const periksaWaktu = () => {
-    const sekarang = new Date();
-
-    const tanggalHariIni = [
-      sekarang.getFullYear(),
-      String(sekarang.getMonth() + 1).padStart(2, "0"),
-      String(sekarang.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    const jamSekarang =
-      `${String(sekarang.getHours()).padStart(2, "0")}:` +
-      `${String(sekarang.getMinutes()).padStart(2, "0")}`;
-
-    if (!waktuPengumuman.includes(jamSekarang)) return;
-
-    const kunciPengumuman =
-      `${tanggalHariIni}-${jamSekarang}`;
-
-    if (sudahAnnounce.current.has(kunciPengumuman)) return;
-
-    // Catat lebih dahulu agar tidak berulang pada menit yang sama.
-   sudahAnnounce.current.add(kunciPengumuman);
-
-if (jamSekarang === "07:50") {
-  // Pengumuman pembuka dilanjutkan daftar nama petugas.
-  announceApel();
-} else if (jamSekarang === "07:55") {
-  bicara(
-    "Mohon perhatian. Seluruh pegawai dimohon segera menempati barisan apel. Apel akan segera dimulai."
-  );
-} else if (jamSekarang === "08:00") {
-  bicara(
-    "Mohon perhatian. Apel pegawai Bapas Kelas I Jakarta Barat dimulai sekarang."
-  );
-}
-  };
-
-  periksaWaktu();
-
-  const interval = window.setInterval(periksaWaktu, 5000);
-
-  return () => window.clearInterval(interval);
-}, [audioAktif, jadwalHariIni]);
   // ================================
   // TEXT TO SPEECH
   // ================================
