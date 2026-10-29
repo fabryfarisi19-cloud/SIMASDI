@@ -152,42 +152,6 @@ async function aktifkanAudio() {
     };
   }, []);
 
-
-
-  // ================================
-  // ANNOUNCE APEL
-  // ================================
-  function announceApel() {
-    const teksAwal =
-      "Mohon perhatian. " +
-      "Kepada seluruh pegawai Bapas Kelas Satu Jakarta Barat. " +
-      "Apel pegawai akan segera dimulai. " +
-      "Mohon seluruh pegawai segera berkumpul di " +
-      `${jadwalHariIni[0]?.lokasi || "lokasi apel"}.`;
-
-    bicara(teksAwal);
-
-  setTimeout(() => {
-  const petugas = jadwalHariIni
-  .map(
-    (item) =>
-      `${item.tugas}, ${item.nama_petugas}`
-  )
-  .join(". ");
-
- if (!petugas) {
-  return;
-}
-
-  const suaraPetugas =
-    "Adapun petugas apel hari ini adalah. " +
-    petugas +
-    ".";
-
-bicara(suaraPetugas);
-}, 9000);
-  }
-
   // ================================
   // TEXT TO SPEECH
   // ================================

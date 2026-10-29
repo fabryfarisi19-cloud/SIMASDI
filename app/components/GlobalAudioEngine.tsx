@@ -329,7 +329,7 @@ export default function GlobalAudioEngine() {
 
     const teks =
       "Mohon Perhatian. " +
-      "Lima menit lagi apel pagi akan dimulai. " +
+  "Apel pagi akan dimulai lima menit lagi. " +
       `Pelaksanaan apel bertempat di ${lokasi}. ` +
       "Kepada seluruh pegawai dan petugas apel agar segera menuju tempat pelaksanaan apel " +
       "dan menempati posisi masing-masing, terimakasih.";
@@ -363,13 +363,11 @@ export default function GlobalAudioEngine() {
     // untuk kompatibilitas jadwal yang ada.
     void pembina;
 
-    let teks =
-      "Mohon Perhatian. " +
-      "Apel pagi Bapas Kelas Satu Jakarta Barat segera dimulai. ";
-
-    teks +=
-      "Kepada seluruh peserta apel dimohon untuk mengikuti apel dengan tertib, terimakasih.";
-
+   const teks =
+  "Mohon perhatian. " +
+  "Apel pagi Bapas Kelas Satu Jakarta Barat segera dimulai. " +
+  "Kepada seluruh peserta apel dimohon mengikuti apel dengan tertib. " +
+  "Terima kasih.";
     await putarTengTong();
 
     await new Promise((resolve) =>
@@ -380,7 +378,7 @@ export default function GlobalAudioEngine() {
   }
 
   // =========================================================
-  // INDONESIA RAYA 10:00
+  // INDONESIA RAYA 06:00
   // =========================================================
   async function putarIndonesiaRaya() {
     if (!indonesiaRayaRef.current) {
@@ -458,8 +456,8 @@ export default function GlobalAudioEngine() {
 
     const kunci0800 =
       `${tanggal}-08:00`;
-const kunci0700 =
-  `${tanggal}-07:00`;
+const kunci0600 =
+  `${tanggal}-06:00`;
 
     // =======================================================
     // 07:50 - NAMA PETUGAS
@@ -516,18 +514,18 @@ const kunci0700 =
     }
 
  // =======================================================
-// 07:00 - INDONESIA RAYA
+// 06:00 - INDONESIA RAYA
 // =======================================================
 if (
-  waktuSekarang === "07:00" &&
-  sudahDiputarRef.current.p0700 !==
-    kunci0700
+  waktuSekarang === "06:00" &&
+  sudahDiputarRef.current.p0600 !==
+    kunci0600
 ) {
-  sudahDiputarRef.current.p0700 =
-    kunci0700;
+  sudahDiputarRef.current.p0600 =
+    kunci0600;
 
   console.log(
-    "🇮🇩 Menjalankan Indonesia Raya 07:00"
+    "🇮🇩 Menjalankan Indonesia Raya 06:00"
   );
 
   await putarIndonesiaRaya();
