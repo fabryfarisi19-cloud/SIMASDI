@@ -327,12 +327,12 @@ export default function GlobalAudioEngine() {
       )?.lokasi ||
       "Halaman Griya Abhipraya Bapas Kelas I Jakarta Barat";
 
-    const teks =
-      "Mohon Perhatian. " +
+const teks =
+  "Mohon perhatian kepada seluruh pegawai Bapas Kelas I Jakarta Barat. " +
   "Apel pagi akan dimulai lima menit lagi. " +
-      `Pelaksanaan apel bertempat di ${lokasi}. ` +
-      "Kepada seluruh pegawai dan petugas apel agar segera menuju tempat pelaksanaan apel " +
-      "dan menempati posisi masing-masing, terimakasih.";
+  "Seluruh pegawai dimohon segera bersiap. " +
+  "Apel pagi dilaksanakan di halaman Griya Abipraya. " +
+  "Terima kasih.";
 
     await putarTengTong();
 
@@ -363,10 +363,11 @@ export default function GlobalAudioEngine() {
     // untuk kompatibilitas jadwal yang ada.
     void pembina;
 
-   const teks =
-  "Mohon perhatian. " +
-  "Apel pagi Bapas Kelas Satu Jakarta Barat segera dimulai. " +
-  "Kepada seluruh peserta apel dimohon mengikuti apel dengan tertib. " +
+const teks =
+  "Mohon perhatian kepada seluruh pegawai Bapas Kelas I Jakarta Barat. " +
+  "Apel pagi segera dimulai. " +
+  "Seluruh pegawai dimohon menempati posisi masing-masing " +
+  "dan mengikuti apel dengan tertib. " +
   "Terima kasih.";
     await putarTengTong();
 
