@@ -338,12 +338,26 @@ function deteksiBulanTahunPelayanan(
   tahun: number;
   namaBulan: string;
 } | null {
-  const teksNormal = normalisasiTeksPelayanan(teks).toLowerCase();
+  const teksNormal = normalisasiTeksPelayanan(teks);
 
-  const regex =
-    /\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})\b/i;
+  const daftarBulan =
+    "januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember";
 
-  const match = teksNormal.match(regex);
+  // Prioritaskan periode pada bagian Perihal.
+  const regexPerihal = new RegExp(
+    `\\bperihal\\s*:\\s*.*?\\b(${daftarBulan})\\s+(\\d{4})\\b`,
+    "i"
+  );
+
+  // Cadangan jika format Perihal tidak ditemukan.
+  const regexUmum = new RegExp(
+    `\\b(${daftarBulan})\\s+(\\d{4})\\b`,
+    "i"
+  );
+
+  const match =
+    teksNormal.match(regexPerihal) ||
+    teksNormal.match(regexUmum);
 
   if (!match) {
     return null;
@@ -363,13 +377,16 @@ function deteksiBulanTahunPelayanan(
     namaBulan: match[1],
   };
 }
-
 // ============================================================
 // DETEKSI TANGGAL DALAM TEKS
 // ============================================================
 
 function cariTanggalPelayanan(
-  teks: string
+  teks: string,
+  periode: {
+    bulan: number;
+    tahun: number;
+  }
 ): {
   tanggal: string;
   index: number;
@@ -382,21 +399,30 @@ function cariTanggalPelayanan(
   }[] = [];
 
   const regex =
-    /\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})\b/gi;
+    /\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\b/gi;
+
+  const jumlahHari = new Date(
+    Date.UTC(periode.tahun, periode.bulan, 0)
+  ).getUTCDate();
 
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(teks)) !== null) {
     const hari = Number(match[1]);
     const namaBulan = match[2].toLowerCase();
-    const tahun = Number(match[3]);
 
-    const bulan = BULAN_INDONESIA[namaBulan];
+    const bulanString = BULAN_INDONESIA[namaBulan];
 
-    if (!bulan) continue;
+    if (!bulanString) continue;
+
+    const bulan = Number(bulanString);
+
+    if (bulan !== periode.bulan) continue;
+
+    if (hari < 1 || hari > jumlahHari) continue;
 
     hasil.push({
-      tanggal: `${tahun}-${bulan}-${String(hari).padStart(2, "0")}`,
+      tanggal: `${periode.tahun}-${String(bulan).padStart(2, "0")}-${String(hari).padStart(2, "0")}`,
       index: match.index,
       panjang: match[0].length,
     });
@@ -765,14 +791,14 @@ function parseBlokPelayanan(
 // ============================================================
 
 function parseJadwalPelayanan(
-  teks: string
+  items: ItemPdfPublikasi[]
 ): PelayananPublikPreview[] {
   console.log(
-    "=== PARSER JADWAL PELAYANAN PUBLIK OTOMATIS ==="
+    "=== PARSER KOORDINAT JADWAL PELAYANAN PUBLIK ==="
   );
 
   const teksNormal = normalisasiTeksPelayanan(
-    teks
+    items.map((item) => item.text).join(" ")
   );
 
   // ----------------------------------------------------------
@@ -788,10 +814,7 @@ function parseJadwalPelayanan(
     );
 
   if (!isJadwalPelayanan) {
-    console.warn(
-      "PDF bukan Jadwal Pelayanan Publik."
-    );
-
+    console.warn("PDF bukan Jadwal Pelayanan Publik.");
     return [];
   }
 
@@ -800,109 +823,275 @@ function parseJadwalPelayanan(
   // ----------------------------------------------------------
 
   const periode =
-    deteksiBulanTahunPelayanan(
-      teksNormal
-    );
+    deteksiBulanTahunPelayanan(teksNormal);
 
   if (!periode) {
-    console.warn(
-      "Bulan dan tahun tidak berhasil dideteksi dari PDF."
-    );
-
+    console.warn("Periode PDF tidak ditemukan.");
     return [];
   }
 
   console.log(
-    "Periode PDF:",
+    "PERIODE:",
     periode.namaBulan,
     periode.tahun
   );
 
   // ----------------------------------------------------------
-  // CARI SEMUA TANGGAL
+  // CARI PENANDA TANGGAL BERDASARKAN KOORDINAT
   // ----------------------------------------------------------
 
-  const tanggalList =
-    cariTanggalPelayanan(teksNormal);
+  const kandidatTanggal = items.filter((item) => {
+    if (item.x < 45 || item.x > 95) return false;
 
-  if (tanggalList.length === 0) {
-    console.warn(
-      "Tidak ditemukan tanggal pada PDF."
+    const cocok = item.text.match(
+      /^\s*(\d{1,2})(?:\s+[A-Za-z]+)?\s*$/i
     );
 
+    if (!cocok) return false;
+
+    const hari = Number(cocok[1]);
+
+    if (hari < 1 || hari > 31) return false;
+
+    // Tahun harus berada di sekitar penanda tanggal.
+    const adaTahun = items.some(
+      (lain) =>
+        lain.halaman === item.halaman &&
+        lain.x >= 60 &&
+        lain.x <= 100 &&
+        Math.abs(lain.y - item.y) <= 18 &&
+        lain.text.trim() === String(periode.tahun)
+    );
+
+    const adaBulan = new RegExp(
+      `\\b${periode.namaBulan}\\b`,
+      "i"
+    ).test(item.text);
+
+    return adaTahun || adaBulan;
+  });
+
+  // Hilangkan penanda tanggal duplikat.
+  const tanggalUnik: ItemPdfPublikasi[] = [];
+
+  for (const item of kandidatTanggal) {
+    const sudahAda = tanggalUnik.some(
+      (lain) =>
+        lain.halaman === item.halaman &&
+        lain.text === item.text &&
+        Math.abs(lain.y - item.y) <= 3
+    );
+
+    if (!sudahAda) {
+      tanggalUnik.push(item);
+    }
+  }
+
+  tanggalUnik.sort(
+    (a, b) =>
+      a.halaman - b.halaman ||
+      b.y - a.y
+  );
+
+  console.log(
+    "JUMLAH PENANDA TANGGAL:",
+    tanggalUnik.length
+  );
+
+  console.table(
+    tanggalUnik.map((item) => ({
+      halaman: item.halaman,
+      y: item.y,
+      tanggal: item.text,
+    }))
+  );
+
+  if (tanggalUnik.length === 0) {
+    console.warn("Tidak ditemukan tanggal jadwal.");
     return [];
   }
 
-  console.log(
-    "Jumlah tanggal ditemukan:",
-    tanggalList.length
-  );
+  // ----------------------------------------------------------
+  // FUNGSI MENGGABUNGKAN TEKS DALAM SATU KOLOM
+  // Termasuk teks yang terpecah menjadi beberapa baris.
+  // ----------------------------------------------------------
+
+  const gabungKolom = (
+    daftar: ItemPdfPublikasi[]
+  ): string => {
+    const kelompok: {
+      y: number;
+      items: ItemPdfPublikasi[];
+    }[] = [];
+
+    for (const item of [...daftar].sort(
+      (a, b) => b.y - a.y || a.x - b.x
+    )) {
+      let grup = kelompok.find(
+        (g) => Math.abs(g.y - item.y) <= 3
+      );
+
+      if (!grup) {
+        grup = {
+          y: item.y,
+          items: [],
+        };
+
+        kelompok.push(grup);
+      }
+
+      grup.items.push(item);
+    }
+
+    return kelompok
+      .sort((a, b) => b.y - a.y)
+      .map((grup) =>
+        grup.items
+          .sort((a, b) => a.x - b.x)
+          .map((item) => item.text)
+          .join(" ")
+      )
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
 
   // ----------------------------------------------------------
-  // BUAT BLOK PER TANGGAL
+  // AMBIL NAMA PETUGAS BERDASARKAN POSISI BARIS
+  // ----------------------------------------------------------
+
+  const ambilNamaPetugas = (
+    halaman: number,
+    tanggalY: number,
+    offsetY: number
+  ): string => {
+    const targetY = tanggalY + offsetY;
+
+    const baris = items.filter(
+      (item) =>
+        item.halaman === halaman &&
+        item.x >= 105 &&
+        item.x < 260 &&
+        Math.abs(item.y - targetY) <= 8
+    );
+
+    return gabungKolom(baris);
+  };
+
+  // ----------------------------------------------------------
+  // PROSES SETIAP TANGGAL
   // ----------------------------------------------------------
 
   const hasil: PelayananPublikPreview[] = [];
+  const dataTidakLengkap: string[] = [];
 
-  for (
-    let i = 0;
-    i < tanggalList.length;
-    i++
-  ) {
-    const tanggalInfo =
-      tanggalList[i];
+  for (const penanda of tanggalUnik) {
+    const cocok = penanda.text.match(
+      /^\s*(\d{1,2})/
+    );
 
-    const posisiMulai =
-      tanggalInfo.index;
+    if (!cocok) continue;
 
-    const posisiAkhir =
-      i + 1 < tanggalList.length
-        ? tanggalList[i + 1].index
-        : teksNormal.length;
+    const hari = Number(cocok[1]);
 
-    let blok = teksNormal.slice(
-      posisiMulai,
-      posisiAkhir
+    const tanggal =
+      `${periode.tahun}-` +
+      `${String(periode.bulan).padStart(2, "0")}-` +
+      `${String(hari).padStart(2, "0")}`;
+
+    const dalamBlok = items.filter(
+      (item) =>
+        item.halaman === penanda.halaman &&
+        item.y <= penanda.y + 15 &&
+        item.y >= penanda.y - 30
     );
 
     // --------------------------------------------------------
-    // Hindari mengambil bagian laporan / footer PDF
+    // TIGA NAMA PETUGAS
+    // Urutan: Duta, Pelayanan Publik, Maganghub.
     // --------------------------------------------------------
 
-    const batasLaporan =
-      blok.search(
-        /catatan|format\s+laporan\s+atensi/i
-      );
+    const duta_layanan = ambilNamaPetugas(
+      penanda.halaman,
+      penanda.y,
+      8.6
+    );
 
-    if (batasLaporan >= 0) {
-      blok = blok.slice(
-        0,
-        batasLaporan
-      );
+    const pelayanan_publik = ambilNamaPetugas(
+      penanda.halaman,
+      penanda.y,
+      -6
+    );
+
+    const maganghub = ambilNamaPetugas(
+      penanda.halaman,
+      penanda.y,
+      -20.6
+    );
+
+    // --------------------------------------------------------
+    // PENGAWAS DAN KOORDINATOR
+    // --------------------------------------------------------
+
+    let pengawas = gabungKolom(
+      dalamBlok.filter(
+        (item) =>
+          item.x >= 340 &&
+          item.x < 455
+      )
+    );
+
+    let koordinator = gabungKolom(
+      dalamBlok.filter(
+        (item) =>
+          item.x >= 455 &&
+          item.x < 550
+      )
+    );
+
+    // --------------------------------------------------------
+    // PENANGANAN TEKS PENGAWAS DAN KOORDINATOR
+    // YANG TERGABUNG DALAM SATU ITEM PDF.
+    // --------------------------------------------------------
+
+    if (!koordinator && pengawas) {
+      const polaGabungan =
+        /^(Kasubsi\s+(?:Bimker|Bimkemas|Registrasi)\s+(?:Dewasa|Anak)|Kaur\s+(?:Keuangan|Umum|Kepegawaian)|Kasubbag\s+Tata\s+Usaha)\s+(.+)$/i;
+
+      const pecah = pengawas.match(polaGabungan);
+
+      if (pecah) {
+        pengawas = pecah[1].trim();
+        koordinator = pecah[2].trim();
+      }
     }
 
-    const data =
-      parseBlokPelayanan(
-        blok,
-        tanggalInfo.tanggal
-      );
-
-    if (!data) continue;
+    const data: PelayananPublikPreview = {
+      tanggal,
+      duta_layanan,
+      pelayanan_publik,
+      maganghub,
+      pengawas,
+      koordinator,
+    };
 
     // --------------------------------------------------------
-    // Validasi minimal
+    // VALIDASI LIMA KOLOM WAJIB
     // --------------------------------------------------------
 
-    const adaData =
-      Boolean(
-        data.duta_layanan ||
-          data.pelayanan_publik ||
-          data.maganghub ||
-          data.pengawas ||
-          data.koordinator
+    const kolomKosong = Object.entries(data)
+      .filter(
+        ([key, value]) =>
+          key !== "tanggal" &&
+          !String(value).trim()
+      )
+      .map(([key]) => key);
+
+    if (kolomKosong.length > 0) {
+      dataTidakLengkap.push(
+        `${tanggal}: ${kolomKosong.join(", ")}`
       );
 
-    if (!adaData) {
       continue;
     }
 
@@ -910,31 +1099,43 @@ function parseJadwalPelayanan(
   }
 
   // ----------------------------------------------------------
-  // Hapus tanggal duplikat
+  // TOLAK SELURUH HASIL JIKA ADA TANGGAL TIDAK LENGKAP
   // ----------------------------------------------------------
 
-  const hasilUnik =
-    Array.from(
-      new Map(
-        hasil.map((item) => [
-          item.tanggal,
-          item,
-        ])
-      ).values()
+  if (dataTidakLengkap.length > 0) {
+    console.error(
+      "ADA JADWAL YANG BELUM LENGKAP:"
     );
 
+    console.table(
+      dataTidakLengkap.map((item) => ({
+        keterangan: item,
+      }))
+    );
+
+    return [];
+  }
+
   // ----------------------------------------------------------
-  // Urutkan tanggal
+  // HAPUS TANGGAL DUPLIKAT
   // ----------------------------------------------------------
 
-  hasilUnik.sort((a, b) =>
-    a.tanggal.localeCompare(
-      b.tanggal
-    )
+  const hasilUnik = Array.from(
+    new Map(
+      hasil.map((item) => [
+        item.tanggal,
+        item,
+      ])
+    ).values()
+  );
+
+  hasilUnik.sort(
+    (a, b) =>
+      a.tanggal.localeCompare(b.tanggal)
   );
 
   // ----------------------------------------------------------
-  // LOG
+  // HASIL AKHIR
   // ----------------------------------------------------------
 
   console.log(
@@ -948,7 +1149,7 @@ function parseJadwalPelayanan(
   );
 
   console.log(
-    "JUMLAH JADWAL:",
+    "JUMLAH JADWAL LENGKAP:",
     hasilUnik.length
   );
 
@@ -960,15 +1161,14 @@ function parseJadwalPelayanan(
 
   return hasilUnik;
 }
+
 // ============================================================
-// BACA TEXT PDF
+// BACA TEXT PDF (FUNGSI LAMA, DIPAKAI MODUL LAIN)
 // ============================================================
+
 async function bacaTeksPdf(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
-
-  const pdf = await pdfjsLib.getDocument({
-    data: arrayBuffer,
-  }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   const semuaBaris: string[] = [];
 
@@ -977,53 +1177,30 @@ async function bacaTeksPdf(file: File): Promise<string> {
     const content = await page.getTextContent();
 
     const items = content.items
-      .filter((item) => {
-        return (
-          "str" in item &&
-          "transform" in item &&
-          typeof item.str === "string" &&
-          Array.isArray(item.transform)
-        );
-      })
-      .map((item) => {
-        const data = item as {
-          str: string;
-          transform: number[];
-        };
-
-        return {
-          text: data.str,
-          x: data.transform[4],
-          y: data.transform[5],
-        };
-      });
+      .filter(
+        (item): item is typeof item & { str: string; transform: number[] } =>
+          "str" in item && "transform" in item
+      )
+      .map((item) => ({
+        text: item.str,
+        x: item.transform[4],
+        y: item.transform[5],
+      }));
 
     const groups: {
       y: number;
-      items: {
-        text: string;
-        x: number;
-      }[];
+      items: { text: string; x: number }[];
     }[] = [];
 
     for (const item of items) {
-      let group = groups.find(
-        (g) => Math.abs(g.y - item.y) <= 3
-      );
+      let group = groups.find((g) => Math.abs(g.y - item.y) <= 3);
 
       if (!group) {
-        group = {
-          y: item.y,
-          items: [],
-        };
-
+        group = { y: item.y, items: [] };
         groups.push(group);
       }
 
-      group.items.push({
-        text: item.text,
-        x: item.x,
-      });
+      group.items.push({ text: item.text, x: item.x });
     }
 
     groups.sort((a, b) => b.y - a.y);
@@ -1032,20 +1209,78 @@ async function bacaTeksPdf(file: File): Promise<string> {
       group.items.sort((a, b) => a.x - b.x);
 
       const line = group.items
-        .map((item) => item.text)
+        .map((i) => i.text)
         .join(" ")
         .replace(/\s+/g, " ")
         .trim();
 
-      if (line) {
-        semuaBaris.push(line);
-      }
+      if (line) semuaBaris.push(line);
     }
   }
 
   return semuaBaris.join("\n");
 }
+// ============================================================
+// BACA PDF PUBLIKASI DENGAN KOORDINAT
+// Tidak mengubah fungsi bacaTeksPdf yang lama
+// ============================================================
 
+type ItemPdfPublikasi = {
+  text: string;
+  x: number;
+  y: number;
+  halaman: number;
+};
+
+async function bacaPdfPublikasiDenganPosisi(
+  file: File
+): Promise<ItemPdfPublikasi[]> {
+  const arrayBuffer = await file.arrayBuffer();
+
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+  }).promise;
+
+  const semuaItem: ItemPdfPublikasi[] = [];
+
+  for (
+    let pageNum = 1;
+    pageNum <= pdf.numPages;
+    pageNum++
+  ) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+
+    for (const item of content.items) {
+      if (
+        !("str" in item) ||
+        !("transform" in item) ||
+        typeof item.str !== "string" ||
+        !Array.isArray(item.transform)
+      ) {
+        continue;
+      }
+
+      const x = Number(item.transform[4]);
+      const y = Number(item.transform[5]);
+
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        continue;
+      }
+
+      if (!item.str.trim()) continue;
+
+      semuaItem.push({
+        text: item.str.trim(),
+        x,
+        y,
+        halaman: pageNum,
+      });
+    }
+  }
+
+  return semuaItem;
+}
 // ============================================================
 // FORMAT TANGGAL
 // ============================================================
@@ -1233,58 +1468,131 @@ const simpanJadwalPelayanan = async () => {
   }
 };
 
-
-
 const parseJadwalPublikasi = (
-  teks: string
+  itemsPdf: ItemPdfPublikasi[]
 ): Omit<JadwalPiketPublikasi, "id">[] => {
-  const kelompok = [
-    {
-      tanggal: [1, 2, 3, 4],
-      fotografer: ["Darisman", "Satrio", "Ichwanul", "Diah K"],
-      videografer: ["Diah K", "Shabrina", "Larissa", "Ichwanul"],
-      pembuat_konten_1: ["Heru", "Hardanta", "Reza", "Olivia"],
-      pembuat_konten_2: ["Luthfan", "Olivia", "Kartini", "Larissa"],
-    },
-    {
-      tanggal: [5, 6, 7, 8, 9, 10, 11],
-      fotografer: ["Shabrina", "Hardanta", "Satrio", "Olivia", "Luthfan", "Kartini", "Reza"],
-      videografer: ["Reza", "Heru", "Diah K", "Hardanta", "Shabrina", "Satrio", "Larissa"],
-      pembuat_konten_1: ["Luthfan", "Kartini", "Larissa", "Ichwanul", "Darisman", "Hardanta", "Shabrina"],
-      pembuat_konten_2: ["Satrio", "Darisman", "Kartini", "Heru", "Reza", "Olivia", "Diah K"],
-    },
-    {
-      tanggal: [12, 13, 14, 15, 16, 17, 18],
-      fotografer: ["Darisman", "Larissa", "Heru", "Ichwanul", "Olivia", "Reza", "Luthfan"],
-      videografer: ["Luthfan", "Darisman", "Olivia", "Kartini", "Ichwanul", "Shabrina", "Diah K"],
-      pembuat_konten_1: ["Heru", "Reza", "Diah K", "Satrio", "Heru", "Satrio", "Larissa"],
-      pembuat_konten_2: ["Ichwanul", "Shabrina", "Luthfan", "Hardanta", "Kartini", "Darisman", "Hardanta"],
-    },
-    {
-      tanggal: [19, 20, 21, 22, 23, 24, 25],
-      fotografer: ["Satrio", "Shabrina", "Diah K", "Larissa", "Kartini", "Ichwanul", "Darisman"],
-      videografer: ["Reza", "Heru", "Darisman", "Satrio", "Hardanta", "Olivia", "Kartini"],
-      pembuat_konten_1: ["Luthfan", "Kartini", "Hardanta", "Reza", "Darisman", "Diah K", "Ichwanul"],
-      pembuat_konten_2: ["Larissa", "Olivia", "Ichwanul", "Heru", "Luthfan", "Shabrina", "Satrio"],
-    },
-    {
-      tanggal: [26, 27, 28, 29, 30, 31],
-      fotografer: ["Heru", "Hardanta", "Darisman", "Reza", "Ichwanul", "Shabrina"],
-      videografer: ["Luthfan", "Larissa", "Shabrina", "Olivia", "Diah K", "Hardanta"],
-      pembuat_konten_1: ["Shabrina", "Olivia", "Heru", "Kartini", "Larissa", "Darisman"],
-      pembuat_konten_2: ["Reza", "Diah K", "Hardanta", "Satrio", "Luthfan", "Diah K"],
-    },
-  ];
-
-  return kelompok.flatMap((grup) =>
-    grup.tanggal.map((tanggal, i) => ({
-      tanggal: `2026-10-${String(tanggal).padStart(2, "0")}`,
-      fotografer: grup.fotografer[i],
-      videografer: grup.videografer[i],
-      pembuat_konten_1: grup.pembuat_konten_1[i],
-      pembuat_konten_2: grup.pembuat_konten_2[i],
-    }))
+  const items = itemsPdf.filter(
+    (item) => item.halaman === 1 && item.y > 200
   );
+
+  // Ambil tanggal kalender saja.
+  const tanggalItems = items.filter((item) => {
+    const teks = item.text.trim();
+    return (
+      /^\d{1,2}$/.test(teks) &&
+      Number(teks) >= 1 &&
+      Number(teks) <= 30 &&
+      item.x >= 100 &&
+      item.y > 300
+    );
+  });
+
+  const hasil: Omit<JadwalPiketPublikasi, "id">[] = [];
+  const tanggalDiproses = new Set<number>();
+
+  // Kelompokkan tanggal yang berada pada baris kalender yang sama.
+  const barisTanggal: typeof tanggalItems = [];
+
+  for (const item of [...tanggalItems].sort(
+    (a, b) => b.y - a.y || a.x - b.x
+  )) {
+    if (
+      !barisTanggal.some(
+        (tanggal) =>
+          Math.abs(tanggal.y - item.y) <= 2
+      )
+    ) {
+      barisTanggal.push(item);
+    }
+  }
+
+  const jarakBarisPeran = [
+    { field: "fotografer", offset: 0 },
+    { field: "videografer", offset: 1 },
+    { field: "pembuat_konten_1", offset: 2 },
+    { field: "pembuat_konten_2", offset: 3 },
+  ] as const;
+
+  for (const tanggalY of barisTanggal.map((item) => item.y)) {
+    const tanggalDalamBaris = tanggalItems
+      .filter((item) => Math.abs(item.y - tanggalY) <= 2)
+      .sort((a, b) => a.x - b.x);
+
+    for (const tanggalItem of tanggalDalamBaris) {
+      const tanggal = Number(tanggalItem.text);
+      if (tanggalDiproses.has(tanggal)) continue;
+      tanggalDiproses.add(tanggal);
+
+      const namaPeran: Record<string, string | null> = {
+        fotografer: null,
+        videografer: null,
+        pembuat_konten_1: null,
+        pembuat_konten_2: null,
+      };
+
+      // Setiap tanggal memiliki empat nama pada koordinat X yang sama
+      // dan berada pada empat baris tepat di bawah tanggalnya.
+      for (const peran of jarakBarisPeran) {
+        const kandidat = items
+          .filter((item) => {
+            const jarakY = tanggalItem.y - item.y;
+            return (
+              item.x >= 100 &&
+              Math.abs(item.x - tanggalItem.x) <= 35 &&
+              jarakY > 10 &&
+              jarakY < 100 &&
+              !/^\d{1,2}$/.test(item.text) &&
+              !/^(Fotografer|Videografer|Pembuat Konten)/i.test(
+                item.text
+              )
+            );
+          })
+          .sort((a, b) => {
+            const jarakA = tanggalItem.y - a.y;
+            const jarakB = tanggalItem.y - b.y;
+            return jarakA - jarakB;
+          });
+
+    const offsetPeran = [
+  { field: "fotografer", offset: 21.6 },
+  { field: "videografer", offset: 49.0 },
+  { field: "pembuat_konten_1", offset: 76.4 },
+  { field: "pembuat_konten_2", offset: 100.3 },
+] as const;
+
+for (const peran of offsetPeran) {
+  const targetY = tanggalItem.y - peran.offset;
+
+  const nama = items
+    .filter(
+      (item) =>
+        item.x >= 100 &&
+        Math.abs(item.x - tanggalItem.x) <= 35 &&
+        Math.abs(item.y - targetY) <= 8 &&
+        !/^\d{1,2}$/.test(item.text)
+    )
+    .sort(
+      (a, b) =>
+        Math.abs(a.y - targetY) - Math.abs(b.y - targetY)
+    )[0];
+
+  if (nama) {
+    namaPeran[peran.field] = nama.text.trim();
+  }
+}
+      }
+
+      hasil.push({
+        tanggal: `2026-11-${String(tanggal).padStart(2, "0")}`,
+        fotografer: namaPeran.fotografer,
+        videografer: namaPeran.videografer,
+        pembuat_konten_1: namaPeran.pembuat_konten_1,
+        pembuat_konten_2: namaPeran.pembuat_konten_2,
+      });
+    }
+  }
+
+  return hasil.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
 };
 
 const handleFilePublikasiChange = async (
@@ -1310,16 +1618,33 @@ const handleFilePublikasiChange = async (
   setLoadingBacaPublikasi(true);
 
   try {
-    const teks = await bacaTeksPdf(file);
+    const itemsPdf = await bacaPdfPublikasiDenganPosisi(file);
+
+    console.log("ITEM PDF PUBLIKASI:", itemsPdf);
+    console.table(
+      itemsPdf.map((item) => ({
+        halaman: item.halaman,
+        y: item.y,
+        x: item.x,
+        teks: item.text,
+      }))
+    );
+console.log("KOORDINAT PDF:", JSON.stringify(itemsPdf, null, 2));
+    const teks = itemsPdf.map((item) => item.text).join(" ");
+    console.log("TEKS PDF UNTUK DETEKSI PERIODE:", teks);
     setTeksPdfPublikasi(teks);
 
-    const hasilParser = parseJadwalPublikasi(teks);
-    setPreviewPublikasi(hasilParser);
+    const hasilParse = parseJadwalPublikasi(itemsPdf);
+
+    console.log("HASIL PARSING JADWAL PUBLIKASI:", hasilParse);
+    console.table(hasilParse);
+
+    setPreviewPublikasi(hasilParse);
 
     setPesanPublikasi(
-      hasilParser.length === 31
-        ? "Ditemukan 31 baris jadwal. Periksa kembali nama dan tanggal sebelum menyimpan."
-        : `Baru terbaca ${hasilParser.length} baris jadwal.`
+      hasilParse.length === 30
+        ? "PDF berhasil dibaca. 30 tanggal jadwal publikasi berhasil dikenali."
+        : `PDF terbaca, tetapi hanya ${hasilParse.length} tanggal yang dikenali. Seharusnya 30 tanggal.`
     );
   } catch (error) {
     console.error("Gagal membaca PDF publikasi:", error);
@@ -1328,18 +1653,17 @@ const handleFilePublikasiChange = async (
     setLoadingBacaPublikasi(false);
   }
 };
-
-
 const handleSimpanPublikasi = async () => {
-  if (previewPublikasi.length !== 31) {
-    setPesanPublikasi("Jadwal harus lengkap 31 hari sebelum disimpan.");
-    return;
-  }
-
-  const konfirmasi = window.confirm(
-    "Simpan 31 baris jadwal piket publikasi Oktober 2026 ke database?"
+if (previewPublikasi.length !== 30) {
+  setPesanPublikasi(
+    `Jadwal belum lengkap. Ditemukan ${previewPublikasi.length} tanggal, sedangkan November 2026 harus 30 tanggal.`
   );
+  return;
+}
 
+ const konfirmasi = window.confirm(
+  "Simpan 30 baris jadwal piket publikasi November 2026 ke database?"
+);
   if (!konfirmasi) return;
 
   setLoadingBacaPublikasi(true);
@@ -1368,6 +1692,7 @@ const handleSimpanPublikasi = async () => {
       hasil.message || "Jadwal publikasi berhasil disimpan."
     );
     alert(hasil.message || "Jadwal publikasi berhasil disimpan.");
+    await loadJadwalPublikasi();
   } catch (error) {
     console.error("Gagal menyimpan jadwal publikasi:", error);
     setPesanPublikasi(
@@ -1476,7 +1801,16 @@ useEffect(() => {
 
     try {
       const teks = await bacaTeksPdf(file);
+const itemsPosisi = await bacaPdfPublikasiDenganPosisi(file);
 
+console.table(
+  itemsPosisi.map((item) => ({
+    halaman: item.halaman,
+    x: item.x,
+    y: item.y,
+    teks: item.text,
+  }))
+);
       setTeksPdf(teks);
 
       const hasil = parseJadwal(teks);
@@ -1522,10 +1856,29 @@ const handleFilePelayananChange = async (
 
   try {
     const teks = await bacaTeksPdf(file);
+const itemsPosisi = await bacaPdfPublikasiDenganPosisi(file);
 
+console.log("PEMERIKSAAN KOORDINAT 3 NOVEMBER:");
+
+console.table(
+  itemsPosisi
+    .filter(
+      (item) =>
+        item.halaman === 1 &&
+        item.y >= 700 &&
+        item.y <= 740
+    )
+    .map((item) => ({
+      halaman: item.halaman,
+      x: item.x,
+      y: item.y,
+      teks: item.text,
+    }))
+);
     setTeksPdfPelayanan(teks);
-
-    const hasil = parseJadwalPelayanan(teks);
+console.log("=== TEKS PDF MENTAH PELAYANAN ===");
+console.log(teks);
+   const hasil = parseJadwalPelayanan(itemsPosisi);
 
     setPreviewPelayanan(hasil);
 
@@ -2530,7 +2883,7 @@ if (jumlah < hasilPreview.length) {
       </div>
 
       {/* =====================================================
-          JADWAL PIKET PUBLIKASI OKTOBER 2026
+        Jadwal Piket Publikasi November 2026
       ====================================================== */}
 
       <div className="bg-white rounded-3xl shadow-lg p-6">
@@ -2539,11 +2892,11 @@ if (jumlah < hasilPreview.length) {
 
           <div>
             <h2 className="text-xl font-bold text-gray-800">
-              Jadwal Piket Publikasi Oktober 2026
+              Jadwal Piket Publikasi November 2026
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               Pembaharuan Piket Pembuatan Berita, Infografis,
-              dan Videografis Bulan Oktober 2026.
+              dan Videografis Bulan November 2026.
             </p>
           </div>
         </div>
@@ -2557,8 +2910,7 @@ if (jumlah < hasilPreview.length) {
           </div>
 
           <p className="text-sm text-gray-600 mb-3">
-            Khusus Admin. Pilih PDF jadwal piket publikasi
-            Oktober 2026 untuk membaca dan memeriksa datanya.
+            Khusus Admin. Pilih PDF jadwal piket publikasi Oktober 2026 untuk membaca dan memeriksa datanya.
           </p>
 
           <input
@@ -2629,13 +2981,10 @@ if (jumlah < hasilPreview.length) {
     <div className="mt-4 flex justify-end">
       <button
         type="button"
-        disabled={
-          previewPublikasi.length !== 31 ||
-          loadingBacaPublikasi
-        }
-        onClick={() => {
-          alert("Tombol simpan siap. Langkah berikutnya menyambungkan API.");
-        }}
+      disabled={
+  previewPublikasi.length !== 30 ||
+  loadingBacaPublikasi
+}onClick={handleSimpanPublikasi}
         className="rounded-lg bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Simpan Jadwal ke Database

@@ -23,8 +23,7 @@ export async function GET() {
       .select(
         "id, tanggal, fotografer, videografer, pembuat_konten_1, pembuat_konten_2"
       )
-      .gte("tanggal", "2026-10-01")
-      .lte("tanggal", "2026-10-31")
+
       .order("tanggal", { ascending: true });
 
     if (error) {
@@ -83,63 +82,121 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const jadwal = body?.data;
+if (!Array.isArray(jadwal) || jadwal.length === 0) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Data impor jadwal publikasi kosong atau tidak valid.",
+    },
+    { status: 400 }
+  );
+}
 
-    if (!Array.isArray(jadwal) || jadwal.length !== 31) {
+const tanggalPertama = jadwal[0]?.tanggal;
+
+if (
+  typeof tanggalPertama !== "string" ||
+  !/^\d{4}-\d{2}-\d{2}$/.test(tanggalPertama)
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Format tanggal tidak valid.",
+    },
+    { status: 400 }
+  );
+}
+
+const [tahun, bulan] = tanggalPertama.split("-").map(Number);
+
+const jumlahHari = new Date(tahun, bulan, 0).getDate();
+const prefixBulan = `${tahun}-${String(bulan).padStart(2, "0")}-`;
+
+if (
+  !Number.isInteger(tahun) ||
+  tahun < 2000 ||
+  !Number.isInteger(bulan) ||
+  bulan < 1 ||
+  bulan > 12 ||
+  jadwal.length !== jumlahHari
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Jumlah tanggal tidak sesuai dengan kalender bulan tersebut.",
+    },
+    { status: 400 }
+  );
+}
+
+   const tanggalValid = new Set<string>();
+
+for (const item of jadwal) {
+  if (
+    !item ||
+    typeof item.tanggal !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(item.tanggal) ||
+    !item.tanggal.startsWith(prefixBulan) ||
+    tanggalValid.has(item.tanggal)
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Tanggal tidak valid, berbeda bulan, atau duplikat.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const nomorHari = Number(item.tanggal.slice(8, 10));
+
+if (
+  nomorHari < 1 ||
+  nomorHari > jumlahHari ||
+  new Date(
+    Date.UTC(tahun, bulan - 1, nomorHari)
+  ).toISOString().slice(0, 10) !== item.tanggal
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: `Tanggal ${item.tanggal} tidak valid.`,
+    },
+    { status: 400 }
+  );
+}
+  for (const kolom of [
+    "fotografer",
+    "videografer",
+    "pembuat_konten_1",
+    "pembuat_konten_2",
+  ]) {
+    if (
+      typeof item[kolom] !== "string" ||
+      item[kolom].trim().length === 0
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Data impor harus berisi 31 tanggal jadwal Oktober 2026.",
+          error: `Data ${kolom} tanggal ${item.tanggal} belum lengkap.`,
         },
         { status: 400 }
       );
     }
+  }
 
-    const tanggalValid = new Set<string>();
-    const polaTanggal = /^2026-10-(0[1-9]|[12]\d|3[01])$/;
+  tanggalValid.add(item.tanggal);
+}
 
-    for (const item of jadwal) {
-      if (
-        !item ||
-        typeof item.tanggal !== "string" ||
-        !polaTanggal.test(item.tanggal) ||
-        tanggalValid.has(item.tanggal)
-      ) {
-        return NextResponse.json(
-          { success: false, error: "Tanggal tidak valid atau duplikat." },
-          { status: 400 }
-        );
-      }
-
-      for (const kolom of [
-        "fotografer",
-        "videografer",
-        "pembuat_konten_1",
-        "pembuat_konten_2",
-      ]) {
-        if (
-          typeof item[kolom] !== "string" ||
-          item[kolom].trim().length === 0
-        ) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: `Data ${kolom} tanggal ${item.tanggal} belum lengkap.`,
-            },
-            { status: 400 }
-          );
-        }
-      }
-
-      tanggalValid.add(item.tanggal);
-    }
-
-    if (tanggalValid.size !== 31) {
-      return NextResponse.json(
-        { success: false, error: "Semua tanggal 1–31 harus tersedia." },
-        { status: 400 }
-      );
-    }
-
+if (tanggalValid.size !== jumlahHari) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: `Semua tanggal 1–${jumlahHari} harus tersedia.`,
+    },
+    { status: 400 }
+  );
+}
     const { error } = await supabaseAdmin
       .from("jadwal_piket_publikasi")
       .upsert(
@@ -168,11 +225,26 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      total: jadwal.length,
-      message: "Jadwal publikasi Oktober 2026 berhasil diimpor.",
-    });
+  const namaBulan = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+return NextResponse.json({
+  success: true,
+  total: jadwal.length,
+  message: `${jadwal.length} jadwal piket publikasi bulan ${namaBulan[bulan - 1]} ${tahun} berhasil disimpan.`,
+});
   } catch (error) {
     console.error("API impor jadwal publikasi error:", error);
 
