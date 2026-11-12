@@ -14,7 +14,8 @@ type JadwalApel = {
 };
 
 const AUDIO_STORAGE_KEY = "simasdi-global-audio";
-
+const AUDIO_PLAYED_STORAGE_KEY =
+  "simasdi-global-audio-played";
 const ALLOWED_USERNAMES = [
   "admin",
   "petugas",
@@ -38,9 +39,6 @@ export default function GlobalAudioEngine() {
 
   const sedangBicaraRef = useRef(false);
 
-  // Mencegah pengumuman yang sama diputar berulang kali
-  const sudahDiputarRef =
-    useRef<Record<string, string>>({});
 
   // =========================================================
   // CEK HAK AKSES
@@ -88,21 +86,14 @@ export default function GlobalAudioEngine() {
   // =========================================================
   // FORMAT TANGGAL HARI INI
   // =========================================================
-  function tanggalHariIni() {
-    const sekarang = new Date();
-
-    const tahun = sekarang.getFullYear();
-
-    const bulan = String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0");
-
-    const tanggal = String(
-      sekarang.getDate()
-    ).padStart(2, "0");
-
-    return `${tahun}-${bulan}-${tanggal}`;
-  }
+ function tanggalHariIni() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
   // =========================================================
   // AMBIL JADWAL APEL HARI INI
@@ -252,41 +243,55 @@ export default function GlobalAudioEngine() {
   // =========================================================
   // SUSUN NAMA PETUGAS
   // =========================================================
+
+  // =========================================================
+  // SUSUN NAMA PETUGAS - KOREKSI PELAFALAN TTS
+  // =========================================================
   function susunNamaPetugas(
     jadwal: JadwalApel[]
   ) {
     if (jadwal.length === 0) {
       return (
-        "Mohon Perhatian. " +
-        "Belum terdapat data petugas apel pada jadwal hari ini."
+        "Mohon perhatian. " +
+        "Belum terdapat data petugas a-pel pagi pada jadwal hari ini."
       );
     }
+
+    const koreksiPelafalan: Record<string, string> = {
+      "lulu od'hiyani, s.h.": "Lulu Odiyani",
+      "adhityo sandjaya": "Adityo Sanjaya",
+      "nicky chairani isa chamidi, s.sos.": "Niki Kairani Isa Kamidi",
+      "adidthya faragita yuniar, s.i.kom.": "Aditya Faragita Yuniar",
+      "achmad nurhadi rachmatadhani": "Ahmad Nurhadi Rahmatadani",
+    };
 
     const bagian: string[] = [];
 
     jadwal.forEach((item) => {
-      const nama =
-        item.nama_petugas?.trim();
+      const namaAsli = item.nama_petugas?.trim();
+      const tugas = item.tugas?.trim();
 
-      const tugas =
-        item.tugas?.trim();
+      if (!namaAsli) return;
 
-      if (!nama) return;
+      const kunciNama = namaAsli
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+
+      const namaTTS =
+        koreksiPelafalan[kunciNama] ?? namaAsli;
 
       if (tugas) {
-        bagian.push(
-          `${tugas}, ${nama}`
-        );
+        bagian.push(`${tugas}, ${namaTTS}`);
       } else {
-        bagian.push(nama);
+        bagian.push(namaTTS);
       }
     });
 
     return (
-      "Mohon Perhatian. " +
-      "Diberitahukan susunan petugas apel pagi Bapas Kelas Satu Jakarta Barat hari ini. " +
+      "Mohon perhatian. " +
+      "Diberitahukan susunan petugas a-pel pagi Bapas Kelas Satu Jakarta Barat hari ini. " +
       bagian.join(". ") +
-      ". Terimakasih."
+      ". Terima kasih."
     );
   }
 
@@ -329,9 +334,9 @@ export default function GlobalAudioEngine() {
 
 const teks =
   "Mohon perhatian kepada seluruh pegawai Bapas Kelas I Jakarta Barat. " +
-  "Apel pagi akan dimulai lima menit lagi. " +
+  "A-pel pagi akan dimulai lima menit lagi. " +
   "Seluruh pegawai dimohon segera bersiap. " +
-  "Apel pagi dilaksanakan di halaman Griya Abipraya. " +
+"A-pel pagi dilaksanakan di halaman Griya Abipraya. " +
   "Terima kasih.";
 
     await putarTengTong();
@@ -365,7 +370,7 @@ const teks =
 
 const teks =
   "Mohon perhatian kepada seluruh pegawai Bapas Kelas I Jakarta Barat. " +
-  "Apel pagi segera dimulai. " +
+  "A-pel pagi segera dimulai. " +
   "Seluruh pegawai dimohon menempati posisi masing-masing " +
   "dan mengikuti apel dengan tertib. " +
   "Terima kasih.";
@@ -423,115 +428,111 @@ const teks =
   // =========================================================
   // CEK JADWAL OTOMATIS
   // =========================================================
-  async function cekJadwalAudio() {
-    if (!audioAktif) return;
 
-    if (
-      typeof window ===
-      "undefined"
-    ) {
-      return;
+async function cekJadwalAudio() {
+  if (!audioAktif) return;
+
+  if (typeof window === "undefined") return;
+
+  const sekarang = new Date();
+
+  const waktuSekarang =
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(sekarang);
+
+  const tanggal = tanggalHariIni();
+
+  const jadwal = [
+    {
+      id: "p0750",
+      waktu: "07:50",
+      kunci: `${tanggal}-07:50`,
+      jalankan: pengumuman0750,
+    },
+    {
+      id: "p0755",
+      waktu: "07:55",
+      kunci: `${tanggal}-07:55`,
+      jalankan: pengumuman0755,
+    },
+    {
+      id: "p0800",
+      waktu: "08:00",
+      kunci: `${tanggal}-08:00`,
+      jalankan: pengumuman0800,
+    },
+    {
+      id: "p0600",
+      waktu: "06:00",
+      kunci: `${tanggal}-06:00`,
+      jalankan: putarIndonesiaRaya,
+    },
+  ];
+
+  let statusTersimpan: Record<string, string> = {};
+
+  try {
+    const raw = window.localStorage.getItem(
+      AUDIO_PLAYED_STORAGE_KEY
+    );
+
+    if (raw) {
+      const parsed = JSON.parse(raw);
+
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        !Array.isArray(parsed)
+      ) {
+        statusTersimpan = parsed;
+      }
     }
+  } catch (error) {
+    console.error(
+      "Gagal membaca penanda jadwal audio:",
+      error
+    );
+  }
 
-    const sekarang = new Date();
-
-    const jam = String(
-      sekarang.getHours()
-    ).padStart(2, "0");
-
-    const menit = String(
-      sekarang.getMinutes()
-    ).padStart(2, "0");
-
-    const waktuSekarang =
-      `${jam}:${menit}`;
-
-    const tanggal =
-      tanggalHariIni();
-
-    const kunci0750 =
-      `${tanggal}-07:50`;
-
-    const kunci0755 =
-      `${tanggal}-07:55`;
-
-    const kunci0800 =
-      `${tanggal}-08:00`;
-const kunci0600 =
-  `${tanggal}-06:00`;
-
-    // =======================================================
-    // 07:50 - NAMA PETUGAS
-    // =======================================================
-    if (
-      waktuSekarang === "07:50" &&
-      sudahDiputarRef.current.p0750 !==
-        kunci0750
-    ) {
-      sudahDiputarRef.current.p0750 =
-        kunci0750;
-
-      console.log(
-        "🔊 Menjalankan pengumuman 07:50"
-      );
-
-      await pengumuman0750();
-    }
-
-    // =======================================================
-    // 07:55
-    // =======================================================
-    if (
-      waktuSekarang === "07:55" &&
-      sudahDiputarRef.current.p0755 !==
-        kunci0755
-    ) {
-      sudahDiputarRef.current.p0755 =
-        kunci0755;
-
-      console.log(
-        "🔊 Menjalankan pengumuman 07:55"
-      );
-
-      await pengumuman0755();
-    }
-
-    // =======================================================
-    // 08:00
-    // =======================================================
-    if (
-      waktuSekarang === "08:00" &&
-      sudahDiputarRef.current.p0800 !==
-        kunci0800
-    ) {
-      sudahDiputarRef.current.p0800 =
-        kunci0800;
-
-      console.log(
-        "🔊 Menjalankan pengumuman 08:00"
-      );
-
-      await pengumuman0800();
-    }
-
- // =======================================================
-// 06:00 - INDONESIA RAYA
-// =======================================================
-if (
-  waktuSekarang === "06:00" &&
-  sudahDiputarRef.current.p0600 !==
-    kunci0600
-) {
-  sudahDiputarRef.current.p0600 =
-    kunci0600;
-
-  console.log(
-    "🇮🇩 Menjalankan Indonesia Raya 06:00"
+  const target = jadwal.find(
+    (item) => item.waktu === waktuSekarang
   );
 
-  await putarIndonesiaRaya();
+  if (!target) return;
+
+  if (
+    statusTersimpan[target.id] === target.kunci
+  ) {
+    return;
+  }
+
+// Tandai jadwal sebelum audio diputar
+statusTersimpan[target.id] = target.kunci;
+  try {
+    window.localStorage.setItem(
+      AUDIO_PLAYED_STORAGE_KEY,
+      JSON.stringify(statusTersimpan)
+    );
+  } catch (error) {
+    console.error(
+      "Gagal menyimpan penanda jadwal audio:",
+      error
+    );
+
+    return;
+  }
+
+  console.log(
+    `Menjalankan jadwal audio ${target.waktu}`
+  );
+
+  await target.jalankan();
 }
-}
+
   // =========================================================
   // AKTIFKAN AUDIO
   // =========================================================
@@ -578,7 +579,7 @@ if (
       setSiap(true);
 
       console.log(
-        "🔊 GLOBAL AUDIO AKTIF"
+        "ðŸ”Š GLOBAL AUDIO AKTIF"
       );
     } catch (error) {
       console.error(
@@ -628,7 +629,7 @@ if (
     }
 
     console.log(
-      "🔇 GLOBAL AUDIO DIMATIKAN"
+      "ðŸ”‡ GLOBAL AUDIO DIMATIKAN"
     );
   }
 
@@ -666,9 +667,8 @@ if (
     if (!audioAktif) {
       return;
     }
-
     console.log(
-      "⏰ Global Audio Engine berjalan"
+      "â° Global Audio Engine berjalan"
     );
 
     // Cek langsung
@@ -743,7 +743,7 @@ if (
                 "0 4px 12px rgba(0,0,0,.25)",
             }}
           >
-            🔊 AKTIFKAN AUDIO
+            ðŸ”Š AKTIFKAN AUDIO
           </button>
         ) : (
           <>
@@ -758,7 +758,7 @@ if (
                   "0 4px 12px rgba(0,0,0,.25)",
               }}
             >
-              🟢 AUDIO AKTIF
+              ðŸŸ¢ AUDIO AKTIF
             </div>
 
             <button
